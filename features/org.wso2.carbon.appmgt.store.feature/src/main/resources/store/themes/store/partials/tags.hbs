@@ -1,0 +1,17 @@
+
+{{#if .}}
+<div class="row">
+          <h3>{{t "Tags"}}</h3>
+            <hr>
+        <div class="tags">
+            <ul>{{#each .}}
+                {{#each data}}
+                    <li>
+                        <a class="tag" href="{{tenantedUrl ../this.url}}{{name}}">{{name}}</a>
+                    </li>
+                {{/each}}
+                {{/each}}
+            </ul>
+        </div>
+</div>
+{{/if}}

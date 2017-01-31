@@ -1,0 +1,66 @@
+<div class="assets-wrapper">
+	{{#if assets}}
+
+		{{#each assets}}
+
+            <div class="col-xs-6 col-md-4 col-lg-1-5 app-assets-wrapper">
+                {{#compare  attributes.overview_advertiseOnly "true" operator="=="}}
+                    <div class="ribbon-wrapper-orange"><div class="ribbon-orange">Advertised</div></div>
+                {{/compare}}
+
+                {{#if isSubscribed}}
+                    <div class="ribbon-wrapper-green"><div class="ribbon-green">Subscribed</div></div>
+                {{/if}}
+                <div class="app-assets">
+                    {{#compare  attributes.overview_advertiseOnly "true" operator="=="}}
+                    <a href="{{url "/t"}}/{{attributes.overview_appTenant}}/assets/{{type}}/{{attributes.overview_advertisedAppUuid}}">
+                    {{else}}
+                    <a href="{{tenantedUrl "/assets"}}/{{type}}/{{id}}">
+                    {{/compare}}
+                    {{#if defaultThumbnail}}
+                        <div class="app-assets-default-icon" style="background: #{{defaultThumbnail.color}};">
+                            {{defaultThumbnail.text}}
+                        </div>
+                    {{else}}
+                        <div class="app-assets-icon">
+                            <img src="{{attributes.images_thumbnail}}" />
+                        </div>
+                    {{/if}}
+                    </a>
+                    <div class="app-assets-info">
+                        <div class="app-assets-name">
+							{{attributes.overview_displayName}}
+                        </div>
+                        <div class="app-assets-provider">
+							{{attributes.overview_provider}}
+                        </div>
+                    </div>
+                    <span class="app-assets-rating"> {{#assetRating rating}}{{/assetRating}} </span>
+                </div>
+            </div>
+
+		{{/each}}
+
+    {{else}}
+
+        <div class="well-large col-md-12 no-apps-box">
+            <i class="fw fw-paste nothing-icon"></i> Sorry, We could not find any app for you
+        </div>
+
+	{{/if}}
+
+</div>
+
+
+{{#if assets}}
+    <div class="row">
+    <ul class="pager">
+        {{#if leftNav}}
+            <li><a href="{{tenantedUrl "/assets/webapp?"}}{{this.urlQuery}}{{t "page="}}{{this.leftNav}}">Previous</a></li>
+        {{/if}}
+        {{#if rightNav}}
+            <li><a  href="{{tenantedUrl "/assets/webapp?"}}{{this.urlQuery}}{{t "page="}}{{this.rightNav}}">Next</a></li>
+        </ul>
+        {{/if}}
+    </div>
+{{/if}}

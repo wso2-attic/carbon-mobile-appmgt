@@ -1,0 +1,39 @@
+
+{{#if user}}
+{{#if subscription}}
+
+
+
+<div class="row visible-lg">
+    <h3>My {{title}}</h3>
+    <hr>
+
+
+	{{#slice subscriptions count="20" size="20"}}
+
+		{{#each .}}
+        <a href="{{tenantedUrl "/assets"}}/{{type}}/{{id}}">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="recent-app-assets-name">{{attributes.overview_displayName}}</div>
+                    <div class="recent-app-asset-provider">{{attributes.overview_provider}}</div>
+                    <span class="app-assets-rating"> {{#assetRating rating}}{{/assetRating}} </span>
+                </div>
+                <div class="col-md-4">
+                    <img class="col-md-12" src="{{#if attributes.images_thumbnail}}{{url "/api/mobileapp/getfile/"}}{{attributes.images_thumbnail}}{{/if}}">
+                </div>
+            </div>
+
+            <hr>
+        </a>
+		{{/each}}
+	{{/slice}}
+
+
+</div>
+
+
+
+
+{{/if}}
+{{/if}}

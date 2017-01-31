@@ -1,0 +1,35 @@
+<%
+
+include('../modules/jagg/jagg.jag');
+var AuthService;
+var authentictaor;
+var user;
+var log = new Log();
+
+var loggeduser = require('store').user
+
+AuthService=require('/extensions/assets/webapp/services/authentication.js').serviceModule;
+
+authenticator=new AuthService.Authenticator();
+
+authenticator.init(jagg,session);
+
+user=authenticator.getLoggedInUser();
+
+if(user){
+	authenticator.logout();
+}
+
+loggeduser.logout();
+
+caramel = require('caramel');
+var contextPath = caramel.configs().context;
+var reversProxyEnabled = caramel.configs().reverseProxyEnabled;
+var reverseProxyHost = caramel.configs().reverseProxyHost;
+var reDirectUrl = contextPath;
+if(reversProxyEnabled) {
+    reDirectUrl = reverseProxyHost+contextPath;
+}
+response.sendRedirect(reDirectUrl);
+
+%>

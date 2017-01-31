@@ -1,0 +1,576 @@
+<%
+/*
+ *  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+var AuthService;
+var authenticator;
+var caramel;
+
+include('../modules/jagg/jagg.jag');
+var manager = jagg.module("manager");
+var storeHostObj = manager.getAPIStoreObj();
+if(!storeHostObj.isAssetTypeEnabled("site")) {
+    response.sendError(404,'Resource does not exist');
+}
+
+var storeServer = require('store').server;
+var carbon = require('carbon');
+var user = storeServer.current(session);
+var um;
+if (user) {
+    um = storeServer.userManager(user.tenantId);
+} else {
+    um = storeServer.userManager(-1234);
+}
+var WEBAPP_TYPE = 'webapp';
+
+require('/modules/store.js').exec(function (ctx) {
+    var options, assets, paging, url,
+            log = ctx.log,
+            sso = ctx.sso,
+            query = ctx.params.query,
+            tag = encodeURIComponent(ctx.params.tag),
+            store = ctx.store,
+            user = ctx.user,
+            server = ctx.server,
+            tenantId = ctx.tenant.tenantId,
+            tenantDomain = ctx.tenant.domain,
+            configs = ctx.configs,
+            site = ctx.site,
+            social = carbon.server.osgiService('org.wso2.carbon.social.core.service.SocialActivityService');
+
+
+    //set tenant aware username
+    var tenantUsername = null;
+    if (user != null) {
+        tenantUsername = user.username;
+    }
+
+    //Get the store public visibility. Read the registry file store.json(tenanted) and get the value of publicVisibility
+    var storePublicVisibility = store.getPublicVisibility();
+    if (storePublicVisibility == null) {
+        storePublicVisibility = false;
+        log.warn('\'publicVisibility\' property has not been configured in the store.json config file. Use the default value as \'false\'');
+    }
+    var tagInfo = {};
+
+    caramel = require('caramel');
+    //Check whether to show register link in myapps page
+    var isSelfSignupEnabledForTenant = storeHostObj.isSelfSignupEnabledForTenant(String(tenantDomain));
+    //Get the list of enabled app types
+    var enabledTypeList = storeHostObj.getEnabledAssetTypeList();
+
+    //Get the subscription configuration options
+    var subscriptionUtil = require('../../../../themes/store/js/subscription-config.js');
+    var isSelfSubscriptionEnabled = subscriptionUtil.isSelfSubscriptionEnabled();
+    var isEnterpriseSubscriptionEnabled = subscriptionUtil.isEnterpriseSubscriptionEnabled();
+
+    //Initialize subscription service
+    var SubscriptionService = require(getServiceDir('subscription.js')).serviceModule;
+    var subsApp = new SubscriptionService.SubscriptionService();
+    subsApp.init(jagg, session);
+
+    var isSite = 'true';//To get the site tags
+    var context = caramel.configs().context;
+    var leftnav, rightnav, urlQuery;//For pagination
+    
+    var headerData = site.header(tenantId, {
+        sso: sso,
+        user: user,
+        domain: tenantDomain
+    });
+    headerData.isSelfSignUpEnabledForTenant = isSelfSignupEnabledForTenant;
+    headerData.hideAllAppsLink = false;
+    headerData.storeTenantDomain = tenantDomain;
+    headerData.assetType = "site";
+
+    var navigationData = {
+        showAllAppsLink: true
+    };
+
+    var webAppRecentAssets = [];
+    var PAGE_SIZE = store.getPageSize();
+    var availablePages = store.getAvailablePages(type, ctx.request, ctx.session);
+    paging = store.assetsPagingOverrided(request, availablePages);
+    var currIndex = paging.start + 1;
+    var currentPage = store.getCurrentPage(currIndex);
+
+    var isMultipleVersionDisplayEnabled = storeHostObj.isDisplayMultipleVersionsEnabled();
+    if (log.isDebugEnabled()) {
+        log.debug("Multiple version display in store is : " + isMultipleVersionDisplayEnabled);
+    }
+
+    var SITE_QUERY;
+    if (isMultipleVersionDisplayEnabled) {
+        //if multiple versions to be displayed don't consider default version
+        SITE_QUERY =
+        {"overview_treatAsASite": "TRUE"};
+    } else {
+        //if multiple versions to be displayed don consider default version
+        SITE_QUERY =
+        {"overview_treatAsASite": "TRUE", "overview_makeAsDefaultVersion": "true"};
+    }
+
+    var SITE_OPTIONS = {
+        type: type,
+        attributes: SITE_QUERY
+    };
+
+    /**
+     * Sets the default thumbnail of the specified asset.
+     * @param asset {Object} asset
+     */
+    var setDefaultThumbnail = function (asset) {
+        var assetThumbnail = asset.attributes.images_thumbnail;
+        if (!assetThumbnail || (assetThumbnail.trim().length == 0)) {
+            var displayName = String(asset.attributes.overview_displayName);
+            asset.defaultThumbnail = storeHostObj.getDefaultThumbnail(displayName);
+        } else if (!(assetThumbnail.indexOf(asset.id) > -1)) {
+            //when getting subscribed apps from appm db it doesn't give full url of thubnail
+            asset.attributes.images_thumbnail = context + "/storage/webapp/" + asset.id + "/" + assetThumbnail;
+        }
+    };
+
+    /**
+     * Retrieve the assets from registry when both subscriptions are disabled.
+     */
+    var getAssetsFromRegistry = function () {
+        if (tag == 'undefined') {
+            tag = null;
+        }
+
+        if (tag) {//if tag search in myapps page
+            urlQuery = 'tag=' + tag + '&';
+            options = {
+                attributes: SITE_QUERY
+            };
+            options.tag = tag;
+            options.type = type;
+            options.lifecycleState = ["published"];
+            assets = store.taggeds(type, options, paging);
+        } else if (query) { // if search from search box
+            var searchParameter;
+            var searchValue;
+            var splitQuery = query.split(":");
+            searchParameter = splitQuery[0];
+            // This is a registry based search. In search box, user wants to search by business owner name. But
+            // in registry, there is only business owner Id. Therefore, it is necessary to get business owner Ids
+            // related to search prefix from DB.
+            if (!searchParameter.equals("Business Owner")) {
+                urlQuery = 'query=' + query + '&';
+                query = require('/modules/search.js').build(query);
+                query.overview_treatAsASite = 'TRUE';
+                if (!isMultipleVersionDisplayEnabled) {
+                    query.overview_makeAsDefaultVersion = 'true';
+                }
+                options = {
+                    type: type,
+                    attributes: query
+                };
+                assets = store.search(options, paging);
+            } else {
+                searchValue = splitQuery[1];
+                var initialQuery = "businessOwner:" + searchValue;
+                var searchPrefix = searchValue.split("\"")[1];
+                var resultIdsList = storeHostObj.getBusinessOwnerIdsByBusinessOwnerNameField(searchPrefix, tenantId);
+                if (resultIdsList){
+                    var resultAssets = [];
+                    resultIdsList = resultIdsList.toArray();
+                    for(var key in resultIdsList) {
+                        var businessOwnerId = resultIdsList[key];
+                        query = "businessOwner:\"" + businessOwnerId + "\"";
+                        query = require('/modules/search.js').build(query);
+                        query.overview_treatAsASite = 'TRUE';
+                        if (!isMultipleVersionDisplayEnabled) {
+                            query.overview_makeAsDefaultVersion = 'true';
+                        }
+                        options = {
+                            type: type,
+                            attributes: query
+                        };
+                        resultAssets = resultAssets.concat(store.search(options, paging));
+                    }
+                    assets = resultAssets;
+                }
+                query = initialQuery;
+                urlQuery = 'query=' + initialQuery + '&';
+                query = require('/modules/search.js').build(query);
+            }
+        } else { // sort by popularity in myapps page
+            if (paging.sort == 'popular') {
+                urlQuery = 'sort=' + paging.sort + '&';
+                server.privileged(function () {
+                    var index = 0, maxTry = 0;
+
+                    var ratingApi = require('/modules/rating-api.js').api;
+                    registry = storeServer.systemRegistry(tenantId),
+                            am = store.assetManager(type, registry);
+
+                    var getNextAssetSet = function () {
+                        var result = ratingApi.getPopularAssets(type, tenantId, am, paging.start + index, PAGE_SIZE,
+                                                                isSite, isMultipleVersionDisplayEnabled);
+                        if (log.isDebugEnabled()) {
+                            log.debug("Query executed successfully to get the assets hit count");
+                        }
+                        index += PAGE_SIZE;
+                        return result;
+                    };
+
+
+                    assets = [];
+                    var aid, asset;
+                    while (assets.length < PAGE_SIZE && maxTry < 10) {
+                        maxTry++;
+                        var result = getNextAssetSet();
+
+                        for (var n = 0; n < result.length && assets.length < PAGE_SIZE; n++) {
+                            aid = String(result[n].id);
+                            try {
+                                asset = store.asset(type, aid);
+                                if (configs.lifeCycleBehaviour.visibleIn.indexOf(String(asset.lifecycleState), 0)
+                                        >= 0) {
+                                    assets.push(asset);
+                                }
+                            } catch (e) {
+                                log.warn("error retrieving asset from store ,information might be stale in table. id=" +
+                                         aid);
+                            }
+                        }
+                    }
+                });
+
+            }
+            else if (paging.sort == 'usage') { //sort by usage in myapps page
+                var totalAppCount = store.getTotalAssetCount(type, ctx.request, ctx.session);
+                urlQuery = 'sort=' + paging.sort + '&';
+                server.privileged(function () {
+                    var userName = user ? tenantUsername : "";
+                    var index = 0, maxTry = 0;
+                    var getNextAssetSet = function () {
+                        var appMgtDaoService = Packages.org.wso2.carbon.appmgt.impl.dao.AppMDAO;
+                        var appMgtDaoObj = new appMgtDaoService();
+                        var offset = paging.start + index;
+                        var result = appMgtDaoObj.getAppsByHitCount(userName, offset, PAGE_SIZE);
+                        if (log.isDebugEnabled()) {
+                            var recordCount = 0;
+                            if (result != null) {
+                                recordCount = JSON.parse(result).length;
+                            }
+                            log.debug("Query executed successfully to get the assets hit count. " + recordCount
+                                              + " records found");
+                        }
+                        index += PAGE_SIZE;
+                        if (JSON.parse(result).length > 0) {
+                            return JSON.parse(result);
+                        } else {
+                            return {};
+                        }
+                    };
+                    assets = [];
+                    var done = false;
+                    while (assets.length < PAGE_SIZE && maxTry < 10 && !done) {
+                        maxTry++;
+                        var result = [];
+                        if ((paging.start + index) < totalAppCount) {
+                            result = getNextAssetSet();
+                        }
+                        if (result.length < PAGE_SIZE) {
+                            done = true;
+                        }
+                        for (var n = 0; n < result.length && assets.length < PAGE_SIZE; n++) {
+                            var aid = String(result[n].UUID);
+                            try {
+                                var asset = store.asset(type, aid);
+                                if (!asset) {
+                                    continue;
+                                }
+                               // asset.indashboard = store.isuserasset(aid, type);
+                                if (configs.lifeCycleBehaviour.visibleIn.indexOf(String(asset.lifecycleState), 0)
+                                        >= 0) {
+                                    //filter web apps
+                                    if (asset.attributes.overview_treatAsASite == "TRUE") {
+                                        assets.push(asset);
+                                    }
+                                }
+                            } catch (e) {
+                                log.warn("error retrieving asset from store ,information might be stale in table. id=" +
+                                         aid);
+                            }
+                        }
+                    }
+                });
+            }
+            else { //myapps page request
+                if(paging.sort != "null") {
+                    urlQuery = 'sort=' + paging.sort + '&'
+                }
+                assets = store.search(SITE_OPTIONS, paging);
+            }
+        }
+    };
+
+    /**
+     * Retrieve the recently added assets from registry when both subscriptions are disabled.
+     */
+    var getRecentAssetsFromRegistry = function () {
+        var RECENT_ASSET_COUNT = store.getRecentAppCount().assetsPage;
+        var recentAssets = store.recentAssets(type, RECENT_ASSET_COUNT, SITE_QUERY);
+
+        for (var i = 0; i < recentAssets.length; i++) {
+            var recentAsset = recentAssets[i];
+            // set default thumbnail of 'recentAsset'
+            setDefaultThumbnail(recentAsset);
+            var appRatingRecentAssetsJson = JSON.parse(social.getRating(WEBAPP_TYPE + ':' + recentAsset.id));
+            if (appRatingRecentAssetsJson) {
+                recentAsset.rating = {average: Math.floor(appRatingRecentAssetsJson.rating)};
+            } else {
+                recentAsset.rating = 0;
+            }
+            webAppRecentAssets.push(recentAsset);
+        }
+    };
+
+    /**
+     * Check for pagination. When both subscriptions are disabled.
+     */
+    var setPagination = function () {
+        // Check whether a 'next page' navigation is needed.
+        // If the assets count in the current page is less than PAGE_SIZE, next page is not available.
+        // Else assets should be queried to decide whether there are assets available for the next page.
+        var nextPageAvailable = false;
+
+        if (assets.length == PAGE_SIZE) {
+            if (currentPage < availablePages) {
+                nextPageAvailable = true;
+            }
+        }
+
+        if (nextPageAvailable) {
+            rightnav = currentPage + 1;
+        }
+
+        if (currentPage - 1 > 0) {
+            leftnav = currentPage - 1;
+        }
+    };
+
+    /**
+     * Add more information to the apps.
+     */
+    var addMoreInformationToWebApps = function () {
+        var AppInformationService = require('../services/app-information.js').serviceModule;
+        var appInfoManager = new AppInformationService.AppInformationService();
+        appInfoManager.init(jagg, session);
+
+        for (var i = 0; i < assets.length; i++) {
+            //set rating
+            if (JSON.parse(social.getRating("webapp:" + assets[i].id))) {
+                assets[i].rating = Math.floor(JSON.parse(social.getRating("webapp:" + assets[i].id)).rating);
+            } else {
+                assets[i].rating = 0;
+            }
+
+            //Set the access URL -By one click user should access the app in myapps page.
+            if (!assets[i].accessUrl) {
+                if (assets[i].attributes.overview_skipGateway.toLowerCase() == "false") {
+                    //Get the gatewayurl
+                    var appData = appInfoManager.getAppDescription(assets[i].attributes.overview_provider,
+                                                                   assets[i].attributes.overview_name,
+                                                                   assets[i].attributes.overview_version);
+                    assets[i].accessUrl = appData.serverURL.productionURL;
+                } else {
+                    //Get the direct webapp url
+                    assets[i].accessUrl = assets[i].attributes.overview_webAppUrl;
+                }
+            }
+
+            //set favourite app or not- This information will be used to set proper icon(add/remove favourite) on asset
+            // tile
+            assets[i].isFavourite = false;
+            if (isFavouriteApp(assets[i].attributes.overview_name, assets[i].attributes.overview_version,
+                               assets[i].attributes.overview_provider)) {
+                assets[i].isFavourite = true;
+            }
+            //Check the active or not
+            assets[i].isActive = isActive(assets[i]);
+            //set thumbnail
+            setDefaultThumbnail(assets[i]);
+        }
+    };
+
+    /**
+     * Get the apps from APM DB when subscription is enabled.
+     * When subscription is enabled myapp page should show anonymous + user subscribed apps for logged in user.
+     * For an anonymous user it should show only anonymous apps.
+     * Sort by recent(recently subscribed apps) option will be available for only logged in user
+     */
+    var getAssetsFromDB = function () {
+        var carbon = require('carbon');
+        var treatAsSite = "TRUE";
+        if (query) {
+            var array = query.split(":");
+            var searchOption = array[0];
+            var searchValue = array[1].replace(/\"/g, "");// replace all the occurrences of double quote with empty
+
+            if (searchOption.toLowerCase() == "provider") {
+                searchOption = "SEARCH_BY_APP_PROVIDER";
+            } else if (searchOption.toLowerCase() == "business owner") {
+                query = "businessOwner:" + searchValue;
+                searchOption = "SEARCH_BY_BUSINESS_OWNER";
+            } else {
+                searchOption = "SEARCH_BY_APP_NAME";
+            }
+            query = require('/modules/search.js').build(query);
+            if (user) {
+                assets = subsApp.searchUserAccessibleApps(tenantUsername, user.tenantId, String(tenantDomain),
+                                                          treatAsSite, searchOption, searchValue);
+            } else {
+                assets = subsApp.searchUserAccessibleApps(carbon.user.anonUser, tenantId, String(tenantDomain),
+                                                          treatAsSite, searchOption, searchValue);
+            }
+        } else {
+            var sortOption = request.getParameter('sort');
+            if (sortOption == "az") {
+                sortOption = "SORT_BY_APP_NAME_ASC";
+            } else if (sortOption == "recent") {
+                sortOption = "SORT_BY_SUBSCRIBED_TIME_DESC";
+            } else {
+                sortOption = "INSERTED_ORDER";
+            }
+
+            if (user) {
+                //get anonymous + subscribed apps
+                assets =
+                subsApp.getUserAccessibleApps(tenantUsername, user.tenantId, String(tenantDomain), sortOption,
+                                              treatAsSite);
+            } else {
+                //get anonymous apps
+                assets =
+                subsApp.getUserAccessibleApps(carbon.user.anonUser, tenantId, String(tenantDomain), sortOption,
+                                              treatAsSite);
+            }
+        }
+
+    };
+
+    /**
+     * This method checks whether given app is already selected as favourite app by user or not.
+     * @param appName App Name
+     * @param version App Version
+     * @param provider App Provider
+     * @returns {boolean} true if favourite app of user else false
+     */
+    var isFavouriteApp = function (appName, version, provider) {
+        var status = false;
+        if (user) {
+            // check whether this is favourite app of user.
+            status = manager.isFavouriteApp(provider, appName, version, tenantUsername, user.tenantId,
+                                            tenantDomain).status;
+        }
+        return status;
+    };
+    /**
+     * check whether asset has an active life cycle.
+     * return true if published/deprecated else false
+     */
+    var isActive = function (asset) {
+        var active = false;
+        var lifeCycleState = asset.lifecycleState.toUpperCase();
+        if (lifeCycleState == "PUBLISHED" || lifeCycleState == "DEPRECATED") {
+            active = true;
+        }
+        asset.lifecycleState = lifeCycleState;
+        return active
+    };
+
+    //Retrieve asset form the registry/DB only for the given condition to increase the store performances.
+    if(storePublicVisibility == true || (storePublicVisibility == false && user)) {
+        /*------------------------------Retrieve apps based on subscription options -Start---------------------------------*/
+        if (!isSelfSubscriptionEnabled && !isEnterpriseSubscriptionEnabled) {
+            //In this case all the apps in the store are accessible by user without any subscriptions
+            //So myapps page should display all the apps.Searching,Sorting,pagination,tag search,recently added apps should
+            //available in myapps page since assets are retrieved from registry.
+
+            //get the apps from registry based on the
+            //requested method(sort,search or normal)
+            getAssetsFromRegistry();
+            //check for pagination
+            setPagination();
+
+            // hide all apps link in header
+            navigationData.showAllAppsLink = false;
+        } else {
+            //show anonymous + subscribed apps for logged in user.
+            //show anonymous apps for anonymous user.
+            getAssetsFromDB();
+        }
+
+        // add rating,access url etc to retrieved webapps
+        addMoreInformationToWebApps();
+        //get recently added apps from registry
+        getRecentAssetsFromRegistry();
+
+        tagInfo.allTags = store.tags(type, isSite);
+        tagInfo.searchedTag = tag;
+    } else {
+        assets = null;
+        webAppRecentAssets = null;
+        tagInfo.allTags = null;
+        tagInfo.searchedTag = null;
+    }
+
+
+    /*------------------------------Retrieve apps based on subscription options -End-----------------------------------*/
+    caramel.render({
+                       title: 'Sites | Store ',
+                       user: user,
+                       sso: sso,
+                       header: headerData,
+                       navigation: navigationData,
+                       search: {
+                           query: query
+                       },
+                       type: type,
+                       tags: {
+                           data: tagInfo
+                       },
+                       config: {
+                           isSelfSubscriptionEnabled: isSelfSubscriptionEnabled,
+                           isEnterpriseSubscriptionEnabled: isEnterpriseSubscriptionEnabled,
+                           enabledTypeList: enabledTypeList
+                       },
+                       assets: assets,
+                       assetType: 'site',
+                       pagination: {
+                           leftNav: leftnav,
+                           rightNav: rightnav,
+                           urlQuery: urlQuery
+                       },
+                       recentAssets: webAppRecentAssets
+                   });
+
+}, request, response, session);
+
+function getServiceDir(serviceName) {
+    return '../services/' + serviceName;
+}
+
+function getTags(type, store) {
+    var paging = {"start": 0, "count": 120000,"paginationLimit":120000};
+    return store.taggeds(type, options, paging)
+};
+%>

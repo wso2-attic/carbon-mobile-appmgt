@@ -1,0 +1,189 @@
+{{!-- page content - app details page --}}
+<div class="app-details row remove-margin-left remove-margin-right">
+    <input type="hidden" id="metadata-app-name" value="{{metadata.appName}}">
+    <input type="hidden" id="metadata-app-provider" value="{{metadata.appProvider}}">
+    <input type="hidden" id="metadata-app-version" value="{{metadata.appVersion}}">
+    <div class="hidden-xs col-sm-7 col-md-6 col-lg-6 add-padding-1x">
+        <a href="{{appUrl}}" {{#if appUrl}} title="Click to launch" class="hover-overlay-container"{{else}} class="disabled"{{/if}} target="_blank">
+            <div class="ratio-responsive-16by9">
+                {{#if asset.defaultBanner}}
+                    <div class="ratio-responsive-item responsive-text" style="background-color: #{{asset.defaultBanner.color}};">
+                        <span class="default-banner">{{asset.defaultBanner.text}}</span>
+                    </div>
+                {{else}}
+                    <div class="ratio-responsive-img">
+                        <img src="{{asset.attributes.images_banner}}" />
+                    </div>
+                {{/if}}
+                {{#if appUrl}}
+                    {{> overlays/launch-banner}}
+                {{/if}}
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xs-12 col-sm-5 col-md-6 col-lg-6">
+        <div class="row">
+            <div class="col-xs-12 col-sm-5 col-md-5 col-lg-5 add-padding-1x">
+                <a href="{{appUrl}}" {{#if appUrl}} title="Click to launch"{{else}} class="disabled"{{/if}}
+                   target="_blank">
+                    <div class="ratio-responsive-4by3">
+                        {{#if asset.defaultThumbnail}}
+                            <div class="ratio-responsive-item responsive-text" style="background-color: #{{asset.defaultThumbnail.color}};">
+                                <div class="default-thumbnail">{{asset.defaultThumbnail.text}}</div>
+                            </div>
+                        {{else}}
+                            <div class="ratio-responsive-img">
+                                <img src="{{asset.attributes.images_thumbnail}}" />
+                            </div>
+                        {{/if}}
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="summery col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <h4>{{asset.attributes.overview_displayName}}</h4>
+
+                <p>
+                    Version : {{asset.attributes.overview_version}}<br>
+                    By : {{asset.attributes.overview_provider}}<br>
+                    {{#if businessOwnerName}}
+                    Business Owner : {{businessOwnerName}} ({{businessOwnerEmail}})<br>
+                    {{/if}}
+                    Status: {{asset.lifecycleState}}
+                </p>
+                <span class="rating">
+                    {{assetRating asset.rating}}
+                </span>
+
+                <div class="actions">
+                    {{#if appUrl}}
+                    {{!-- user can access this app --}}
+                        <a id="btnLaunch" href="{{appUrl}}" class="btn btn-primary" target="_blank">
+                            <i class="fw fw-deploy"></i>Launch
+                        </a>
+                        {{#if isFavouriteApp}}
+                            <a href="#" id="btnRemoveFromFav" class="btn btn-default">
+                                {{t "Remove from Favorites"}}
+                            </a>
+                        {{else}}
+                            <a href="#" id="btnAddToFav" class="btn btn-favorite">
+                                <i class="fw fw-heart"></i>{{t "Add to Favorites"}}
+                            </a>
+                        {{/if}}
+                        {{#ifCond asset.attributes.overview_allowAnonymous "==" "false"}}
+                            {{#if isSelfSubscriptionEnabled}}
+                                {{#if isSubscribed}}
+                                    <a href="#" id="btnUnsubscribe" class="btn btn-default">
+                                        {{t "Un-Subscribe"}}
+                                    </a>
+                                {{else}}
+                                    <a href="#" id="btnSubscribe" class="btn btn-subscribe">
+                                        <i class="fw fw-subscribe"></i>{{t "Subscribe"}}
+                                    </a>
+                                {{/if}}
+                            {{/if}}
+                        {{/ifCond}}
+                    {{else}}
+                    {{!-- user cannot access this app --}}
+                        {{#if isSubscriptionAvailable}}
+                        {{!-- subscription option is available for this app --}}
+                            <input type="hidden" id="subsAppTier" name="subsAppTier" value="Unlimited" />
+                            {{#if isSelfSubscriptionEnabled}}
+                            {{!-- self subscription is enabled --}}
+                                {{#ifCond subscriptionInfo.individualSubscription.subscriptionStatus "==" "BLOCKED"}}
+                                    <a href="#" id="btnSubscribe" class="btn btn-subscribe disabled">
+                                        <i class="fw fw-subscribe"></i>{{t "Subscribe"}}
+                                    </a>
+                                    <a href="#" id="btnUnsubscribe" class="btn btn-default">
+                                        {{t "Un-Subscribe"}}
+                                    </a>
+                                {{else}}
+                                    <a href="#" id="btnSubscribe" class="btn btn-subscribe">
+                                        <i class="fw fw-subscribe"></i>{{t "Subscribe"}}
+                                    </a>
+                                {{/ifCond}}
+                            {{/if}}
+
+                            {{#if isEnterpriseSubscriptionEnabled}}
+                                {{#if isEnterpriseSubscriptionAllowed}}
+                                {{!-- enterprise subscription is enabled and allowed --}}
+                                    <button id="enterpriseSubscriptions" class="btn btn-subscribe enterpriseSubscriptions"  type="button" data-toggle="popover"
+                                       title="Enterprise Subscription">
+                                        <i class="fw fw-enterprise"></i>Ent. Subscribe
+                                    </button>
+                                    {{>subscriptions/enterprise-subscriptions}}
+                                {{/if}}
+                            {{/if}}
+                        {{/if}}
+                    {{/if}}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="app-details-tabs row">
+    <ul class="nav nav-tabs add-margin-top-5x">
+        <li class="active"><a data-toggle="tab" href="#menu1">Overview</a></li>
+        <li><a data-toggle="tab" href="#menu2">Documentation</a></li>
+        <li><a data-toggle="tab" href="#menu3">User Reviews</a></li>
+        {{#if businessOwnerName}}
+            <li><a data-toggle="tab" href="#menu4">Business Owner Details</a></li>
+        {{/if}}
+    </ul>
+
+    <div class="tab-content">
+        <div id="menu1" class="tab-pane fade in active">
+            {{#ifCond asset.attributes.overview_description "!=" " "}}
+                <p>{{asset.attributes.overview_description}}</p>
+            {{else}}
+                <p class="text-muted">No description found.</p>
+            {{/ifCond}}
+        </div>
+        <div id="menu2" class="tab-pane fade">
+            {{#if tabs.documentation.data.availability}}
+                <p>{{> documentation .}}</p>
+            {{else}}
+                <p class="text-muted">No documentations found.</p>
+            {{/if}}
+        </div>
+        <div id="menu3" class="tab-pane fade">
+            <div class="row">
+                <iframe name="socialIfr" id="socialIfr" class="col-lg-12 col-md-12 col-sm-12 "
+                        style="border: none;"
+                        src="{{socialURL}}/?target={{type}}:{{asset.id}}&user={{user.username}}">
+                </iframe>
+            </div>
+        </div>
+        <div id="menu4" class="tab-pane fade">
+            <div class="row">
+                {{#each businessOwnerData}}
+                    {{#if value}}
+                        <div class="row">
+                            <div class="col-sm-3"><b>{{name}}</b></div>
+                            <div class="col-sm-9">{{value}}</div>
+                        </div>
+                    {{/if}}
+                {{/each}}
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<div class="modal fade" id="messageModal2" style="display: none"></div>
+<div id="confirmation-data2" style="display: none;">
+    <div class="modal-header">
+        <button class="close" data-dismiss="modal">&times;</button>
+        <h3 class="modal-title">Modal header</h3>
+    </div>
+    <div class="modal-body">
+        <p>One fine body…</p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn btn-other" data-dismiss="modal">Close</a>
+    </div>
+</div>

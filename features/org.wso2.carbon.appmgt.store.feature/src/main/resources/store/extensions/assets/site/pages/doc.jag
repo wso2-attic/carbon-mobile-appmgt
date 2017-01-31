@@ -1,0 +1,100 @@
+<%
+/*
+ *  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+include('../modules/jagg/jagg.jag');
+require('/modules/store.js').exec(function (ctx) {
+    var store = ctx.store,
+            user = ctx.user;
+    var subscriptionConfig = require('../../../../themes/store/js/subscription-config.js');
+    var isSelfSubscriptionEnabled = subscriptionConfig.isSelfSubscriptionEnabled();
+    var isEnterpriseSubscriptionEnabled = subscriptionConfig.isEnterpriseSubscriptionEnabled();
+
+    var parameters = decodeURIComponent(request.getQueryString()).split("&");
+
+    AuthService = require(getServiceDir('authentication.js')).serviceModule;
+    authenticator = new AuthService.Authenticator();
+    authenticator.init(jagg, session);
+
+    var docName = parameters[0];
+    var webappProvider = parameters[1];
+    var webappName = parameters[3];
+    var webappVersion = parameters[2];
+    var username = parameters[4];
+    var apiIdentifier = Packages.org.wso2.carbon.appmgt.api.model.APIIdentifier;
+    var apiIdentifierObj = new apiIdentifier(webappProvider, webappName, webappVersion);
+
+    var APIProviderImpl = Packages.org.wso2.carbon.appmgt.impl.APIProviderImpl;
+
+//In annonymous mode username = "".
+//APIProviderImpl initializes annonymous registry if the username is null.
+//Hence assigning username = null.
+    if ("".equals(username)) {
+        username = null;
+    }
+
+    var navigationData = {
+        showAllAppsLink: true
+    };
+
+    var context = caramel.configs().context;
+    var tagUrl = context + '/assets/site';
+    if (!isSelfSubscriptionEnabled && !isEnterpriseSubscriptionEnabled) {
+        navigationData.showAllAppsLink = false;
+        tagUrl = context + '/extensions/assets/site/myapps';
+    }
+
+    var APIProviderImplObj = new APIProviderImpl(username);
+
+
+    var content = APIProviderImplObj.getDocumentationContent(apiIdentifierObj, docName);
+
+    var docData = {};
+    docData.webappName = webappName;
+    docData.docName = decodeURI(docName);
+    docData.docContent = content;
+
+    var userData = authenticator.getLoggedInUser();
+    var searchQuery = { search: "", searchTerm: ""};
+    var isSite = 'true';//To get the site tags
+
+    caramel.render({
+                       title: 'Inline Doc | Store',
+                       user: user,
+                       header: {
+                           user: userData
+                       },
+                       navigation: navigationData,
+                       data: docData,
+                       search: {
+                           query: searchQuery,
+                           searchUrl: tagUrl
+                       },
+                       tags: {
+                           tagUrl: tagUrl,
+                           data: store.tags(type, isSite)
+                       }
+
+                   });
+
+}, request, response, session);
+function getServiceDir(serviceName) {
+    return '../services/' + serviceName;
+}
+
+%>

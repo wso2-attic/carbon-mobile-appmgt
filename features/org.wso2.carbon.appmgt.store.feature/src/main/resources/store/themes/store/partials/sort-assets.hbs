@@ -1,0 +1,12 @@
+<div class="row sort-bar">
+    <div class="col-md-12">
+        <ul id="ul-sort-assets" data-type="gadget" class="pull-right">
+            {{#each options}}
+                <li>
+                    <a href="{{tenantedUrl this.url}}" data-toggle="tooltip"
+                       title="{{title}}"><i class="{{class}}"></i></a>
+                </li>
+            {{/each}}
+        </ul>
+    </div>
+</div>

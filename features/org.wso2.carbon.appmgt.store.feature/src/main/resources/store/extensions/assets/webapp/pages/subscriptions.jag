@@ -1,0 +1,136 @@
+<%
+
+var caramel;
+var SubscriptionService;
+var subsApi;
+var AuthService;
+var authenticator;
+var log = new Log('subscriptions');
+var carbon = require('carbon');
+
+include('../modules/jagg/jagg.jag');
+
+require('/modules/store.js').exec(function (ctx) {
+	var store = ctx.store;
+	var sso = ctx.sso;
+	var carbon = require('carbon')
+	tenantId = ctx.tenantId;
+	site = ctx.site;
+	social = carbon.server.osgiService('org.wso2.carbon.social.core.service.SocialActivityService');
+
+	caramel = require('caramel');
+	search = require('/modules/search.js');
+	var SITE_QUERY = {"overview_treatAsASite": "FALSE"};
+	var RECENT_ASSET_COUNT = store.getRecentAppCount().myAppsPage;
+
+	SubscriptionService = require(getServiceDir('subscription.js')).serviceModule;
+	subsApi = new SubscriptionService.SubscriptionService();
+	subsApi.init(jagg, session);
+
+	AuthService = require(getServiceDir('authentication.js')).serviceModule;
+	authenticator = new AuthService.Authenticator();
+	authenticator.init(jagg, session);
+
+	var APIInformationService=require('../services/api-information.js').serviceModule;
+	var apiInfoManager=new APIInformationService.APIInformationService();
+	apiInfoManager.init(jagg,session);
+
+	var subscriptions = [];
+	var userData = authenticator.getLoggedInUser();
+
+	//If the user is not logged in, redirect to the login page
+    caramel = require('caramel');
+    var contextPath = caramel.configs().context;
+    var reversProxyEnabled = caramel.configs().reverseProxyEnabled;
+    var reverseProxyHost = caramel.configs().reverseProxyHost;
+    var reDirectUrl = contextPath;
+    if(reversProxyEnabled) {
+        reDirectUrl = reverseProxyHost+contextPath;
+    }
+    if (userData == null) {
+        response.sendRedirect(reDirectUrl);
+        return;
+    }
+
+	var apps = subsApi.getAppsWithSubs({user: userData.username});
+
+
+    if(apps.length >0){
+        subscriptions = apps[0].subscriptions;
+
+        var PAGE_SIZE = store.getPageSize();
+        var appsCount = subscriptions.length;
+        var pages = Math.ceil(appsCount / PAGE_SIZE);
+        var page = request.getParameter('page');
+        if(!page) page = 1;
+        var limit = page * PAGE_SIZE;
+        var offset = limit - PAGE_SIZE - 1;
+		var displayApps = [];
+		var webAppAssets = [];
+
+		//Remove site assets form the asset[].
+		for(i = 0; i < apps[0].subscriptions.length; i++) {
+			var asset = store.asset(type, apps[0].subscriptions[i].uuid);
+			var treatAsASite = asset.attributes.overview_treatAsASite;
+			if(treatAsASite) {
+				if (treatAsASite.toLowerCase() == "false") {
+					webAppAssets.push(apps[0].subscriptions[i]);
+				}
+			}
+		}
+
+		for(i = 0; i < webAppAssets.length; i++) {
+			var app = apiInfoManager.getAPIDescription(webAppAssets[i].provider, webAppAssets[i].name, webAppAssets[i].version);
+			webAppAssets[i].productionURL = app.serverURL.productionURL;
+			webAppAssets[i].tenantDomain = carbon.server.tenantDomain({username: webAppAssets[i].provider});
+
+			if((i > offset && i < limit)){
+				displayApps.push(webAppAssets[i]);
+			}
+		}
+
+		apps[0].subscriptions = displayApps;
+
+    }
+
+	var recentAssets = store.recentAssets('webapp', RECENT_ASSET_COUNT, SITE_QUERY);
+	for (var i = 0; i < recentAssets.length; i++) {
+		var appRatingRecentAssets = JSON.parse(social.getRating(WEBAPP_TYPE + ':' + recentAssets[i].id));
+		if (appRatingRecentAssets) {
+			recentAssets[i].rating = {
+				average: Math.floor(appRatingRecentAssets.rating)
+			};
+		} else {
+			recentAssets[i].rating = 0;
+		}
+	}
+
+	caramel.render({
+		header: {
+			user: userData,
+			sso: sso
+		},
+		navigation: site.navigation(tenantId),
+		search: {
+		            search: {title: type},
+		            isTopAssets: false,
+		            searchFields: search.fields()
+		},
+		sso: sso,
+		appsWithSubs: apps,
+        pages: pages,
+        page: page,
+		metadata: {
+			appsWithSubs: apps
+		},
+		recentAssets: recentAssets
+	}, request, response, session);
+
+}, request, response, session);
+
+function getServiceDir(serviceName) {
+	return '../services/' + serviceName;
+}
+
+%>
+

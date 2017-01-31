@@ -1,0 +1,66 @@
+{{!-- search --}}
+{{#if searchUrl}}
+    <div class="navbar-wrapper navbar-search">
+
+        <nav class="navbar navbar-default "  data-offset-top="80" data-offset-bottom="40">
+            <a class="navbar-menu-toggle hidden-sm hidden-lg hidden-md" data-toggle="sidebar"
+               data-target="#left-sidebar"
+               data-container=".page-content-wrapper" data-container-push="true" aria-expanded="false"
+               rel="leftmenu-sidebar">
+                <span class="icon fw-stack">
+                    <i class="fw fw-menu fw-stack-1x toggle-icon-left-arrow"></i>
+                </span>
+            </a>
+
+            <div class="form-group">
+                <div class="search-box col-xs-10 col-sm-12 col-md-12 col-lg-4">
+                    <div class="input-group input-wrap search-wrap">
+                        <input type="hidden" value="{{tenantedUrl searchUrl}}" id="searchUrl">
+                        <input type="text" id="searchTxt" value="{{searchQuery.search}}"
+                               class="search-field form-control"
+                               placeholder="Search for apps" />
+
+                        <div class="input-group-btn">
+
+                            <button type="button" id="searchSelect" class="btn dropdown-toggle search-by"
+                                    data-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                {{#compare "overview_provider" searchQuery.searchTerm}}value="Provider"{{/compare}}
+                                {{#compare "overview_businessOwner" searchQuery.searchTerm}}value="Business Owner"{{/compare}}
+                                {{#compare "overview_displayName" searchQuery.searchTerm}}value="Name"{{/compare}}>
+                                {{#compare "overview_provider" searchQuery.searchTerm}}By Provider{{/compare}}
+                                {{#compare "overview_businessOwner" searchQuery.searchTerm}}By Business Owner{{/compare}}
+                                {{#compare "overview_displayName" searchQuery.searchTerm}}By Name{{/compare}}
+                                <span class="caret"></span>
+                            </button>
+
+                            <ul id="searchBy"
+                                class="dropdown-menu dropdown-menu-right dropdown-selectable search-by-dropdown"
+                                data-target="#searchSelect">
+                                <li data-value="Provider"><a>By Provider</a></li>
+                                <li data-value="Name"><a>By Name</a></li>
+                                <li data-value="Business Owner"><a>By Business Owner</a></li>
+                            </ul>
+                            <button type="button" class="btn" id="searchBtn">
+                                <i class="fw fw-search"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <!-- /input-group -->
+                </div>
+            </div>
+        </nav>
+    </div>
+{{else}}
+    <div class="navbar-wrapper navbar-search hidden-lg hidden-md">
+        <a class="navbar-menu-toggle hidden-sm hidden-lg hidden-md" data-toggle="sidebar" data-target="#left-sidebar"
+           data-container=".page-content-wrapper" data-container-divide="true" aria-expanded="false"
+           rel="leftmenu-sidebar">
+                        <span class="icon fw-stack">
+                            <i class="fw fw-menu fw-stack-1x toggle-icon-left-arrow"></i>
+                        </span>
+        </a>
+    </div>
+{{/if}}

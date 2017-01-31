@@ -1,0 +1,92 @@
+{{#if user}}
+    <input type="hidden" value="{{user.username}}" id="loggedinuser" name="loggedinuser">
+{{else}}
+    <input type="hidden" value="{{user.username}}" id="loggedinuser" name="loggedinuser">
+{{/if}}
+
+<input type="hidden" value="{{config.localIP}}" id="localIP" name="localIP">
+<input type="hidden" value="{{config.httpsPort}}" id="httpsPort" name="httpsPort">
+<input type="hidden" value="{{sso}}" id="sso" name="sso">
+
+
+
+
+<div class="assets-wrapper">
+{{#each assets}}
+<div class="row">
+
+    {{#if assets}}
+
+        <h3>{{plural}}</h3>
+
+        {{#each assets}}
+
+            <div class="col-xs-6 col-md-4 col-lg-1-5 app-assets-wrapper type-{{attributes.overview_platform}}">
+                {{#compare  attributes.overview_advertiseOnly "true" operator="=="}}
+                    <div class="ribbon-wrapper-orange">
+                        <div class="ribbon-orange">Advertised</div>
+                    </div>
+                {{/compare}}
+                {{#if isSubscribed}}
+                    <div class="ribbon-wrapper-green"><div class="ribbon-green">Subscribed</div></div>
+                {{/if}}
+                {{#if indashboard}}
+                    <div class="ribbon-wrapper-green"><div class="ribbon-green">Installed</div></div>
+                {{/if}}
+
+                <div class="app-assets">
+                {{#compare "mobileapp" type}}
+                    <a href="{{tenantedUrl "/assets"}}/{{type}}/{{id}}">
+                {{else}}
+                    {{#compare  attributes.overview_advertiseOnly "true" operator="=="}}
+                        <a href="{{url "/t"}}/{{attributes.overview_appTenant}}/assets/{{type}}/{{attributes.overview_advertisedAppUuid}}">
+                    {{else}}
+                        <a href="{{tenantedUrl "/assets"}}/{{../type}}/{{id}}">
+                    {{/compare}}
+                {{/compare}}
+                    {{#if defaultThumbnail}}
+                        <div class="app-assets-default-icon" style="background: #{{defaultThumbnail.color}};">
+                            {{defaultThumbnail.text}}
+                        </div>
+                    {{else}}
+                        <div class="app-assets-icon">
+                            <img src="{{attributes.images_thumbnail}}" />
+                        </div>
+                    {{/if}}
+                        <div class="app-assets-icon-info">
+                            <i title="{{attributes.overview_platform}}" class="fw {{iconImage attributes.overview_platform}} fw-1_5x fw-inverse"></i>
+                            <i title="{{attributes.overview_type}}" class="fw {{iconImageType attributes.overview_type}} fw-1_5x fw-inverse"></i>
+                        </div>
+                    </a>
+                    <div class="app-assets-info">
+                        <div class="app-assets-name">
+                            {{attributes.overview_displayName}}
+                        </div>
+                        <div class="app-assets-provider">
+                            {{attributes.overview_provider}}
+                        </div>
+                    </div>
+                    <span class="app-assets-rating"> {{#assetRating rating}}{{/assetRating}} </span>
+                </div>
+            </div>
+
+        {{/each}}
+
+
+     {{else}}
+
+
+    {{/if}}
+</div>
+
+{{/each}}
+
+    {{#if noAssets}}
+
+        <div class="well-large col-md-12 no-apps-box">
+            <i class="fw fw-paste nothing-icon"></i> Sorry, We could not find any app for you
+        </div>
+
+    {{/if}}
+
+</div>

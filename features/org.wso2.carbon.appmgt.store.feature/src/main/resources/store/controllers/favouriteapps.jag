@@ -1,0 +1,295 @@
+<%
+/*
+ *  Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+include('/jagg/jagg.jag');
+
+var SubscriptionService;
+var subsApi;
+var AuthService;
+var authenticator;
+var manager = jagg.module("manager");
+var storeHostObj = manager.getAPIStoreObj();
+var  caramel = require('caramel');
+var context = caramel.configs().context;
+var log = new Log('favouriteapps');
+
+
+require('/modules/store.js').exec(function (ctx) {
+    var sso = ctx.sso,
+            store = ctx.store,
+            user = ctx.user,
+            storeTenantId = ctx.tenant.tenantId,
+            storeTenantDomain = ctx.tenant.domain,
+            store = ctx.store,
+            query = ctx.params.query;
+
+    var storeObj = jagg.module("manager").getAPIStoreObj();
+
+    var enabledTypeList = storeObj.getEnabledAssetTypeList();
+
+    //Favourite app page can be accessed from web app or site
+    //this query parameter indicates,where request came from.
+    var  assetType = "webapp";
+    if(request.getParameter('type') == "site") {
+        assetType = "site"
+    }
+
+    if (!storeObj.isAssetTypeEnabled(assetType)) {
+        response.sendError(404, 'Resource does not exist');
+    }
+    //if user not logged in redirect to login page
+    if (!user) {
+        var referer = store.getReferer(request);
+        var redirectUrl = store.getRedirectUrl("/login?referer=" + referer);
+        response.sendRedirect(redirectUrl);
+        return;
+    }
+
+    //Get subscription configuration options
+    var favourites = jagg.module("favourites");
+    var subscriptionUtil = require('/themes/store/js/subscription-config.js');
+    var isSelfSubscriptionEnabled = subscriptionUtil.isSelfSubscriptionEnabled();
+    var isEnterpriseSubscriptionEnabled = subscriptionUtil.isEnterpriseSubscriptionEnabled();
+
+    var isSite = "true"; //To get the site tags
+    if(assetType == "webapp") {
+        isSite = "false"; //To get the webapps tags
+    }
+
+    var navigationData = {
+        showAllAppsLink: true
+    };
+    //if both subscriptions off no need to show the link for all apps,
+    //because all apps will be displayed in myapps page.
+    if (!isSelfSubscriptionEnabled && !isEnterpriseSubscriptionEnabled) {
+        navigationData.showAllAppsLink = false;
+    }
+
+    var searchQuery = {search: "", searchTerm: ""};
+
+    var tenantUsername = user.username;
+
+    var apps;
+    if(query) {
+        var array = query.split(":");
+        var searchOption = array[0];
+        var searchValue = array[1].replace(/\"/g, "");// replace all the occurrences of double quote with empty
+
+        if (searchOption.toLowerCase() == "provider") {
+            searchOption = "SEARCH_BY_APP_PROVIDER";
+            searchQuery.searchTerm = "overview_provider";
+        } else {
+            searchOption = "SEARCH_BY_APP_NAME";
+            searchQuery.searchTerm = "overview_name";
+        }
+        searchQuery.search = searchValue;
+        result = favourites.searchFavouriteApps(tenantUsername, user.tenantId, storeTenantDomain,
+                                              searchOption, searchValue);
+        apps = (result.apps) ? result.apps : [];
+    } else {
+        var sortOption = encodeURIComponent(request.getParameter('sort'));
+        if (sortOption == "az") {
+            sortOption = "SORT_BY_APP_NAME_ASC";
+        } else if (sortOption == "recent") {
+            sortOption = "SORT_BY_CREATED_TIME_DESC";
+        } else {
+            sortOption = "INSERTED_ORDER";
+        }
+        //Get the all favourite apps of logged in user based on sort option
+        var result = favourites.getAllFavouriteApps(tenantUsername, user.tenantId,
+                                                    storeTenantDomain, sortOption);
+        apps = (result.apps) ? result.apps : [];
+    }
+
+    //filter webapp and sites
+    apps = filterAssets(apps, assetType);
+    //Check whether use has selected favourite page as default landing page
+    //This is needed to show correct icon(set as home page /remove from home page) to user.
+    var hasFavouritePage = false;
+    result = favourites.hasFavouritePage(tenantUsername, user.tenantId, storeTenantDomain);
+    if (!result.error) {
+        hasFavouritePage = result.status;
+    }
+
+    var recentAssets = getRecentAssetsFromRegistry(store,assetType);
+
+        caramel.render({
+            title: 'Favourite Apps | Store',
+            header: {
+                user: user,
+                sso: sso,
+                storeTenantDomain: storeTenantDomain,
+                assetType: assetType,
+                enabledTypeList: enabledTypeList
+            },
+            assetType: assetType,
+            tags: {
+                data: store.tags("webapp", isSite)
+            },
+            config: {
+                isSelfSubscriptionEnabled: isSelfSubscriptionEnabled,
+                isEnterpriseSubscriptionEnabled: isEnterpriseSubscriptionEnabled,
+                enabledTypeList:enabledTypeList
+            },
+            navigation: navigationData,
+            search: {
+                query: searchQuery
+            },
+            sso: sso,
+            favouriteApps: apps,
+            recentAssets: recentAssets,
+            isHomePage: hasFavouritePage
+        }, request, response, session);
+}, request, response, session);
+
+
+function getServiceDir(serviceName) {
+    return '/extensions/assets/webapp/services/' + serviceName;
+}
+
+/**
+ * Filter specified assets whiles setting their default thumbnail.
+ * if request came from webapps page (type parameter = webapp) create the array to
+ * display webapps first in the myfavourite page else display site first.
+ * @param assets {Object[]} assets to be filtered & processed
+ * @returns {{assets: Object[], type: string}[]} filtered assets
+ */
+function filterAssets(assets,type) {
+    var sites = [];
+    var webApps = [];
+    var apps = [];
+
+    var numberOfAssets = assets.length;
+    for (var i = 0; i < numberOfAssets; i++) {
+        var asset = assets[i];
+        // set default thumbnail
+        var assetThumbnail = asset.thumburl;
+        if (!assetThumbnail || (assetThumbnail.trim().length == 0)) {
+            asset.defaultThumbnail = storeHostObj.getDefaultThumbnail(asset.appDisplayName);
+        }
+        asset.isActive = isActive(asset);
+        // categorize asset either as webapp or site
+        if (asset.treatAsSite == "TRUE") {
+            sites.push(asset);
+        } else {
+            webApps.push(asset);
+        }
+    }
+
+    if (type == "webapp") {
+        //display web app first and then site
+        if (webApps.length > 0) {
+            apps.push({
+                          assets: webApps,
+                          type: "Web Apps"
+                      });
+        }
+
+        if (sites.length > 0) {
+            apps.push({
+                          assets: sites,
+                          type: "Sites"
+                      });
+
+        }
+    } else {
+        //display site first and then webapp
+        if (sites.length > 0) {
+            apps.push({
+                          assets: sites,
+                          type: "Sites"
+                      });
+        }
+
+        if (webApps.length > 0) {
+            apps.push({
+                          assets: webApps,
+                          type: "Web Apps"
+
+                      });
+
+        }
+    }
+    return apps;
+}
+
+
+/**
+ * check whether asset has an active life cycle.
+ * return true if published/deprecated else false
+ */
+function isActive(asset) {
+    var active = false;
+    if (asset.lifeCycleStatus == "PUBLISHED" || asset.lifeCycleStatus == "DEPRECATED") {
+        active = true;
+    }
+    asset.lifecycleState = asset.lifeCycleStatus;
+    return active;
+}
+
+/**
+ * Retrieve the recently added assets from registry when both subscriptions are disabled.
+ */
+function getRecentAssetsFromRegistry(store, assetType, type) {
+    var RECENT_ASSET_COUNT = store.getRecentAppCount().assetsPage;
+    var SITE_QUERY = getSiteQuery(assetType);
+    var recentAssets = store.recentAssets('webapp', RECENT_ASSET_COUNT, SITE_QUERY);
+
+    for (var i = 0; i < recentAssets.length; i++) {
+        // set default thumbnail of 'recentAsset'
+        setDefaultThumbnail(recentAssets[i]);
+    }
+    return recentAssets;
+};
+
+function getSiteQuery(assetType) {
+    var isMultipleVersionDisplayEnabled = storeHostObj.isDisplayMultipleVersionsEnabled();
+    var SITE_QUERY;
+    var treatAsASite = "TRUE";
+    if (assetType == 'webapp') {
+        treatAsASite = "FALSE"
+    }
+    if (isMultipleVersionDisplayEnabled) {
+        //if multiple versions to be displayed don't consider default version
+        SITE_QUERY =
+        {"overview_treatAsASite": treatAsASite};
+    } else {
+        //if multiple versions to be displayed don consider default version
+        SITE_QUERY =
+        {"overview_treatAsASite": treatAsASite, "overview_makeAsDefaultVersion": "true"};
+    }
+    return SITE_QUERY
+}
+
+
+/**
+ * Sets the default thumbnail of the specified asset.
+ * @param asset {Object} asset
+ */
+function setDefaultThumbnail(asset) {
+    var assetThumbnail = asset.attributes.images_thumbnail;
+    if (!assetThumbnail || (assetThumbnail.trim().length == 0)) {
+        var displayName = String(asset.attributes.overview_displayName);
+        asset.defaultThumbnail = storeHostObj.getDefaultThumbnail(displayName);
+    } else if (!(assetThumbnail.indexOf(asset.id) > -1)) {
+        //when getting subscribed apps from appm db it doesn't give full url of thubnail
+        asset.attributes.images_thumbnail = context + "/storage/webapp/" + asset.id + "/" + assetThumbnail;
+    }
+};
+%>
+
