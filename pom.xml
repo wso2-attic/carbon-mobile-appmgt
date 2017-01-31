@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
-  <artifactId>carbon-mobile-device-mgt</artifactId>
+  <groupId>org.wso2.carbon.mobile.appmgt</groupId>
+  <artifactId>carbon-mobile-appmgt</artifactId>
   <packaging>pom</packaging>
   <version>1.3.0-SNAPSHOT</version>
   <name>WSO2 Carbon - App Management Aggregator Pom</name>
@@ -15,9 +15,9 @@
   </parent>
 
   <scm>
-    <url>https://github.com/lakshani/carbon-mobile-device-mgt.git</url>
-    <developerConnection>scm:git:https://github.com/lakshani/carbon-mobile-device-mgt.git</developerConnection>
-    <connection>scm:git:https://github.com/lakshani/carbon-mobile-device-mgt.git</connection>
+    <url>https://github.com/lakshani/carbon-mobile-appmgt.git</url>
+    <developerConnection>scm:git:https://github.com/lakshani/carbon-mobile-appmgt.git</developerConnection>
+    <connection>scm:git:https://github.com/lakshani/carbon-mobile-appmgt.git</connection>
     <tag>HEAD</tag>
   </scm>
 
@@ -201,7 +201,7 @@
         <version>${carbon.logging.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.impl</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
@@ -282,7 +282,7 @@
         <version>${jaggery.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.api</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
@@ -297,7 +297,7 @@
         <version>${jaggery.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.keymgt.client</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
@@ -412,7 +412,7 @@
         <version>4.3.0.wso2v1</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.mobile</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
@@ -512,49 +512,49 @@
         <version>0.1.6</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.gateway</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.hostobjects</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.publisher</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.keymgt</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.core</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.oauth.endpoint</artifactId>
         <version>${carbon.appmgt.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.services.api</artifactId>
         <version>${carbon.appmgt.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.mdm.wso2mdm</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+        <groupId>org.wso2.carbon.mobile.appmgt</groupId>
         <artifactId>org.wso2.carbon.appmgt.mdm.wso2emm</artifactId>
         <version>${carbon.appmgt.version}</version>
       </dependency>
@@ -625,29 +625,29 @@
       </dependency>
 
         <dependency>
-            <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+            <groupId>org.wso2.carbon.mobile.appmgt</groupId>
             <artifactId>org.wso2.carbon.appmgt.oauth.core</artifactId>
             <version>${carbon.appmgt.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+            <groupId>org.wso2.carbon.mobile.appmgt</groupId>
             <artifactId>org.wso2.carbon.appmgt.oauth.webapp</artifactId>
             <version>${carbon.appmgt.version}</version>
             <type>war</type>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+            <groupId>org.wso2.carbon.mobile.appmgt</groupId>
             <artifactId>org.wso2.carbon.appmgt.rest.api.util</artifactId>
             <version>${carbon.appmgt.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+            <groupId>org.wso2.carbon.mobile.appmgt</groupId>
             <artifactId>org.wso2.carbon.appmgt.rest.api.publisher</artifactId>
             <version>${carbon.appmgt.version}</version>
             <type>war</type>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+            <groupId>org.wso2.carbon.mobile.appmgt</groupId>
             <artifactId>org.wso2.carbon.appmgt.rest.api.store</artifactId>
             <version>${carbon.appmgt.version}</version>
             <type>war</type>

@@ -1,4 +1,4 @@
-WSO2 App Manager (Carbon Components)
+WSO2 Mobile App Manager (Carbon Components)
 ============================================
 [![Build Status](https://wso2.org/jenkins/job/carbon-appmgt/badge/icon)](https://wso2.org/jenkins/job/carbon-appmgt)
 
@@ -80,5 +80,4 @@ Crypto Notice
    * Bouncycastle     : http://www.bouncycastle.org/
 
 --------------------------------------------------------------------------------
-(c) Copyright 2016 WSO2 Inc.
-
+(c) Copyright 2017 WSO2 Inc.
