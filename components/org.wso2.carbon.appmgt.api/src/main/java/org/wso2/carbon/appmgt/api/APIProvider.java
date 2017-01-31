@@ -378,17 +378,6 @@ public interface APIProvider extends APIManager {
     public String createNewVersion(App app)throws AppManagementException;
 
     /**
-     * Updates an existing WebApp. This method must not be used to change WebApp status. Implementations should throw an
-     * exceptions when such attempts are made. All life cycle state changes should be carried out using the
-     * changeAPIStatus method of this interface.
-     *
-     * @param api             WebApp
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @throws AppManagementException if failed to update WebApp
-     */
-    public void updateAPI(WebApp api, String authorizedAdminCookie) throws AppManagementException;
-
-    /**
      * Updates an existing Mobile Application. This method must not be used to change Mobile App status. Implementations
      * should throw an exceptions when such attempts are made. All life cycle state changes
      * should be carried out using the changeAPIStatus method of this interface.
@@ -425,15 +414,6 @@ public interface APIProvider extends APIManager {
      */
     public MobileApp getMobileApp(String uuid) throws AppManagementException;
 
-    public void changeAPIStatus(WebApp api, APIStatus status, String userId,
-                                boolean updateGatewayConfig) throws AppManagementException;
-
-    /**
-     * redeploy the synapse when webapp is being edited
-     * @param api The WebApp whose status to be updated
-     * @throws AppManagementException on error
-     */
-    public void updateWebAppSynapse(WebApp api) throws AppManagementException;
 
     /**
      * Copy web applications documentations
@@ -609,17 +589,6 @@ public interface APIProvider extends APIManager {
      */
     public int moveSubscriptions(APIIdentifier fromIdentifier, APIIdentifier toIdentifier)
             throws AppManagementException;
-
-    /**
-     * Delete an WebApp
-     *
-     * @param identifier      APIIdentifier
-     * @param ssoProvider     SSOProvider
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @throws AppManagementException if failed to remove the WebApp
-     */
-    public boolean deleteApp(APIIdentifier identifier, SSOProvider ssoProvider, String authorizedAdminCookie) throws
-                                                                                                        AppManagementException;
 
     /**
      * Get the list of Custom InSequences.

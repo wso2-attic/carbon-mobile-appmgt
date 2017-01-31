@@ -35,7 +35,6 @@ import org.wso2.carbon.appmgt.api.dto.UserApplicationAPIUsage;
 import org.wso2.carbon.appmgt.api.model.*;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
 import org.wso2.carbon.appmgt.api.model.entitlement.XACMLPolicyTemplateContext;
-import org.wso2.carbon.appmgt.impl.APIGatewayManager;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.dto.*;
@@ -6477,21 +6476,6 @@ public class AppMDAO {
         }
 
         return keys;
-    }
-
-    private boolean isAPIPublished(WebApp api) throws AppManagementException {
-        try {
-            String tenantDomain = null;
-            if (api.getId().getProviderName().contains("AT")) {
-                String provider = api.getId().getProviderName().replace("-AT-", "@");
-                tenantDomain = MultitenantUtils.getTenantDomain( provider);
-            }
-            APIGatewayManager gatewayManager = APIGatewayManager.getInstance();
-            return gatewayManager.isAPIPublished(api, tenantDomain);
-        } catch (Exception e) {
-            handleException("Error while checking WebApp status", e);
-        }
-        return false;
     }
 
     /**

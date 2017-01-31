@@ -17,9 +17,9 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 <parent>
-        <groupId>org.wso2.carbon.appmgt</groupId>
-        <artifactId>carbon-appmgt</artifactId>
-        <version>1.2.15-SNAPSHOT</version>
+    <groupId>org.wso2.carbon.mobile.devicemgt</groupId>
+    <artifactId>carbon-mobile-device-mgt</artifactId>
+    <version>1.3.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -33,9 +33,6 @@
     <modules>
         <module>publisher</module>
         <module>store</module>
-        <module>idp</module>
-        <module>gateway-manager</module>
-        <module>gateway-worker</module>
     </modules>
 
     <build>

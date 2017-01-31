@@ -30,7 +30,6 @@ import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.config.TenantConfiguration;
 import org.wso2.carbon.appmgt.impl.service.TenantConfigurationService;
-import org.wso2.carbon.appmgt.usage.publisher.APIMgtUsagePublisherConstants;
 import org.wso2.carbon.identity.user.registration.stub.dto.UserFieldDTO;
 import org.wso2.carbon.utils.CarbonUtils;
 import org.wso2.carbon.utils.ConfigurationContextService;
@@ -148,13 +147,6 @@ public class HostObjectUtils {
             return 0;
         }
 
-    }
-
-    protected static boolean checkDataPublishingEnabled() {
-        AppManagerConfiguration configuration =
-                ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        String enabledStr = configuration.getFirstProperty(APIMgtUsagePublisherConstants.API_USAGE_ENABLED);
-        return enabledStr != null && Boolean.parseBoolean(enabledStr);
     }
 
     /**

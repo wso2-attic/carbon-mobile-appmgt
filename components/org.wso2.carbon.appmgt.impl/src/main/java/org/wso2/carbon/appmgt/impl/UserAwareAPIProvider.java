@@ -67,24 +67,9 @@ public class UserAwareAPIProvider extends APIProviderImpl {
     }
 
     @Override
-    public void updateAPI(WebApp api, String authorizedAdminCookie) throws AppManagementException {
-        checkWebappUpdatePermission();
-        super.updateAPI(api, authorizedAdminCookie);
-    }
-
-    @Override
     public void updateApp(App app) throws AppManagementException {
         checkWebappUpdatePermission();
         super.updateApp(app);
-    }
-
-    @Override
-    public void changeAPIStatus(WebApp api, APIStatus status, String userId,
-                                boolean updateGatewayConfig) throws AppManagementException {
-        if (APIStatus.PUBLISHED.equals(status)) {
-            checkPublishPermission();
-        }
-        super.changeAPIStatus(api, status, userId, updateGatewayConfig);
     }
 
     @Override

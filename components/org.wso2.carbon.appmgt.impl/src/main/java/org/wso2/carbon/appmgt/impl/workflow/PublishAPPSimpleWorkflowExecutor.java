@@ -67,7 +67,7 @@ public class PublishAPPSimpleWorkflowExecutor extends WorkflowExecutor {
             APIStatus newStatus = null;
             if (api != null) {
                 newStatus = getApiStatus(publishAPPDTO.getNewState());
-                provider.changeAPIStatus(api, newStatus, fullName, true);
+               // provider.changeAPIStatus(api, newStatus, fullName, true);
             }
             if(publishAPPDTO.getLcState().equalsIgnoreCase(AppMConstants.ApplicationStatus.APPLICATION_CREATED)) {
                 super.execute(workflowDTO);
@@ -107,7 +107,7 @@ public class PublishAPPSimpleWorkflowExecutor extends WorkflowExecutor {
 
             if (app != null) {
                 APIStatus newStatus = getApiStatus(publishAPPDTO.getNewState());
-                provider.changeAPIStatus(app, newStatus, fullName, true);
+               // provider.changeAPIStatus(app, newStatus, fullName, true);
             }
         } catch (AppManagementException e) {
             //throw exception

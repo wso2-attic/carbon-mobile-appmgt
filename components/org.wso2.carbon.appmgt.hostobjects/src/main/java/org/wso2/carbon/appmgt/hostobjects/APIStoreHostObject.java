@@ -43,12 +43,10 @@ import org.wso2.carbon.appmgt.api.dto.AppVersionUserUsageDTO;
 import org.wso2.carbon.appmgt.api.exception.AppUsageQueryServiceClientException;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIKey;
-import org.wso2.carbon.appmgt.api.model.APIRating;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.Application;
 import org.wso2.carbon.appmgt.api.model.BusinessOwner;
 import org.wso2.carbon.appmgt.api.model.BusinessOwnerProperty;
-import org.wso2.carbon.appmgt.api.model.Comment;
 import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.DocumentationType;
 import org.wso2.carbon.appmgt.api.model.SubscribedAPI;
@@ -2710,9 +2708,9 @@ public class APIStoreHostObject extends ScriptableObject {
             handleException("Invalid number of parameters.");
         }
         NativeArray myn = new NativeArray(0);
-        if (!HostObjectUtils.checkDataPublishingEnabled()) {
-            return myn;
-        }
+//        if (!HostObjectUtils.checkDataPublishingEnabled()) {
+//            return myn;
+//        }
         String subscriberName = (String) args[0];
         String period = (String) args[1];
 

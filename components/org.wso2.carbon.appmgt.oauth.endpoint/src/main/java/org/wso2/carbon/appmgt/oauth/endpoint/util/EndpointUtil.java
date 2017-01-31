@@ -1,9 +1,9 @@
 package org.wso2.carbon.appmgt.oauth.endpoint.util;
 
 
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.axiom.util.base64.Base64Utils;
-import org.wso2.carbon.appmgt.gateway.service.AppManagerOAuth2Service;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.wso2.carbon.appmgt.oauth.service.AppManagerOAuth2Service;
 import org.wso2.carbon.base.ServerConfiguration;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;

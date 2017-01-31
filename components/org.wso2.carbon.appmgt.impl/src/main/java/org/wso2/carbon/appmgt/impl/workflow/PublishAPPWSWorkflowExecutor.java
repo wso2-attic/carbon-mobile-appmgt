@@ -92,7 +92,7 @@ public class PublishAPPWSWorkflowExecutor extends WorkflowExecutor {
                 APIStatus oldState = getApiStatus(publishAPPDTO.getLcState());
                 APIStatus newStatus = getApiStatus("IN-REVIEW");
                 api.setStatus(oldState);
-                provider.changeAPIStatus(api, newStatus, adminUserUsername, true);
+              //  provider.changeAPIStatus(api, newStatus, adminUserUsername, true);
             }
         } catch (AppManagementException e) {
             log.error("Could not update APP lifecycle state to IN-REVIEW", e);
@@ -218,7 +218,7 @@ public class PublishAPPWSWorkflowExecutor extends WorkflowExecutor {
 
                 if (app != null) {
                     APIStatus newStatus = getApiStatus("rejected");
-                    provider.changeAPIStatus(app, newStatus, adminUserUsername, true);
+                  //  provider.changeAPIStatus(app, newStatus, adminUserUsername, true);
                 }
 
                 String apiPath = AppManagerUtil.getAPIPath(apiIdentifier);
@@ -262,7 +262,7 @@ public class PublishAPPWSWorkflowExecutor extends WorkflowExecutor {
 
                 if (app != null) {
                     APIStatus newStatus = getApiStatus(workflowDTO.getStatus().name());
-                    provider.changeAPIStatus(app, newStatus, adminUsername, true);
+                //    provider.changeAPIStatus(app, newStatus, adminUsername, true);
                 }
             } catch (AppManagementException e) {
                 log.error("Error while retrieving relevant workflow reference", e);

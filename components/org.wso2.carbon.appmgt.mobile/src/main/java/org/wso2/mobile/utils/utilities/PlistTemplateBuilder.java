@@ -25,11 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
-import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.PlistTemplateContext;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicy;
-import org.wso2.carbon.appmgt.api.model.entitlement.XACMLPolicyTemplateContext;
-import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
 
 import java.io.File;
 import java.io.StringWriter;

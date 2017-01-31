@@ -32,7 +32,6 @@ import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.api.EntitlementService;
 import org.wso2.carbon.appmgt.api.dto.UserApplicationAPIUsage;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
-import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.APPLifecycleActions;
 import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.api.model.AppDefaultVersion;
@@ -47,7 +46,6 @@ import org.wso2.carbon.appmgt.api.model.LifeCycleEvent;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.Provider;
-import org.wso2.carbon.appmgt.api.model.SSOProvider;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.Tag;
 import org.wso2.carbon.appmgt.api.model.Tier;
@@ -61,15 +59,12 @@ import org.wso2.carbon.appmgt.impl.dao.AppMDAO;
 import org.wso2.carbon.appmgt.impl.dto.Environment;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.appmgt.impl.entitlement.EntitlementServiceFactory;
-import org.wso2.carbon.appmgt.impl.idp.sso.SSOConfiguratorUtil;
-import org.wso2.carbon.appmgt.impl.observers.APIStatusObserverList;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.appmgt.impl.template.APITemplateBuilder;
 import org.wso2.carbon.appmgt.impl.template.APITemplateBuilderImpl;
 import org.wso2.carbon.appmgt.impl.utils.APINameComparator;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.governance.api.common.dataobjects.GovernanceArtifact;
 import org.wso2.carbon.governance.api.exception.GovernanceException;
 import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
 import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
@@ -77,7 +72,6 @@ import org.wso2.carbon.governance.api.util.GovernanceUtils;
 import org.wso2.carbon.registry.common.CommonConstants;
 import org.wso2.carbon.registry.core.ActionConstants;
 import org.wso2.carbon.registry.core.Association;
-import org.wso2.carbon.registry.core.CollectionImpl;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
@@ -91,7 +85,6 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-import javax.cache.Cache;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
@@ -224,13 +217,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return appMDAO.getBusinessOwnerId(businessOwnerName, businessOwnerEmail, tenantId);
     }
 
-    /**
-     * Returns a list of all #{@link org.wso2.carbon.apimgt.api.model.Provider} available on the system.
-     *
-     * @return Set<Provider>
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to get Providers
-     */
     public Set<Provider> getAllProviders() throws AppManagementException {
         Set<Provider> providerSet = new HashSet<Provider>();
         GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
@@ -253,16 +239,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return providerSet;
     }
 
-    /**
-     * Get a list of APIs published by the given provider. If a given WebApp has multiple APIs,
-     * only the latest version will
-     * be included in this list.
-     *
-     * @param providerId , provider id
-     * @return set of WebApp
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to get set of WebApp
-     */
     public List<WebApp> getAPIsByProvider(String providerId) throws AppManagementException {
 
         List<WebApp> apiSortedList = new ArrayList<WebApp>();
@@ -297,15 +273,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
 
-
-    /**
-     * Get a list of all the consumers for all APIs
-     *
-     * @param providerId if of the provider
-     * @return Set<Subscriber>
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to get subscribed APIs of given provider
-     */
     public Set<Subscriber> getSubscribersOfProvider(String providerId)
             throws AppManagementException {
 
@@ -318,14 +285,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return subscriberSet;
     }
 
-    /**
-     * get details of provider
-     *
-     * @param providerName name of the provider
-     * @return Provider
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to get Provider
-     */
     public Provider getProvider(String providerName) throws AppManagementException {
         Provider provider = null;
         String providerPath = RegistryConstants.GOVERNANCE_REGISTRY_BASE_PATH +
@@ -369,14 +328,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return null;
     }
 
-    /**
-     * Returns usage details of all APIs published by a provider
-     *
-     * @param providerName Provider Id
-     * @return UserApplicationAPIUsages for given provider
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          If failed to get UserApplicationAPIUsage
-     */
     public UserApplicationAPIUsage[] getAllAPIUsageByProvider(
             String providerName) throws AppManagementException {
         return appMDAO.getAllAPIUsageByProvider(providerName);
@@ -393,14 +344,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return null;
     }
 
-    /**
-     * Returns full list of Subscribers of an WebApp
-     *
-     * @param identifier APIIdentifier
-     * @return Set<Subscriber>
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to get Subscribers
-     */
     public Set<Subscriber> getSubscribersOfAPI(APIIdentifier identifier)
             throws AppManagementException {
 
@@ -413,14 +356,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return subscriberSet;
     }
 
-    /**
-     * this method returns the Set<APISubscriptionCount> for given provider and api
-     *
-     * @param identifier APIIdentifier
-     * @return Set<APISubscriptionCount>
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to get APISubscriptionCountByAPI
-     */
     public long getAPISubscriptionCountByAPI(APIIdentifier identifier)
             throws AppManagementException {
         long count = 0L;
@@ -922,127 +857,12 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
-    /**
-     * Updates an existing WebApp
-     *
-     * @param api             WebApp
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @throws AppManagementException if failed to update WebApp
-     */
-    public void updateAPI(WebApp api, String authorizedAdminCookie) throws AppManagementException {
-        WebApp oldApi = getAPI(api.getId());
-        if (oldApi.getStatus().equals(api.getStatus())) {
-            try {
-
-                //boolean updatePermissions = false;
-                /*if(!oldApi.getVisibility().equals(api.getVisibility()) || (oldApi.getVisibility().equals(AppMConstants.API_RESTRICTED_VISIBILITY) && !api.getVisibleRoles().equals(oldApi.getVisibleRoles()))){
-                    updatePermissions = true;
-                }*/
-                //updateApiArtifact(api, true,updatePermissions);
-                if (!oldApi.getContext().equals(api.getContext())) {
-                    api.setApiHeaderChanged(true);
-                }
-
-                appMDAO.updateAPI(api, authorizedAdminCookie);
-
-                AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                        getAPIManagerConfigurationService().getAPIManagerConfiguration();
-                boolean gatewayExists = config.getApiGatewayEnvironments().size() > 0;
-                String gatewayType = config.getFirstProperty(AppMConstants.API_GATEWAY_TYPE);
-                boolean isAPIPublished = false;
-
-                isAPIPublished = isAPIPublished(api);
-                if (gatewayExists) {
-                    if (isAPIPublished) {
-                        WebApp apiPublished = getAPI(api.getId());
-                        apiPublished.setOldInSequence(oldApi.getInSequence());
-                        apiPublished.setOldOutSequence(oldApi.getOutSequence());
-
-                        //update version
-                        if (api.isDefaultVersion() || oldApi.isDefaultVersion()) {
-                            //remove both versioned/non versioned apis
-                            WebApp webApp = new WebApp(api.getId());
-                            webApp.setDefaultVersion(true);
-                            removeFromGateway(webApp);
-                        }
-
-                        //publish to gateway if skipGateway is disabled only
-                        if (!api.getSkipGateway()) {
-                            publishToGateway(apiPublished);
-                        }
-                    }
-                } else {
-                    log.debug("Gateway is not existed for the current WebApp Provider");
-                }
-
-               
-                /*Boolean gatewayKeyCacheEnabled=false;
-                String gatewayKeyCacheEnabledString = config.getFirstProperty(AppMConstants.API_GATEWAY_KEY_CACHE_ENABLED);
-                //If gateway key cache enabled
-                if (gatewayKeyCacheEnabledString != null) {
-                    gatewayKeyCacheEnabled = Boolean.parseBoolean(gatewayKeyCacheEnabledString);
-                }
-                //If resource paths being saved are on permission cache, remove them.
-                if (gatewayExists && gatewayKeyCacheEnabled) {
-                    if (isAPIPublished && !oldApi.getUriTemplates().equals(api.getUriTemplates())) {
-                        Set<URITemplate> resourceVerbs = api.getUriTemplates();
-
-                        List<Environment> gatewayEnvs = config.getApiGatewayEnvironments();
-                        for(Environment environment : gatewayEnvs){
-                            APIAuthenticationAdminClient client =
-                                    new APIAuthenticationAdminClient(environment);
-                            if(resourceVerbs != null){
-                                for(URITemplate resourceVerb : resourceVerbs){
-                                    String resourceURLContext = resourceVerb.getUriTemplate();
-                                    //If url context ends with the '*' character.
-                                    if(resourceURLContext.endsWith("*")){
-                                        //Remove the ending '*'
-                                        resourceURLContext = resourceURLContext.substring(0, resourceURLContext.length() - 1);
-                                    }
-                                    client.invalidateResourceCache(api.getContext(),api.getId().getVersion(),resourceURLContext,resourceVerb.getHTTPVerb());
-                                    if (log.isDebugEnabled()) {
-                                        log.debug("Calling invalidation cache");
-                                    }
-                                }
-                            }
-                        }
-
-                    }
-                }*/
-                /* Update WebApp Definition for Swagger
-                createUpdateAPIDefinition(api);*/
-
-                //update apiContext cache
-                if (AppManagerUtil.isAPIManagementEnabled()) {
-                    Cache contextCache = AppManagerUtil.getAPIContextCache();
-                    contextCache.remove(oldApi.getContext());
-                    contextCache.put(api.getContext(), true);
-                }
-
-            } catch (AppManagementException e) {
-            	handleException("Error while updating the WebApp :" +api.getId().getApiName(),e);
-            }
-
-        } else {
-            // We don't allow WebApp status updates via this method.
-            // Use changeAPIStatus for that kind of updates.
-            throw new AppManagementException("Invalid WebApp update operation involving WebApp status changes");
-        }
-    }
-
     @Override
     public void updateApp(App app) throws AppManagementException {
         AppRepository appRepository = new DefaultAppRepository(registry);
         appRepository.updateApp(app);
     }
 
-    /**
-     * Updates an existing WebApp
-     *
-     * @param api WebApp
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to update WebApp
-     */
     public void updateMobileApp(MobileApp mobileApp) throws AppManagementException {
 
 
@@ -1182,13 +1002,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
-    /**
-     * Create WebApp Definition in JSON and save in the registry
-     *
-     * @param api WebApp
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to generate the content and save
-     */
     private void createUpdateAPIDefinition(WebApp api) throws AppManagementException {
     	APIIdentifier identifier = api.getId();
 
@@ -1213,89 +1026,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 		}
     }
 
-
-    @Override
-    public void changeAPIStatus(WebApp api, APIStatus status, String userId,
-                                boolean updateGatewayConfig) throws AppManagementException {
-        APIStatus currentStatus = api.getStatus();
-        if (!currentStatus.equals(status)) {
-            api.setStatus(status);
-            try {
-            	//                updateApiArtifact(api, false,false);
-            	//                appMDAO.recordAPILifeCycleEvent(api.getId(), currentStatus, status, userId);
-
-                APIStatusObserverList observerList = APIStatusObserverList.getInstance();
-                observerList.notifyObservers(currentStatus, status, api);
-                AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                        getAPIManagerConfigurationService().getAPIManagerConfiguration();
-                String gatewayType = config.getFirstProperty(AppMConstants.API_GATEWAY_TYPE);
-                if (!api.isAdvertiseOnly()) { // no need to publish to gateway if webb is only for advertising
-                    if (updateGatewayConfig) {
-
-                        if (api.isDefaultVersion()) {
-                            if (status.equals(APIStatus.UNPUBLISHED)) {
-                                //when un-publishing default version, reset the default published version as null in table
-                                APIIdentifier identifier = new APIIdentifier(api.getId().getProviderName(),
-                                                                             api.getId().getApiName(),
-                                                                             null);
-                                WebApp webApp = new WebApp(identifier);
-                                appMDAO.updatePublishedDefaultVersion(webApp);
-                            }
-                        }
-
-                        if (status.equals(APIStatus.PUBLISHED) || status.equals(APIStatus.DEPRECATED) ||
-                                status.equals(APIStatus.BLOCKED)) {
-
-                            //update version
-                            if (status.equals(APIStatus.PUBLISHED)) {
-                                if (api.isDefaultVersion()) {
-                                    appMDAO.updateDefaultVersionDetails(api);
-                                }
-                            }
-
-                            //publish to gateway if skipGateway is disabled only
-                            if (!api.getSkipGateway()) {
-                                publishToGateway(api);
-                            }
-                        } else if(status.equals(APIStatus.UNPUBLISHED) || status.equals(APIStatus.RETIRED)) {
-                            removeFromGateway(api);
-                        }
-                    }
-                }
-
-            } catch (AppManagementException e) {
-            	handleException("Error occured in the status change : " + api.getId().getApiName() , e);
-            }
-        }
-    }
-
-    public void updateWebAppSynapse(WebApp api) throws AppManagementException {
-       removeFromGateway(api);
-    }
-
-    private void publishToGateway(WebApp api) throws AppManagementException {
-        APITemplateBuilder builder = null;
-        String tenantDomain = null;
-//        if (api.getId().getProviderName().contains("AT")) {
-            String provider = api.getId().getProviderName().replace("-AT-", "@");
-            tenantDomain = MultitenantUtils.getTenantDomain( provider);
-//        }
-
-        try{
-            builder = getAPITemplateBuilder(api);
-        }catch(Exception e){
-            handleException("Error while publishing to Gateway ", e);
-        }
-
-
-        APIGatewayManager gatewayManager = APIGatewayManager.getInstance();
-        try {
-            gatewayManager.publishToGateway(api, builder, tenantDomain);
-        } catch (Exception e) {
-            handleException("Error while publishing to Gateway ", e);
-        }
-    }
-
     private void validateAndSetTransports(WebApp api) throws AppManagementException {
         String transports = api.getTransports();
         if(transports != null && !("null".equalsIgnoreCase(transports))){
@@ -1317,35 +1047,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         if(!Constants.TRANSPORT_HTTP.equalsIgnoreCase(transport) && !Constants.TRANSPORT_HTTPS.equalsIgnoreCase(transport)){
             handleException("Unsupported Transport [" + transport + "]");
         }
-    }
-
-    private void removeFromGateway(WebApp api) throws AppManagementException {
-        String tenantDomain = null;
-        if (api.getId().getProviderName().contains("@")) {
-            tenantDomain = MultitenantUtils.getTenantDomain( api.getId().getProviderName());
-        }
-
-        APIGatewayManager gatewayManager = APIGatewayManager.getInstance();
-        try {
-            gatewayManager.removeFromGateway(api, tenantDomain);
-        } catch (Exception e) {
-            handleException("Error while removing WebApp from Gateway ", e);
-        }
-    }
-
-    private boolean isAPIPublished(WebApp api) throws AppManagementException {
-        try {
-            String tenantDomain = null;
-			if (api.getId().getProviderName().contains("AT")) {
-				String provider = api.getId().getProviderName().replace("-AT-", "@");
-				tenantDomain = MultitenantUtils.getTenantDomain( provider);
-			}
-            APIGatewayManager gatewayManager = APIGatewayManager.getInstance();
-            return gatewayManager.isAPIPublished(api, tenantDomain);
-        } catch (Exception e) {
-            handleException("Error while checking WebApp status", e);
-        }
-		return false;
     }
 
     /**
@@ -1560,29 +1261,12 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
-    /**
-     * Adds Documentation to an WebApp
-     *
-     * @param apiId         APIIdentifier
-     * @param documentation Documentation
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to add documentation
-     */
     @Override
     public void addDocumentation(APIIdentifier apiId, Documentation documentation)
             throws AppManagementException {
         createDocumentation(apiId, documentation);
     }
 
-    /**
-     * This method used to save the documentation content
-     *
-     * @param identifier,        WebApp identifier
-     * @param documentationName, name of the inline documentation
-     * @param text,              content of the inline documentation
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to add the document as a resource to registry
-     */
     public void addDocumentationContent(APIIdentifier identifier, String documentationName, String text)
             throws AppManagementException {
 
@@ -1661,17 +1345,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
-
-
-    /**
-     * This method used to update the WebApp definition content - Swagger
-     *
-     * @param identifier,        WebApp identifier
-     * @param documentationName, name of the inline documentation
-     * @param text,              content of the inline documentation
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to add the document as a resource to registry
-     */
     public void addAPIDefinitionContent(APIIdentifier identifier, String documentationName, String text)
     					throws AppManagementException {
     	String contentPath = AppManagerUtil.getAPIDefinitionFilePath(identifier.getApiName(), identifier.getVersion());
@@ -1747,14 +1420,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
     }
 
-    /**
-     * Copies current Documentation into another version of the same WebApp.
-     *
-     * @param toVersion Version to which Documentation should be copied.
-     * @param apiId     id of the APIIdentifier
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          if failed to copy docs
-     */
     public void copyAllDocumentation(APIIdentifier apiId, String toVersion)
             throws AppManagementException {
 
@@ -1925,29 +1590,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return authorizationManager.getAllowedRolesForResource(resourcePath,ActionConstants.GET);
     }
 
-    /**
-     * Returns the details of all the life-cycle changes done per api
-     *
-     * @param apiId WebApp Identifier
-     * @return List of lifecycle events per given api
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          If failed to get Lifecycle Events
-     */
     public List<LifeCycleEvent> getLifeCycleEvents(APIIdentifier apiId) throws
                                                                         AppManagementException {
         return appMDAO.getLifeCycleEvents(apiId);
     }
 
-    /**
-     * Update the subscription status
-     *
-     * @param apiId WebApp Identifier
-     * @param subStatus Subscription Status
-     * @param appId Application Id              *
-     * @return int value with subscription id
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          If failed to update subscription status
-     */
     public void updateSubscription(APIIdentifier apiId,String subStatus,int appId) throws
                                                                                    AppManagementException {
         appMDAO.updateSubscription(apiId, subStatus, appId);
@@ -1966,135 +1613,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 																						   AppManagementException {
 		return appMDAO.moveSubscriptions(fromIdentifier, toIdentifier);
 	}
-
-    /**
-     * Delete applicatoion
-     * @param identifier AppIdentifier
-     * @param ssoProvider SSO provider
-     * @param authorizedAdminCookie The cookie which was generated from the SAML assertion.
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public boolean deleteApp(APIIdentifier identifier, SSOProvider ssoProvider, String authorizedAdminCookie) throws
-                                                                                AppManagementException {
-
-        SSOConfiguratorUtil ssoConfiguratorUtil;
-        String path = AppMConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR +
-                      identifier.getProviderName() + RegistryConstants.PATH_SEPARATOR +
-                      identifier.getApiName() + RegistryConstants.PATH_SEPARATOR + identifier.getVersion();
-
-        String appArtifactPath = AppManagerUtil.getAPIPath(identifier);
-        boolean isAppDeleted = false;
-
-        try {
-            long subsCount = appMDAO.getAPISubscriptionCountByAPI(identifier);
-            Resource appArtifactResource = registry.get(appArtifactPath);
-            String applicationStatus = appArtifactResource.getProperty(AppMConstants.WEB_APP_LIFECYCLE_STATUS);
-            if (subsCount > 0 && !applicationStatus.equals("Retired")) {
-                //remove subscriptions per app
-                appMDAO.removeAPISubscription(identifier);
-            }
-
-            //If SSOProvider exists, remove it
-            if (ssoProvider != null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Removing the SSO Provider with name : " + ssoProvider.getProviderName());
-                }
-                ssoConfiguratorUtil = new SSOConfiguratorUtil();
-
-                Map<String, String> serviceConfigs = new HashMap<String, String>();
-                serviceConfigs.put(SSOConfiguratorUtil.SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY, authorizedAdminCookie);
-
-                ssoConfiguratorUtil.deleteSSOProvider(ssoProvider, serviceConfigs);
-            }
-
-            GovernanceUtils.loadGovernanceArtifacts((UserRegistry) registry);
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.API_KEY);
-            Resource appResource = registry.get(path);
-            String artifactId = appResource.getUUID();
-
-
-            String appArtifactResourceId = appArtifactResource.getUUID();
-            if (artifactId == null) {
-                throw new AppManagementException("artifact id is null for : " + path);
-            }
-
-            GenericArtifact appArtifact = artifactManager.getGenericArtifact(appArtifactResourceId);
-            String inSequence = appArtifact.getAttribute(AppMConstants.API_OVERVIEW_INSEQUENCE);
-            String outSequence = appArtifact.getAttribute(AppMConstants.API_OVERVIEW_OUTSEQUENCE);
-
-            //Delete the dependencies associated  with the api artifact
-            GovernanceArtifact[] dependenciesArray = appArtifact.getDependencies();
-
-            if (dependenciesArray.length > 0) {
-                for (int i = 0; i < dependenciesArray.length; i++) {
-                    registry.delete(dependenciesArray[i].getPath());
-                }
-            }
-
-            artifactManager.removeGenericArtifact(appArtifact);
-            artifactManager.removeGenericArtifact(artifactId);
-
-            String thumbPath = AppManagerUtil.getIconPath(identifier);
-            if (registry.resourceExists(thumbPath)) {
-                registry.delete(thumbPath);
-            }
-
-            AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                    getAPIManagerConfigurationService().getAPIManagerConfiguration();
-            boolean gatewayExists = config.getApiGatewayEnvironments().size() > 0;
-            String gatewayType = config.getFirstProperty(AppMConstants.API_GATEWAY_TYPE);
-
-            WebApp webapp = new WebApp(identifier);
-            // gatewayType check is required when WebApp Management is deployed on other servers to avoid synapse
-            if (gatewayExists && "Synapse".equals(gatewayType)) {
-                webapp.setInSequence(inSequence); //need to remove the custom sequences
-                webapp.setOutSequence(outSequence);
-                removeFromGateway(webapp);
-            } else {
-                if(log.isDebugEnabled()) {
-                    log.debug("Gateway is not existed for the current applications Provider");
-                }
-            }
-            appMDAO.deleteAPI(identifier, authorizedAdminCookie);
-
-            /*remove empty directories*/
-            String appCollectionPath = AppMConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR +
-                                       identifier.getProviderName() + RegistryConstants.PATH_SEPARATOR +
-                                       identifier.getApiName();
-            if (registry.resourceExists(appCollectionPath)) {
-                Resource appCollection = registry.get(appCollectionPath);
-                CollectionImpl collection = (CollectionImpl) appCollection;
-                //if there is no other versions of applications delete the directory of the applications
-                if (collection.getChildCount() == 0) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("No more versions of the applications found, removing applications collection from registry");
-                    }
-                    registry.delete(appCollectionPath);
-                }
-            }
-
-            String appProviderPath = AppMConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR +
-                    identifier.getProviderName();
-            if (registry.resourceExists(appProviderPath)) {
-                Resource providerCollection = registry.get(appProviderPath);
-                CollectionImpl collection = (CollectionImpl) providerCollection;
-                //if there is no applications for given provider delete the provider directory
-                if (collection.getChildCount() == 0) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("No more Applications from the provider " + identifier.getProviderName() + " found. " +
-                                "Removing provider collection from registry");
-                    }
-                    registry.delete(appProviderPath);
-                }
-            }
-            isAppDeleted = true;
-        } catch (RegistryException e) {
-            handleException("Failed to remove the WebApp from : " + path, e);
-        }
-
-        return isAppDeleted;
-    }
 
     public List<WebApp> searchAPIs(String searchTerm, String searchType, String providerId) throws
                                                                                             AppManagementException {
@@ -2206,16 +1724,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
-
-    /**
-     * Update the Tier Permissions
-     *
-     * @param tierName Tier Name
-     * @param permissionType Permission Type
-     * @param roles Roles
-     * @throws org.wso2.carbon.apimgt.api.APIManagementException
-     *          If failed to update subscription status
-     */
     public void updateTierPermissions(String tierName, String permissionType, String roles) throws
                                                                                             AppManagementException {
         appMDAO.updateTierPermissions(tierName, permissionType, roles, tenantId);

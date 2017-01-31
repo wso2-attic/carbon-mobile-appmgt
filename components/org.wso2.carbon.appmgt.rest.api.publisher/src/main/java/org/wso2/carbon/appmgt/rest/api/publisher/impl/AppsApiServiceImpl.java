@@ -680,7 +680,7 @@ public class AppsApiServiceImpl extends AppsApiService {
                 } else {
                     //todo: pass the correct auth cookie
                     String authorizedAdminCookie = null;
-                    apiProvider.deleteApp(webApp.getId(), webApp.getSsoProviderDetails(), authorizedAdminCookie);
+                   // apiProvider.deleteApp(webApp.getId(), webApp.getSsoProviderDetails(), authorizedAdminCookie);
                 }
             } else if (appType.equals(AppMConstants.MOBILE_ASSET_TYPE)) {
                 removeRegistryArtifact(app, username);
