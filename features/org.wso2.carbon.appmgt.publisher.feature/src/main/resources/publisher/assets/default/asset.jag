@@ -45,21 +45,7 @@ require('/modules/publisher.js').exec(function(ctx) {
     var DataInjectorModes = publisher.DataInjectorModes;
     var filterManager = publisher.filterManager;
 
-    mod = jagg.module("documentation");
-
     var typeList = apiProvider.getEnabledAssetTypeList();
-
-    function getBusinessOwner() {
-        var businessOwnerList = apiProvider.getBusinessOwners();
-        var ownersList = JSON.parse(stringify(businessOwnerList));
-        var nameList = [];
-        var businessOwnerNameAndEmail;
-        for (var i = 0; i < ownersList.length; i++) {
-            ownerNameAndEmail = ownersList[i].businessOwnerName + " (" + ownersList[i].businessOwnerEmail + ")";
-            nameList.push({id:ownersList[i].businessOwnerId, text:ownerNameAndEmail});
-        }
-        return stringify(nameList);
-    }
 
     routeManager.register('GET', 'publisher', '/publisher/asset/{type}', function(context) {
 
@@ -115,8 +101,7 @@ require('/modules/publisher.js').exec(function(ctx) {
             rxtTemplate: rxtTemplate,
             data: output,
             title: title,
-            typeList: typeList,
-	    businessOwnerList: getBusinessOwner()
+            typeList: typeList
             }
         );
     }
@@ -176,7 +161,6 @@ routeManager.register('GET', 'publisher', '/publisher/asset/{type}/{id}', functi
         apiData.provider = model.get('overview.provider').value;
         apiData.name = model.get('overview.name').value;
         apiData.version = model.get('overview.version').value;
-        var result = mod.getAllDocumentation(apiData);
 
         var appStoresDetail = {};
         //For webapps, get external store details
@@ -191,10 +175,6 @@ routeManager.register('GET', 'publisher', '/publisher/asset/{type}/{id}', functi
         var user = server.current(session);
         var um = server.userManager(user.tenantId);
 
-        var docCreateAuth = permissions.isAuthorized(user.username, config.permissions.document_add, um);
-        var docEditAuth = permissions.isAuthorized(user.username, config.permissions.document_edit, um);
-        var docDeleteAuth = permissions.isAuthorized(user.username, config.permissions.document_delete, um);
-
         if (apiProvider.isAssetTypeEnabled(shortName)) {
             caramel.render({
                 op: operation,
@@ -204,16 +184,8 @@ routeManager.register('GET', 'publisher', '/publisher/asset/{type}/{id}', functi
                 rxtTemplate: rxtTemplate,
                 data: output,
                 versions: versionList,
-                tags: tags,
                 title: title,
-                docs: result.docs,
-                appStores: appStoresDetail,
-                permissions: {
-                    canCreate: docCreateAuth,
-                    canEdit: docEditAuth,
-                    canDelete: docDeleteAuth
-                },
-		businessOwnerList: getBusinessOwner()
+                appStores: appStoresDetail
             });
         }
         else {
@@ -278,7 +250,6 @@ routeManager.register('GET', 'publisher', '/publisher/asset/{type}/{id}', functi
             apiData.provider = model.get('overview.provider').value;
             apiData.name = model.get('overview.name').value;
             apiData.version = model.get('overview.version').value;
-            var result = mod.getAllDocumentation(apiData);
 
             //Get tags
             var path = artifact.path;
@@ -330,42 +301,6 @@ routeManager.register('GET', 'publisher', '/publisher/asset/{type}/{id}', functi
                 }
             }
 
-
-            if (operation == "documentation") {
-                var docCreateAuth = permissions.isAuthorized(user.username, config.permissions.document_add, um);
-                var docEditAuth = permissions.isAuthorized(user.username, config.permissions.document_edit, um);
-                var docDeleteAuth = permissions.isAuthorized(user.username, config.permissions.document_delete, um);
-
-                caramel.render({
-                    op: operation,
-                    cuser: user,
-                    shortName: shortName,
-                    artifact: artifact,
-                    rxtTemplate: rxtTemplate,
-                    data: output,
-                    versions: versionList,
-                    tags: tags,
-                    title: title,
-                    docs: result.docs,
-                    permissions: {canCreate: docCreateAuth, canEdit: docEditAuth, canDelete:docDeleteAuth},
-		    businessOwnerList: getBusinessOwner()
-                });
-            } else {
-                caramel.render({
-                    isSubscriptionEnabled: isSubscriptionEnabled,
-                    isCreateSPForSkipGatewayAppsEnabled:isCreateSPForSkipGatewayAppsEnabled,
-                    op: operation,
-                    cuser: user,
-                    shortName: shortName,
-                    artifact: artifact,
-                    rxtTemplate: rxtTemplate,
-                    data: output,
-                    versions: versionList,
-                    tags: tags,
-                    title: title,
-		    businessOwnerList: getBusinessOwner()
-                });
-            }
 
         } catch (e) {
             log.debug('The asset with id ' + id + ' could not be found due to : ' + e);
