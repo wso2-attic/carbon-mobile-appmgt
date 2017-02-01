@@ -15,9 +15,9 @@
   </parent>
 
   <scm>
-    <url>https://github.com/lakshani/carbon-mobile-appmgt.git</url>
-    <developerConnection>scm:git:https://github.com/lakshani/carbon-mobile-appmgt.git</developerConnection>
-    <connection>scm:git:https://github.com/lakshani/carbon-mobile-appmgt.git</connection>
+    <url>https://github.com/wso2/carbon-mobile-appmgt.git</url>
+    <developerConnection>scm:git:https://github.com/wso2/carbon-mobile-appmgt.git</developerConnection>
+    <connection>scm:git:https://github.com/wso2/carbon-mobile-appmgt.git</connection>
     <tag>HEAD</tag>
   </scm>
 
