@@ -23,7 +23,19 @@ $(document).ready(function() {
 	var CSS_ERR = 'control-group error';
 	var CSS_SUCCESS = 'control-group success';
 
-	$('.dropdown-toggle').dropdown();
+    $('#cloud-menu-popover i.fw-tiles').popover({
+        html: true,
+        trigger:'click',
+        title: function() {
+            return $("#popover-head").html();
+        },
+        content: function() {
+            return $("#popover-content").html();
+        }
+    });
+
+
+    $('.dropdown-toggle').dropdown();
 	$('#asset_view_tabs a').click(function(e) {
 		e.preventDefault();
 		$(this).tab('show');

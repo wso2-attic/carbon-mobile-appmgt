@@ -4,6 +4,183 @@
     height: 50px;
     /* overflow: hidden;*/
 }
+
+/**
+ Styles added for new header
+ Note : Should migrate to theme WS02
+ */
+
+.header-container-height-fix{
+    height: 50px;
+}
+header.header-default {
+    background: #191919;
+    color: #fff;
+}
+header .brand {
+    padding: 13px 0;
+}
+header .brand img.logo {
+    height: 24px;
+}
+header .brand a {
+    display: inline-block;
+    min-height: 24px;
+    white-space: nowrap;
+}
+header .brand h1 {
+    display: inline-block;
+    line-height: 1;
+    font-size: 18px;
+    margin: 0 0 0 5px;
+    font-weight: 300;
+    color: #fff;
+}
+header .brand img{
+    height: 24px;
+}
+header .nav > li > a:hover {
+    background: #262626;
+}
+
+.nav>li>a:hover, .nav>li>a:focus{
+    background-color: none;
+}
+
+@media (min-width: 768px){
+    .navbar-right {
+        float: right !important;
+        margin-right: -15px;
+    }
+}
+
+.visible-inline-block {
+    display: inline-block !important;
+}
+
+.cloud-menu .popover {
+    border-radius: 0px;
+    width: 24em;
+    left: -21.1em !important;
+    max-width: 32em;
+    background-color: #006690
+}
+.cloud-menu .popover-title,.navbar-header .popover-title {
+    background-color: #006690;
+    font-size: 16px;
+    border-bottom: none;
+    font-weight: 400;
+}
+.cloud-menu .popover.bottom>.arrow{
+    margin-left:-2px;
+}
+.cloud-menu .popover.bottom>.arrow:after,.navbar-header .popover.bottom>.arrow:after{
+    border-bottom-color: #006690;
+}
+.cloud-block {
+    float: left;
+    width: 8.2em;
+    height: 8.2em;
+    background-color: #fff;
+    margin: 0.5em 0em 0.5em 0.5em;
+    text-align: center;
+    vertical-align: middle;
+}
+.cloud-name {
+    font-size:14px;
+    margin-top: .5em;
+    font-weight: 400;
+}
+.cloud-menu-popover {
+    position: relative;
+    float: right;
+    padding: 0px 8px;
+    background-color: transparent;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+}
+#cloud-menu-popover-xs {
+    color: #fff;
+    line-height:24px;
+    border: none;
+    margin-right: 15px!important;
+}
+.navbar-toggle{
+    border:none;
+    border-radius: 0px;
+}
+.navbar-header .popover {
+    border-radius: 0px;
+    width: 21em;
+    max-width:32em;
+    background-color: #006690;
+}
+.navbar-header .popover .popover-content{
+    padding:0px;
+}
+.cloud-menu .popover-content {
+    padding: 0px;
+}
+.cloud-actions {
+    background-color: #005578;
+    float: left;
+    position: absolute;
+    width: 100%;
+    left: 0px;
+    overflow:hidden;
+}
+.cloud-actions h3 {
+    font-size: 16px;
+    font-weight: 400;
+    padding-left: 14px;
+    margin-top: 10px;
+}
+.cloud-block-invert {
+    color: #fff;
+    float: left;
+    width: 8.2em;
+    height: 8.2em;
+    background-color: #1f1f1f;
+    margin: 0.5em 0em 0.5em 0.5em;
+    text-align: center;
+    cursor: pointer;
+}
+
+.cloud-block-default {
+    color: #006690;
+    background-color: #fff;
+    cursor: pointer;
+}
+.cloud-actions a:hover {
+    color: #d7d5d5;
+    background-color: #3d3d3d;
+    text-decoration: none
+}
+.cloud-apps a {
+    text-decoration: none;
+    color: #006690;
+    cursor: pointer
+}
+.cloud-apps a:hover {
+    text-decoration: none;
+    color: #006690;
+    background-color: #c5c5c5;
+}
+.cloud-apps .cloud-actions a {
+    color: #fff
+}
+
+.add-padding-top-3x {
+    padding-top: 15px !important;
+}
+
+/**
+    End of header styles
+ */
+
 #btn-login {
     width: 80%;
 }
@@ -88,7 +265,7 @@ hr.emboss {
     padding-bottom: 10px;
 }
 
-.navbar > .container .navbar-brand {
+.navbar > .container-fluid .navbar-brand {
     background: url("../img/appm_logo.png") no-repeat top left;
     color: #FFFFFF;
     height: 39px;
@@ -110,7 +287,7 @@ hr.emboss {
 .navbar .nav > li > a {
     text-shadow: none;
     color: #fff;
-    padding: 19px 15px 18px;
+    /*padding: 19px 15px 18px;*/
 }
 .navbar .nav > li > a.btn {
     padding: 5px 10px;
