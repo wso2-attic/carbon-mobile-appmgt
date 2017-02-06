@@ -58,4 +58,15 @@ function registerEventHandlersForSelectableDropdowns(elements) {
 
 $(document).ready(function () {
     registerEventHandlersForSelectableDropdowns($('.dropdown-selectable'));
+
+    $('#cloud-menu-popover i.fw-tiles').popover({
+        html: true,
+        trigger:'click',
+        title: function() {
+            return $("#popover-head").html();
+        },
+        content: function() {
+            return $("#popover-content").html();
+        }
+    });
 });
