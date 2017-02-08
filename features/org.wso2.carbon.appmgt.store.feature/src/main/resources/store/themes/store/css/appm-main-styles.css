@@ -900,4 +900,13 @@ header .nav > li > a:hover {
 .add-padding-top-3x {
     padding-top: 15px !important;
 }
+
+.navbar-toggle .icon-bar{
+    background-color: #fff;
+}
+
+header .nav{
+    margin-right: -30px;
+}
+
 /*---*/
