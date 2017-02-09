@@ -59,7 +59,7 @@ function registerEventHandlersForSelectableDropdowns(elements) {
 $(document).ready(function () {
     registerEventHandlersForSelectableDropdowns($('.dropdown-selectable'));
 
-    $('#cloud-menu-popover-xs i.fw-tiles, #cloud-menu-popover i.fw-tiles').popover({
+    $('#cloud-menu-popover i.fw-tiles').popover({
         html: true,
         trigger:'click',
         title: function() {
@@ -69,4 +69,18 @@ $(document).ready(function () {
             return $("#popover-content").html();
         }
     });
+
+    $('#cloud-menu-popover-xs i.fw-tiles').popover({
+        html: true,
+        placement: 'bottom',
+        container: '.header .navbar-header',
+        trigger:'click',
+        title: function() {
+            return $("#popover-head").html();
+        },
+        content: function() {
+            return $("#popover-content").html();
+        }
+    });
+
 });
