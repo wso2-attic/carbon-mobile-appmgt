@@ -775,7 +775,7 @@ header .nav .open > a, header .nav .open > a:hover, header .nav .open > a:focus 
     background: black;
 }
 .nav>li>a{
-    padding: 6px 15px;
+    padding: 5px 10px;
     color: #fff;
 }
 header .nav > li > a:hover {
@@ -900,4 +900,78 @@ header .nav > li > a:hover {
 .add-padding-top-3x {
     padding-top: 15px !important;
 }
+
+.navbar-toggle .icon-bar{
+    background-color: #fff;
+}
+
+.nav>li{
+    float: left;
+}
+
+header .nav{
+    margin-right: 0px;
+}
+
+#cloud-menu-popover-xs {
+    margin-top: 5px;
+    color: #fff;
+    padding: 6px 10px;
+    border: none;
+}
+
+.navbar-inverse .navbar-brand, .navbar-inverse .navbar-nav>li>a {
+    color: #fff;
+}
+
+.navbar-inverse {
+    border-color: #222;
+    background-color:#222 ;
+}
+
+.navbar-inverse .navbar-collapse, .navbar-inverse .navbar-form {
+    border-color: #101010;
+}
+
+.dropdown-menu li {
+    float: left;
+    border: none;
+    width: 200px;
+}
+
+.navbar-nav>li {
+    float: left;
+}
+
+header .brand{
+    float: left;
+    height: 50px;
+    padding: 15px 15px;
+    font-size: 18px;
+    line-height: 20px;
+    color: #fff;
+}
+
+header .brand img.logo {
+    height: 24px;
+    padding-right: 10px;
+}
+
+@media (max-width: 767px){
+    .display-block{
+        display: block !important;
+    }
+}
+
+@media (max-width: 480px){
+    .navbar-header .popover {
+        width: 100%;
+        max-width: 100%;
+    }
+    .display-block{
+        display: block;
+    }
+}
+
+
 /*---*/

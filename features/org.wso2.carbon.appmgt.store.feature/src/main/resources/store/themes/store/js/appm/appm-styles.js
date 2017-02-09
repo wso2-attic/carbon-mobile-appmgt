@@ -59,7 +59,7 @@ function registerEventHandlersForSelectableDropdowns(elements) {
 $(document).ready(function () {
     registerEventHandlersForSelectableDropdowns($('.dropdown-selectable'));
 
-    $('#cloud-menu-popover i.fw-tiles').popover({
+    $('#cloud-menu-popover-xs i.fw-tiles, #cloud-menu-popover i.fw-tiles').popover({
         html: true,
         trigger:'click',
         title: function() {
