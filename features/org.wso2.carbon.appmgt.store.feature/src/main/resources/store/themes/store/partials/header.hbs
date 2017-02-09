@@ -245,26 +245,41 @@
                 </div>
             </div>
         {{else}}
-            {{#unless hideLogin}}
-                {{#if sso}}
-                    <a href="{{tenantedUrl "/login?header=true"}}" class="header-action">
-                        <span class="icon"><i class="glyphicon glyphicon-off add-padding-right-1x"></i></span>
-                        <span class="text-uppercase">{{t "Sign In"}}</span>
-                    </a>
-                {{else}}
-                    <a href="#" class="header-action" data-toggle="modal" data-target="#modal-login">
-                        <span class="icon"><i class="glyphicon glyphicon-off add-padding-right-1x"></i></span>
-                        <span class="text-uppercase">{{t "Sign In"}}</span>
-                    </a>
-                {{/if}}
-                {{#if isSelfSignUpEnabledForTenant}}
-                    <a href="#" class="header-action" data-toggle="modal" data-target="#register-modal">
-                        <span class="icon"><i class="fw fw-sign-up add-padding-right-1x"></i></span>
-                        <span class="text-uppercase">register</span>
-                    </a>
-                    {{>register}}
-                {{/if}}
-            {{/unless}}
+            <nav class="navbar navbar-inverse navbar-fixed-top">
+                <div class="container-fluid">
+                    <!-- Brand and toggle get grouped for better mobile display -->
+                    <div class="navbar-header">
+                        <div class="brand">
+                            <a href="{{url "/"}}">
+                                <img src="{{customThemeUrl "/libs/theme-wso2_1.0/images/logo-inverse.svg"}}" alt="apps-store"
+                                     title="apps-store" class="logo"/>APP Store
+                            </a>
+                        </div>
+                    </div>
+                    <ul class="nav navbar-right float-remove-xs">
+                        {{#unless hideLogin}}
+                            {{#if sso}}
+                                <a href="{{tenantedUrl "/login?header=true"}}" class="header-action">
+                                    <span class="icon"><i class="glyphicon glyphicon-off add-padding-right-1x"></i></span>
+                                    <span class="text-uppercase">{{t "Sign In"}}</span>
+                                </a>
+                            {{else}}
+                                <a href="#" class="header-action" data-toggle="modal" data-target="#modal-login">
+                                    <span class="icon"><i class="glyphicon glyphicon-off add-padding-right-1x"></i></span>
+                                    <span class="text-uppercase">{{t "Sign In"}}</span>
+                                </a>
+                            {{/if}}
+                            {{#if isSelfSignUpEnabledForTenant}}
+                                <a href="#" class="header-action" data-toggle="modal" data-target="#register-modal">
+                                    <span class="icon"><i class="fw fw-sign-up add-padding-right-1x"></i></span>
+                                    <span class="text-uppercase">register</span>
+                                </a>
+                                {{>register}}
+                            {{/if}}
+                        {{/unless}}
+                    </ul>
+                </div>
+            </nav>
         {{/if}}
 
         <!--<div class="auth remove-margin-right pull-right float-remove-xs text-center-xs">
