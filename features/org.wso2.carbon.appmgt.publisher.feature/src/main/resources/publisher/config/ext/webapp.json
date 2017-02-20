@@ -6,7 +6,6 @@
         "/modules/ext/scripts/rxt.importer.js",
         "/modules/ext/scripts/form.exporter.js",
         "/modules/ext/scripts/asset.exporter.js",
-        "/modules/ext/scripts/webapp.action.save.js",
  	"/modules/ext/scripts/asset.lifecycle.action.save.js",
         "/modules/ext/scripts/form.importer.js"],
 
