@@ -11,7 +11,6 @@ import org.wso2.carbon.appmgt.rest.api.publisher.dto.LifeCycleDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.LifeCycleHistoryListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.PListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.ResponseMessageDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.StatSummaryDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.StaticContentDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.TierListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.UserIdListDTO;
@@ -399,30 +398,6 @@ public class AppsApi  {
     @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch)
     {
     return delegate.appsAppTypeThrottlingtiersGet(appType, accept, ifNoneMatch);
-    }
-    @GET
-    @Path("/{appType}/stats/{statType}")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get Stat summary", notes = "Get Stat summary results.", response = StatSummaryDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nThe resource to be updated does not exist.") })
-
-    public Response appsAppTypeStatsStatTypeGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "Stat Type.",required=true ) @PathParam("statType") String statType,
-    @ApiParam(value = "Start date/time of the stat analysis (2016-04-19#10:32:00)") @QueryParam("startTimeStamp") String startTimeStamp,
-    @ApiParam(value = "End date/time of the stat analysis (2016-04-19#10:32:00)") @QueryParam("endTimeStamp") String endTimeStamp,
-    @ApiParam(value = "Limit of records") @QueryParam("limit") Integer limit,
-    @ApiParam(value = "Media types acceptable for the response. Default is JSON."  , defaultValue="JSON")@HeaderParam("Accept") String accept,
-    @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch)
-    {
-    return delegate.appsAppTypeStatsStatTypeGet(appType,statType,startTimeStamp,endTimeStamp,limit,accept,ifNoneMatch);
     }
     @POST
     @Path("/{appType}/validate-context")

@@ -21,23 +21,32 @@ package org.wso2.carbon.appmgt.impl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonConstants;
-import org.wso2.carbon.appmgt.api.*;
-import org.wso2.carbon.appmgt.api.model.*;
+import org.wso2.carbon.appmgt.api.APIManager;
+import org.wso2.carbon.appmgt.api.AppManagementException;
+import org.wso2.carbon.appmgt.api.AppMgtAuthorizationFailedException;
+import org.wso2.carbon.appmgt.api.AppMgtResourceAlreadyExistsException;
+import org.wso2.carbon.appmgt.api.AppMgtResourceNotFoundException;
+import org.wso2.carbon.appmgt.api.model.APIIdentifier;
+import org.wso2.carbon.appmgt.api.model.APIKey;
+import org.wso2.carbon.appmgt.api.model.Icon;
+import org.wso2.carbon.appmgt.api.model.Subscriber;
+import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.impl.dao.AppMDAO;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
-import org.wso2.carbon.appmgt.impl.utils.APINameComparator;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.appmgt.impl.utils.TierNameComparator;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
 import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
 import org.wso2.carbon.governance.api.util.GovernanceUtils;
-import org.wso2.carbon.registry.core.*;
+import org.wso2.carbon.registry.core.ActionConstants;
 import org.wso2.carbon.registry.core.Collection;
+import org.wso2.carbon.registry.core.Registry;
+import org.wso2.carbon.registry.core.RegistryConstants;
+import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.config.RegistryContext;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.jdbc.realm.RegistryAuthorizationManager;
-import org.wso2.carbon.registry.core.secure.AuthorizationFailedException;
 import org.wso2.carbon.registry.core.session.UserRegistry;
 import org.wso2.carbon.registry.core.utils.RegistryUtils;
 import org.wso2.carbon.user.api.AuthorizationManager;
@@ -46,7 +55,10 @@ import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The basic abstract implementation of the core APIManager interface. This implementation uses
@@ -206,127 +218,6 @@ public abstract class AbstractAPIManager implements APIManager {
 
     public void cleanup() {
 
-    }
-
-    public List<WebApp> getAllAPIs() throws AppManagementException {
-        List<WebApp> apiSortedList = new ArrayList<WebApp>();
-        boolean isTenantFlowStarted = false;
-        try {
-        	if(tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain))	{
-        		isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-        	}
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.API_KEY);
-            GenericArtifact[] artifacts = artifactManager.getAllGenericArtifacts();
-            for (GenericArtifact artifact : artifacts) {
-                apiSortedList.add(AppManagerUtil.getAPI(artifact));
-            }
-
-        } catch (RegistryException e) {
-            handleException("Failed to get APIs from the registry", e);
-        } finally {
-        	if (isTenantFlowStarted) {
-        		PrivilegedCarbonContext.endTenantFlow();
-        	}
-        }
-
-        Collections.sort(apiSortedList, new APINameComparator());
-        return apiSortedList;
-    }
-
-    public List<WebApp> getAllAPIs(String appType) throws AppManagementException {
-        List<WebApp> apiSortedList = new ArrayList<WebApp>();
-        boolean isTenantFlowStarted = false;
-        try {
-            if (tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-            }
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            GenericArtifact[] artifacts = artifactManager.getAllGenericArtifacts();
-            for (GenericArtifact artifact : artifacts) {
-                apiSortedList.add(AppManagerUtil.getGenericApp(artifact));
-            }
-
-        } catch (RegistryException e) {
-            handleException("Failed to get APIs from the registry", e);
-        } finally {
-            if (isTenantFlowStarted) {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
-        }
-
-        Collections.sort(apiSortedList, new APINameComparator());
-        return apiSortedList;
-    }
-
-    public WebApp getAPI(APIIdentifier identifier) throws AppManagementException {
-        String apiPath = AppManagerUtil.getAPIPath(identifier);
-        try {
-            String tenantDomain = MultitenantUtils.getTenantDomain(AppManagerUtil.replaceEmailDomainBack(identifier.getProviderName()));
-            Registry registry;
-            if (!tenantDomain.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME)) {
-                int id = ServiceReferenceHolder.getInstance().getRealmService().getTenantManager().getTenantId(tenantDomain);
-                registry = ServiceReferenceHolder.getInstance().
-                        getRegistryService().getGovernanceSystemRegistry(id);
-            } else {
-                if (this.tenantDomain != null && !this.tenantDomain.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME)) {
-                    registry = ServiceReferenceHolder.getInstance().
-                            getRegistryService().getGovernanceUserRegistry(identifier.getProviderName(), MultitenantConstants.SUPER_TENANT_ID);
-                } else {
-                    if (this.tenantDomain != null && !this.tenantDomain.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME)) {
-                        registry = ServiceReferenceHolder.getInstance().
-                                getRegistryService().getGovernanceUserRegistry(identifier.getProviderName(), MultitenantConstants.SUPER_TENANT_ID);
-                    } else {
-                        registry = this.registry;
-                    }
-                }
-            }
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.API_KEY);
-            Resource apiResource = null;
-            try {
-                apiResource = registry.get(apiPath);
-            } catch (AuthorizationFailedException ex) {
-                log.warn("Retrieving app details for the app : " + identifier.getApiName() + " of user : " + username + ". But user do not have " +
-                        "permission to the app.");
-                return null;
-            }
-            String artifactId = apiResource.getUUID();
-            if (artifactId == null) {
-                throw new AppManagementException("artifact id is null for : " + apiPath);
-            }
-            GenericArtifact apiArtifact = artifactManager.getGenericArtifact(artifactId);
-            return AppManagerUtil.getAPI(apiArtifact, registry);
-
-        } catch (RegistryException e) {
-            handleException("Failed to get WebApp from : " + apiPath, e);
-            return null;
-        } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            handleException("Failed to get WebApp from : " + apiPath, e);
-            return null;
-        }
-    }
-
-    public WebApp getAPI(String apiPath) throws AppManagementException {
-        try {
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.API_KEY);
-            Resource apiResource = registry.get(apiPath);
-            String artifactId = apiResource.getUUID();
-            if (artifactId == null) {
-                throw new AppManagementException("artifact id is null for : " + apiPath);
-            }
-            GenericArtifact apiArtifact = artifactManager.getGenericArtifact(artifactId);
-            return AppManagerUtil.getAPI(apiArtifact);
-
-        } catch (RegistryException e) {
-            handleException("Failed to get WebApp from : " + apiPath, e);
-            return null;
-        }
     }
 
     public boolean isAPIAvailable(APIIdentifier identifier) throws AppManagementException {
@@ -533,38 +424,6 @@ public abstract class AbstractAPIManager implements APIManager {
         return null;
     }
 
-    public Set<WebApp> getSubscriberAPIs(Subscriber subscriber) throws AppManagementException {
-        SortedSet<WebApp> apiSortedSet = new TreeSet<WebApp>(new APINameComparator());
-        Set<SubscribedAPI> subscribedAPIs = appMDAO.getSubscribedAPIs(subscriber);
-        boolean isTenantFlowStarted = false;
-        try {
-	        if(tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)){
-	        	isTenantFlowStarted = true;
-	            PrivilegedCarbonContext.startTenantFlow();
-	            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-	        }
-	        for (SubscribedAPI subscribedAPI : subscribedAPIs) {
-	            String apiPath = AppManagerUtil.getAPIPath(subscribedAPI.getApiId());
-	            Resource resource;
-	            try {
-	                resource = registry.get(apiPath);
-	                GenericArtifactManager artifactManager = new GenericArtifactManager(registry, AppMConstants.API_KEY);
-	                GenericArtifact artifact = artifactManager.getGenericArtifact(
-	                        resource.getUUID());
-	                WebApp api = AppManagerUtil.getAPI(artifact, registry);
-	                apiSortedSet.add(api);
-	            } catch (RegistryException e) {
-	                handleException("Failed to get APIs for subscriber: " + subscriber.getName(), e);
-	            }
-	        }
-        } finally {
-        	if (isTenantFlowStarted) {
-        		PrivilegedCarbonContext.endTenantFlow();
-        	}
-        }
-        return apiSortedSet;
-    }
-
     protected void handleException(String msg, Exception e) throws AppManagementException {
         log.error(msg, e);
         throw new AppManagementException(msg, e);
@@ -618,26 +477,6 @@ public abstract class AbstractAPIManager implements APIManager {
             }
         }
 
-    }
-   
-    public WebApp getAPI(APIIdentifier identifier,APIIdentifier oldIdentifier) throws
-                                                                               AppManagementException {
-        String apiPath = AppManagerUtil.getAPIPath(identifier);
-        try {
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.API_KEY);
-            Resource apiResource = registry.get(apiPath);
-            String artifactId = apiResource.getUUID();
-            if (artifactId == null) {
-                throw new AppManagementException("artifact id is null for : " + apiPath);
-            }
-            GenericArtifact apiArtifact = artifactManager.getGenericArtifact(artifactId);
-            return AppManagerUtil.getAPI(apiArtifact, registry,oldIdentifier);
-
-        } catch (RegistryException e) {
-            handleException("Failed to get WebApp from : " + apiPath, e);
-            return null;
-        }
     }
 
     /**

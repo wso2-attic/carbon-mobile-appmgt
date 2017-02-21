@@ -17,7 +17,6 @@
 package org.wso2.carbon.appmgt.api;
 
 import org.wso2.carbon.appmgt.api.dto.AppHitsStatsDTO;
-import org.wso2.carbon.appmgt.api.dto.AppPageUsageDTO;
 import org.wso2.carbon.appmgt.api.dto.AppResourcePathUsageDTO;
 import org.wso2.carbon.appmgt.api.dto.AppResponseFaultCountDTO;
 import org.wso2.carbon.appmgt.api.dto.AppResponseTimeDTO;
@@ -97,22 +96,6 @@ public interface AppUsageStatisticsClient {
      */
     public List<AppResourcePathUsageDTO> getAppUsageByResourcePath(String providerName, String fromDate,
                                                                    String toDate)
-            throws AppUsageQueryServiceClientException;
-
-    /**
-     * Returns a list of AppPageUsageDTO objects that contain information related to a
-     * particular WebApp of a specified provider, along with the number of WebApp calls processed
-     * by each resource page of that WebApp.
-     *
-     * @param providerName Name of the WebApp provider
-     * @param fromDate
-     * @param toDate
-     * @param tenantDomainName
-     * @return a List of AppPageUsageDTO objects, possibly empty
-     * @throws org.wso2.carbon.appmgt.api.exception.AppUsageQueryServiceClientException on error
-     */
-    public List<AppPageUsageDTO> getAppUsageByPage(String providerName, String fromDate, String toDate,
-                                                   String tenantDomainName)
             throws AppUsageQueryServiceClientException;
 
     /**

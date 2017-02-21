@@ -20,7 +20,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.appmgt.api.AppUsageStatisticsClient;
 import org.wso2.carbon.appmgt.api.dto.AppHitsStatsDTO;
-import org.wso2.carbon.appmgt.api.dto.AppPageUsageDTO;
 import org.wso2.carbon.appmgt.api.dto.AppResourcePathUsageDTO;
 import org.wso2.carbon.appmgt.api.dto.AppResponseFaultCountDTO;
 import org.wso2.carbon.appmgt.api.dto.AppResponseTimeDTO;
@@ -85,15 +84,6 @@ public class AppUsageStatisticsService {
         synchronized (userName) {
             appUsageStatisticsClient.initialize(userName);
             return appUsageStatisticsClient.getAppUsageByResourcePath(providerName, fromDate, toDate);
-        }
-    }
-
-    public List<AppPageUsageDTO> getAppUsageByPage(String providerName, String fromDate, String toDate
-            , String tenantDomainName)
-            throws AppUsageQueryServiceClientException {
-        synchronized (userName) {
-            appUsageStatisticsClient.initialize(userName);
-            return appUsageStatisticsClient.getAppUsageByPage(providerName, fromDate, toDate, tenantDomainName);
         }
     }
 

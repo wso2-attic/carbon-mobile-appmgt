@@ -31,10 +31,8 @@ import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.Provider;
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
-import org.wso2.carbon.appmgt.api.model.Tag;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.api.model.Usage;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicy;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyValidationResult;
@@ -55,17 +53,6 @@ public interface APIProvider extends APIManager {
      * @throws AppManagementException if failed to get Providers
      */
     public Set<Provider> getAllProviders() throws AppManagementException;
-
-    /**
-     * Get a list of APIs published by the given provider. If a given WebApp has multiple APIs,
-     * only the latest version will
-     * be included in this list.
-     *
-     * @param providerId , provider id
-     * @return set of WebApp
-     * @throws AppManagementException if failed to get set of WebApp
-     */
-    public List<WebApp> getAPIsByProvider(String providerId) throws AppManagementException;
 
     /**
      * Get a list of all the consumers for all APIs
@@ -151,8 +138,6 @@ public interface APIProvider extends APIManager {
      */
     public Map<String, List> getSubscribedAPPsByUsers(String fromDate, String toDate)
             throws AppManagementException;
-
-    public List<WebApp> getAppsWithEndpoint(String tenantDomain) throws AppManagementException;
 
     public void addTier(Tier tier) throws AppManagementException;
 
@@ -275,28 +260,12 @@ public interface APIProvider extends APIManager {
             throws AppManagementException;
 
     /**
-     * Adds a new WebApp to the Store
-     *
-     * @param api WebApp
-     * @throws AppManagementException if failed to add WebApp
-     */
-    public void addWebApp(WebApp api) throws AppManagementException;
-
-    /**
      * Adds a new Mobile Application to the Store
      *
      * @param mobileApp Mobile application
      * @throws AppManagementException if failed to add MobileApp
      */
     public String createMobileApp(MobileApp mobileApp) throws AppManagementException;
-
-    /**
-     * Add new webapp
-     * @param webApp
-     * @return
-     * @throws AppManagementException
-     */
-    public String createWebApp(WebApp webApp) throws AppManagementException;
 
     /**
      *
@@ -329,33 +298,12 @@ public interface APIProvider extends APIManager {
      */
 
     /**
-     * Returns details of an WebApp
-     *
-     * @param uuid uuid of the App
-     * @return An WebApp object related to the given identifier or null
-     * @throws AppManagementException if failed get WebApp from APIIdentifier
-     */
-    public WebApp getWebApp(String uuid) throws AppManagementException;
-
-    /**
      * Returns details of a Mobile App
      * @param uuid  uuid of the App
      * @return A MobileApp object related ro given identifier or null
      * @throws AppManagementException
      */
     public MobileApp getMobileApp(String uuid) throws AppManagementException;
-
-    /**
-     * This method used to update the WebApp definition content - Swagger
-     *
-     * @param identifier,        WebApp identifier
-     * @param documentationName, name of the inline documentation
-     * @param text,              content of the inline documentation
-     * @throws AppManagementException
-     *          if failed to add the document as a resource to registry
-     */
-    public void addAPIDefinitionContent(APIIdentifier identifier, String documentationName, String text)
-    					throws AppManagementException;
 
     /**
      * Returns the details of all the life-cycle changes done per WebApp.
@@ -366,17 +314,6 @@ public interface APIProvider extends APIManager {
      */
     public List<LifeCycleEvent> getLifeCycleEvents(APIIdentifier apiId)
             throws AppManagementException;
-
-    /**
-     * Search WebApp
-     *
-     * @param searchTerm  Search Term
-     * @param searchType  Search Type
-     * @return   Set of APIs
-     * @throws AppManagementException
-     */
-    public List<WebApp> searchAPIs(String searchTerm, String searchType, String providerId) throws
-                                                                                            AppManagementException;
 
     /**
      *
@@ -452,24 +389,6 @@ public interface APIProvider extends APIManager {
 
     public List<String> getCustomOutSequences()  throws AppManagementException;
 
-
-    /**
-     * Get the all web apps of tenant
-     *
-     * @return web apps
-     * @throws AppManagementException
-     */
-    public List<WebApp> getAllWebApps(String tenantDomain) throws AppManagementException;
-
-
-    /**
-     * Get the all web apps
-     *
-     * @return web apps
-     * @throws AppManagementException
-     */
-    public List<WebApp> getAllWebApps() throws AppManagementException;
-
     /**
      * This method returns the subscription count of apps for given period.
      *
@@ -502,17 +421,6 @@ public interface APIProvider extends APIManager {
      *@throws org.wso2.carbon.appmgt.api.AppManagementException
      */
     public String getTrackingID(String uuid)throws AppManagementException;
-
-
-
-    /**
-     * Update (add/delete) the the app in external stores.
-     * @param webApp Web App
-     * @param appStores External App Stores
-     * @throws AppManagementException
-     */
-    public void updateAppsInExternalAppStores(WebApp webApp, Set<AppStore> appStores)
-            throws AppManagementException;
 
     /**
      * Get the external app stores for given identifier.
@@ -551,15 +459,6 @@ public interface APIProvider extends APIManager {
      * @throws AppManagementException
      */
     public boolean hasMoreVersions(APIIdentifier identifier) throws AppManagementException;
-
-    /**
-     * Get WebApp basic details by app uuid.
-     *
-     * @param uuid
-     * @return WebApp details corresponding to the given Id
-     * @throws AppManagementException
-     */
-    public WebApp getAppDetailsFromUUID(String uuid) throws AppManagementException;
 
     /**
      * Change the lifecycle status of a given application

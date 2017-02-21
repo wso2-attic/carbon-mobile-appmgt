@@ -31,29 +31,6 @@ import java.util.Set;
 public interface APIManager {
 
     /**
-     * Returns a list of all existing APIs by all providers. The WebApp objects returned by this
-     * method may be partially initialized (due to performance reasons). Each WebApp instance
-     * is guaranteed to have the WebApp name, version, provider name, context, status and icon URL.
-     * All other fields may not be initialized. Therefore, the objects returned by this method
-     * must not be used to access any metadata item related to an WebApp, other than the ones listed
-     * above. For that purpose a fully initialized WebApp object instance should be acquired by
-     * calling the getAPI(APIIdentifier) method.
-     *
-     * @return a List of WebApp objects (partially initialized), possibly empty
-     * @throws AppManagementException on error
-     */
-    public List<WebApp> getAllAPIs() throws AppManagementException;
-
-    /**
-     * Returns details of an WebApp
-     *
-     * @param identifier APIIdentifier
-     * @return An WebApp object related to the given identifier or null
-     * @throws AppManagementException if failed get WebApp from APIIdentifier
-     */
-    public WebApp getAPI(APIIdentifier identifier) throws AppManagementException;
-
-    /**
      * Checks the Availability of given APIIdentifier
      *
      * @param identifier APIIdentifier
@@ -106,15 +83,6 @@ public interface APIManager {
      * @throws AppManagementException if failed to get Subscriber
      */
     public Subscriber getSubscriber(int subscriberId) throws AppManagementException;
-
-    /**
-     * Returns a set of APIs purchased by the given Subscriber
-     *
-     * @param subscriber Subscriber
-     * @return Set<WebApp>
-     * @throws AppManagementException if failed to get WebApp for subscriber
-     */
-    public Set<WebApp> getSubscriberAPIs(Subscriber subscriber) throws AppManagementException;
 
     /**
      * Associates the given icon image with the specified path.

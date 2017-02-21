@@ -36,15 +36,6 @@ public interface APIConsumer extends APIManager {
     public Subscriber getSubscriber(String subscriberId) throws AppManagementException;
 
     /**
-     * Returns a list of all published APIs. If a given WebApp has multiple APIs, only the latest version will be
-     * included in this list.
-     *
-     * @return set of WebApp
-     * @throws AppManagementException if failed to WebApp set
-     */
-    public Set<WebApp> getAllPublishedAPIs(String tenantDomain) throws AppManagementException;
-
-    /**
      * Returns a paginated list of all published APIs. If a given WebApp has multiple APIs, only the latest version will
      * be included in this list.
      *
@@ -56,17 +47,6 @@ public interface APIConsumer extends APIManager {
      */
     public Map<String, Object> getAllPaginatedPublishedAPIs(String tenantDomain, int start, int end) throws
                                                                                                      AppManagementException;
-
-    /**
-     * Returns top rated APIs
-     *
-     * @param limit if -1, no limit. Return everything else, limit the return list to specified value.
-     * @return Set of WebApp
-     * @throws AppManagementException if failed to get top rated APIs
-     */
-    public Set<WebApp> getTopRatedAPIs(int limit) throws AppManagementException;
-
-
     /**
      * Get average rating of an App by UUID
      *
@@ -77,15 +57,6 @@ public interface APIConsumer extends APIManager {
      */
     public float getAverageRating(String uuid, String assetType) throws AppManagementException;
 
-    /**
-     * Get recently added APIs to the store
-     *
-     * @param limit if -1, no limit. Return everything else, limit the return list to specified value.
-     * @return set of WebApp
-     * @throws AppManagementException if failed to get recently added APIs
-     */
-    public Set<WebApp> getRecentlyAddedAPIs(int limit, String tenantDomain) throws
-                                                                            AppManagementException;
     /**
      * Returns a set of SubscribedAPI purchased by the given Subscriber
      *
@@ -180,15 +151,6 @@ public interface APIConsumer extends APIManager {
             throws AppManagementException;
 
     /**
-     * Returns details of an WebApp
-     *
-     * @param uuid uuid of the A
-     * @return An WebApp object related to the given identifier or null
-     * @throws AppManagementException if failed get WebApp from APIIdentifier
-     */
-    public WebApp getWebApp(String uuid) throws AppManagementException;
-
-    /**
      * Adds an application
      *
      * @param application Application
@@ -210,36 +172,9 @@ public interface APIConsumer extends APIManager {
                                                        APIIdentifier identifier) throws
                                                                                  AppManagementException;
 
-    public Set<WebApp> searchAPI(String searchTerm, String searchType, String tenantDomain) throws
-                                                                                            AppManagementException;
-
     public Map<String, Object> searchPaginatedAPIs(String searchTerm, String searchType, String tenantDomain, int start,
                                                    int end) throws
                                                             AppManagementException;
-
-
-    /**
-     * Get a list of published APIs by the given provider.
-     *
-     * @param providerId , provider id
-     * @param loggedUser logged user
-     * @param limit      Maximum number of results to return. Pass -1 to get all.
-     * @return set of WebApp
-     * @throws AppManagementException if failed to get set of WebApp
-     */
-    public Set<WebApp> getPublishedAPIsByProvider(String providerId, String loggedUser, int limit) throws
-                                                                                                   AppManagementException;
-
-    /**
-     * /** Get a list of published APIs by the given provider.
-     *
-     * @param providerId , provider id
-     * @param limit      Maximum number of results to return. Pass -1 to get all.
-     * @return set of WebApp
-     * @throws AppManagementException if failed to get set of WebApp
-     */
-    public Set<WebApp> getPublishedAPIsByProvider(String providerId, int limit) throws
-                                                                                AppManagementException;
 
     /**
      * Check whether an application access token is already persist in database.
@@ -307,6 +242,5 @@ public interface APIConsumer extends APIManager {
 
     public boolean isSubscribedToMobileApp(String userId, String appId) throws AppManagementException;
 
-    public void addSubscription(String subscriberName, WebApp webApp, String applicationName) throws AppManagementException;
 
 }
