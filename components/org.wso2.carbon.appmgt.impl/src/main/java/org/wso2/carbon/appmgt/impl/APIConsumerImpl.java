@@ -1488,39 +1488,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
     }
 
     @Override
-    public void addToFavouriteApps(APIIdentifier identifier, String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        appMDAO.addToFavouriteApps(identifier, username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public void removeFromFavouriteApps(APIIdentifier identifier, String username, int tenantIdOfUser,
-                                        int tenantIdOfStore)
-            throws AppManagementException {
-        appMDAO.removeFromFavouriteApps(identifier, username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public boolean isFavouriteApp(APIIdentifier identifier, String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        return appMDAO.isFavouriteApp(identifier, username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public List<APIIdentifier> getFavouriteApps(String username, int tenantIdOfUser, int tenantIdOfStore,
-                                                WebAppSortOption sortOption)
-            throws AppManagementException {
-        return appMDAO.getFavouriteApps(username, tenantIdOfUser, tenantIdOfStore, sortOption);
-    }
-
-    @Override
-    public List<APIIdentifier> searchFavouriteApps(String username, int tenantIdOfUser, int tenantIdOfStore,
-                                                   WebAppSearchOption searchOption, String searchValue)
-            throws AppManagementException {
-        return appMDAO.searchFavouriteApps(username, tenantIdOfUser, tenantIdOfStore, searchOption, searchValue);
-    }
-
-    @Override
     public List<APIIdentifier> getUserAccessibleApps(String username, int tenantIdOfUser, int tenantIdOfStore,
                                                      WebAppSortOption sortOption, boolean treatAsSite)
             throws AppManagementException {
@@ -1546,24 +1513,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
         return appMDAO.searchUserAccessibleApps(username, tenantIdOfUser, tenantIdOfStore, treatAsSite, searchOption,
                                                 searchValue, anonnymousUserRegistry);
-    }
-
-    @Override
-    public void setFavouritePage(String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        appMDAO.addToStoreFavouritePage(username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public void removeFavouritePage(String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        appMDAO.removeFromStoreFavouritePage(username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public boolean hasFavouritePage(String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        return appMDAO.hasFavouritePage(username, tenantIdOfUser, tenantIdOfStore);
     }
 
     @Override
