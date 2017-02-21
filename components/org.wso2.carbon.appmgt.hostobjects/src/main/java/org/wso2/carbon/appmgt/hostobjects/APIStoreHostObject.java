@@ -29,7 +29,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jaggeryjs.scriptengine.exceptions.ScriptException;
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
@@ -45,8 +44,6 @@ import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIKey;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.Application;
-import org.wso2.carbon.appmgt.api.model.BusinessOwner;
-import org.wso2.carbon.appmgt.api.model.BusinessOwnerProperty;
 import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.DocumentationType;
 import org.wso2.carbon.appmgt.api.model.SubscribedAPI;
@@ -219,50 +216,6 @@ public class APIStoreHostObject extends ScriptableObject {
             handleException("WebApp key manager URL unspecified");
         }
         return url;
-    }
-
-    /**
-     * Retrieve the business Owner
-     * @param cx      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return shared policy partials
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public static NativeObject jsFunction_getBusinessOwner(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws
-            AppManagementException {
-
-        if (args == null || args.length != 2) {
-            throw new AppManagementException("Invalid number of arguments. Arguments length should be one.");
-        }
-
-        int businessOwnerId = Integer.valueOf(args[0].toString());
-        int tenantId = Integer.valueOf(args[1].toString());
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-        BusinessOwner businessOwner = apiConsumer.getBusinessOwnerForAppStore(businessOwnerId, tenantId);
-        NativeObject row = new NativeObject();
-        row.put("businessOwnerId", row, businessOwner.getBusinessOwnerId());
-        row.put("businessOwnerName", row, businessOwner.getBusinessOwnerName());
-        row.put("businessOwnerEmail", row, businessOwner.getBusinessOwnerEmail());
-        row.put("businessOwnerDescription", row, businessOwner.getBusinessOwnerDescription());
-        row.put("businessOwnerSite", row, businessOwner.getBusinessOwnerSite());
-        List<BusinessOwnerProperty> businessOwnerPropertiesList = businessOwner.getBusinessOwnerPropertiesList();
-        if(businessOwnerPropertiesList != null) {
-            JSONObject businessOwnerPropertiesObject = new JSONObject();
-            for (int i = 0; i < businessOwnerPropertiesList.size(); i++) {
-                JSONObject businessOwnerPropertyObject = new JSONObject();
-                BusinessOwnerProperty businessOwnerProperty = businessOwnerPropertiesList.get(i);
-                businessOwnerPropertyObject.put("propertyValue", businessOwnerProperty.getPropertyValue());
-                businessOwnerPropertyObject.put("isShowingInStore", businessOwnerProperty.isShowingInStore());
-                businessOwnerPropertiesObject.put(businessOwnerProperty.getPropertyId(),businessOwnerPropertyObject);
-            }
-            row.put("businessOwnerProperties", row, businessOwnerPropertiesObject.toJSONString());
-        } else {
-            row.put("businessOwnerProperties", row, null);
-        }
-        return row;
     }
 
     /**
@@ -1226,8 +1179,6 @@ public class APIStoreHostObject extends ScriptableObject {
                 } else {
                     row.put("thumbnailurl", row, AppManagerUtil.prependWebContextRoot(api.getThumbnailUrl()));
                 }
-                row.put("bizOwner", row, api.getBusinessOwner());
-                row.put("bizOwnerMail", row, api.getBusinessOwnerEmail());
                 row.put("techOwner", row, api.getTechnicalOwner());
                 row.put("techOwnerMail", row, api.getTechnicalOwnerEmail());
                 row.put("visibility", row, api.getVisibility());
@@ -2504,29 +2455,6 @@ public class APIStoreHostObject extends ScriptableObject {
         }
         return status;
 
-    }
-
-    /**
-     * Returns business owner Ids by a prefix of business owner name.
-     *
-     * @param cx      context
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return business owner Ids List.
-     * @throws AppManagementException
-     */
-    public static List<String> jsFunction_getBusinessOwnerIdsByBusinessOwnerNameField(
-            Context cx, Scriptable thisObj, Object[] args, Function funObj) throws AppManagementException {
-        if (args == null || args.length != 2) {
-            handleException("Invalid number of parameters.");
-        }
-
-        String searchPrefix = args[0].toString();
-        int tenantId = Integer.valueOf(args[1].toString());
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-        List<String> businessOwnersList = apiConsumer.getBusinessOwnerIdsBySearchPrefix(searchPrefix, tenantId);
-        return businessOwnersList;
     }
 
     public static boolean jsFunction_removeSubscription(Context cx, Scriptable thisObj,

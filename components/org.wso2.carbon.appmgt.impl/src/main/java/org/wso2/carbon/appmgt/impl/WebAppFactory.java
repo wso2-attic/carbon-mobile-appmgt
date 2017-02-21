@@ -83,8 +83,6 @@ public class WebAppFactory extends AppFactory {
             webApp.setWadlUrl(artifact.getAttribute(AppMConstants.API_OVERVIEW_WADL));
             webApp.setTechnicalOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER));
             webApp.setTechnicalOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER_EMAIL));
-            webApp.setBusinessOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER));
-            webApp.setBusinessOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER_EMAIL));
             webApp.setVisibility(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBILITY));
             webApp.setVisibleRoles(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBLE_ROLES));
             webApp.setVisibleTenants(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBLE_TENANTS));

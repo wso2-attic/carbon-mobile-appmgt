@@ -110,43 +110,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
     }
 
     /**
-     * Get business owner for a given business owner id.
-     * @param businessOwnerId Id of business owner.
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public BusinessOwner  getBusinessOwner(int businessOwnerId) throws AppManagementException {
-        return appMDAO.getBusinessOwner(businessOwnerId, tenantId);
-    }
-
-    /**
-     * Get business owner for a given business owner id in public store.
-     * @param businessOwnerId
-     * @param appTenantId
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public BusinessOwner getBusinessOwnerForAppStore(int businessOwnerId, int appTenantId) throws
-                                                                                          AppManagementException {
-        return appMDAO.getBusinessOwner(businessOwnerId, appTenantId);
-    }
-
-    /**
-     * Returns business owner Ids by a prefix of business owner name.
-     * @param searchPrefix
-     * @param appTenantId
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public List<String> getBusinessOwnerIdsBySearchPrefix(String searchPrefix, int appTenantId) throws
-                                                                                          AppManagementException {
-        return appMDAO.getBusinessOwnerIdsBySearchPrefix(searchPrefix, appTenantId);
-    }
-
-    /**
      * Returns the set of APIs with the given tag from the taggedAPIs Map
      *
      * @param tag

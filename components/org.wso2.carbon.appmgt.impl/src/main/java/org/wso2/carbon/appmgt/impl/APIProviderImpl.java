@@ -36,7 +36,6 @@ import org.wso2.carbon.appmgt.api.model.APPLifecycleActions;
 import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.api.model.AppDefaultVersion;
 import org.wso2.carbon.appmgt.api.model.AppStore;
-import org.wso2.carbon.appmgt.api.model.BusinessOwner;
 import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.ExternalAppStorePublisher;
@@ -119,102 +118,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
     public APIProviderImpl(String username) throws AppManagementException {
         super(username);
-    }
-
-    /**
-     * Delete business owner.
-     * @param businessOwnerId ID of the owner.
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public boolean deleteBusinessOwner(String businessOwnerId) throws AppManagementException{
-        boolean isBusinessOwnerAssociatedWithApps = appMDAO.isBusinessOwnerAssociatedWithApps(businessOwnerId,
-                                                                                              registry, tenantDomain);
-        if (!isBusinessOwnerAssociatedWithApps) {
-            appMDAO.deleteBusinessOwner(businessOwnerId);
-            // return true if business owner is successfully deleted.
-            return true;
-        }
-        // return false if business owner is associated with one or more web apps.
-        return false;
-    }
-    /**
-     *Update a business owner.
-     * @param businessOwner
-     * @throws AppManagementException
-     */
-    @Override
-    public boolean updateBusinessOwner(BusinessOwner businessOwner) throws AppManagementException {
-        boolean isUpdated = false;
-        if (appMDAO.getBusinessOwner(businessOwner.getBusinessOwnerId(), tenantId) != null) {
-            appMDAO.updateBusinessOwner(businessOwner);
-            isUpdated =true;
-        }
-        return isUpdated;
-    }
-
-
-    /**
-     * Get all business Owners.
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public List<BusinessOwner> getBusinessOwners() throws AppManagementException {
-        return appMDAO.getBusinessOwners(tenantId);
-    }
-
-    /**
-     * Get business owners.
-     * @param businessOwnerId Business owner Id.
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public BusinessOwner getBusinessOwner(int businessOwnerId) throws AppManagementException {
-        return appMDAO.getBusinessOwner(businessOwnerId, tenantId);
-    }
-
-    /**
-     * Search business owners with pagination.
-     * @param startIndex
-     * @param pageSize
-     * @param searchValue
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public  List<BusinessOwner> searchBusinessOwners(int startIndex, int pageSize, String searchValue) throws
-                                                                                          AppManagementException {
-        return appMDAO.searchBusinessOwners(startIndex, pageSize, searchValue, tenantId);
-    }
-
-    @Override
-    public  int getBusinessOwnersCount() throws AppManagementException {
-        return appMDAO.getBusinessOwnersCount(tenantId);
-    }
-
-    /**
-     *Save business owner.
-     * @param businessOwner
-     * @throws AppManagementException
-     */
-    @Override
-    public int saveBusinessOwner(BusinessOwner businessOwner) throws AppManagementException {
-        return appMDAO.saveBusinessOwner(businessOwner, tenantId);
-    }
-
-    /**
-     * Get Business owner Id by owner name and email.
-     * @param businessOwnerName
-     * @param businessOwnerEmail
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public int getBusinessOwnerId(String businessOwnerName, String businessOwnerEmail) throws AppManagementException {
-        return appMDAO.getBusinessOwnerId(businessOwnerName, businessOwnerEmail, tenantId);
     }
 
     public Set<Provider> getAllProviders() throws AppManagementException {

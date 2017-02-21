@@ -37,7 +37,6 @@ import org.wso2.carbon.appmgt.api.dto.AppUsageByUserDTO;
 import org.wso2.carbon.appmgt.api.exception.AppUsageQueryServiceClientException;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.App;
-import org.wso2.carbon.appmgt.api.model.BusinessOwner;
 import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
@@ -471,16 +470,6 @@ public class AppsApiServiceImpl extends AppsApiService {
                 throw new AppManagementException("Context - " + webApp.getContext() + " already exists");
             }
         }
-
-        //check if the business owner exists
-        if (webApp.getBusinessOwner() != null) {
-            int businessOwnerId = Integer.parseInt(webApp.getBusinessOwner());
-            BusinessOwner businessOwner = appProvider.getBusinessOwner(businessOwnerId);
-            if (businessOwner == null) {
-                throw new AppManagementException("Invalid Business Owner - " + businessOwnerId);
-            }
-        }
-
 
         //check if the role/tiers are exists
         //iterate through all groups

@@ -66,8 +66,6 @@ public class WebApp extends App{
 
     private String technicalOwner;
     private String technicalOwnerEmail;
-    private String businessOwner;
-    private String businessOwnerEmail;
 
     private String visibility;
     private String visibleRoles;
@@ -212,23 +210,6 @@ public class WebApp extends App{
     public void setTechnicalOwnerEmail(String technicalOwnerEmail) {
         this.technicalOwnerEmail = technicalOwnerEmail;
     }
-
-    public String getBusinessOwner() {
-        return businessOwner;
-    }
-
-    public void setBusinessOwner(String businessOwner) {
-        this.businessOwner = businessOwner;
-    }
-
-    public String getBusinessOwnerEmail() {
-        return businessOwnerEmail;
-    }
-
-    public void setBusinessOwnerEmail(String businessOwnerEmail) {
-        this.businessOwnerEmail = businessOwnerEmail;
-    }
-
 
     public String getDescription() {
         return description;

@@ -169,8 +169,6 @@ public final class AppMConstants {
     public static final String API_URI_TEMPLATES ="uriTemplates_entry";
     public static final String API_OVERVIEW_TEC_OWNER ="overview_technicalOwner";
     public static final String API_OVERVIEW_TEC_OWNER_EMAIL ="overview_technicalOwnerEmail";
-    public static final String API_OVERVIEW_BUSS_OWNER ="overview_businessOwner";
-    public static final String API_OVERVIEW_BUSS_OWNER_EMAIL ="overview_businessOwnerEmail";
     public static final String API_OVERVIEW_VISIBILITY ="overview_visibility";
     public static final String API_OVERVIEW_VISIBLE_ROLES ="overview_visibleRoles";
     public static final String API_OVERVIEW_VISIBLE_TENANTS ="overview_visibleTenants";

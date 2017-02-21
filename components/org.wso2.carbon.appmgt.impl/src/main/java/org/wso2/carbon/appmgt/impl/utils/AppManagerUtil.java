@@ -211,8 +211,6 @@ public final class AppManagerUtil {
 			api.setWadlUrl(artifact.getAttribute(AppMConstants.API_OVERVIEW_WADL));
 			api.setTechnicalOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER));
 			api.setTechnicalOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER_EMAIL));
-			api.setBusinessOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER));
-			api.setBusinessOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER_EMAIL));
 			api.setVisibility(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBILITY));
 			api.setVisibleRoles(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBLE_ROLES));
 			api.setVisibleTenants(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBLE_TENANTS));
@@ -508,8 +506,6 @@ public final class AppManagerUtil {
             api.setWadlUrl(artifact.getAttribute(AppMConstants.API_OVERVIEW_WADL));
             api.setTechnicalOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER));
             api.setTechnicalOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER_EMAIL));
-            api.setBusinessOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER));
-            api.setBusinessOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER_EMAIL));
             api.setVisibility(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBILITY));
             api.setVisibleRoles(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBLE_ROLES));
             api.setVisibleTenants(artifact.getAttribute(AppMConstants.API_OVERVIEW_VISIBLE_TENANTS));
@@ -781,9 +777,6 @@ public final class AppManagerUtil {
 			artifact.setAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER, api.getTechnicalOwner());
 			artifact.setAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER_EMAIL,
 			                      api.getTechnicalOwnerEmail());
-			artifact.setAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER, api.getBusinessOwner());
-			artifact.setAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER_EMAIL,
-			                      api.getBusinessOwnerEmail());
 			artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBILITY, api.getVisibility());
 			artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBLE_ROLES, api.getVisibleRoles());
 			artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBLE_TENANTS,
@@ -929,8 +922,6 @@ public final class AppManagerUtil {
             artifact.setAttribute(AppMConstants.APP_IMAGES_THUMBNAIL, ""); //webApp.getThumbnailUrl()
             artifact.setAttribute(AppMConstants.APP_IMAGES_BANNER, "");
             artifact.setAttribute(AppMConstants.API_OVERVIEW_LOGOUT_URL, webApp.getLogoutURL());
-            artifact.setAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER, webApp.getBusinessOwner());
-            artifact.setAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER_EMAIL, webApp.getBusinessOwnerEmail());
             artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBILITY, StringUtils.join(webApp.getAppVisibility()));
             artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBLE_TENANTS, webApp.getVisibleTenants());
             artifact.setAttribute(AppMConstants.API_OVERVIEW_TRANSPORTS, webApp.getTransports());
@@ -2041,8 +2032,6 @@ public final class AppManagerUtil {
 			api.setWadlUrl(artifact.getAttribute(AppMConstants.API_OVERVIEW_WADL));
 			api.setTechnicalOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER));
 			api.setTechnicalOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_TEC_OWNER_EMAIL));
-			api.setBusinessOwner(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER));
-			api.setBusinessOwnerEmail(artifact.getAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER_EMAIL));
 			api.setEndpointSecured(Boolean.parseBoolean(artifact.getAttribute(AppMConstants.API_OVERVIEW_ENDPOINT_SECURED)));
 			api.setEndpointUTUsername(artifact.getAttribute(AppMConstants.API_OVERVIEW_ENDPOINT_USERNAME));
 			api.setEndpointUTPassword(artifact.getAttribute(AppMConstants.API_OVERVIEW_ENDPOINT_PASSWORD));

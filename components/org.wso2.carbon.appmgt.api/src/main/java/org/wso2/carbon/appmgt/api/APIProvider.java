@@ -23,7 +23,6 @@ import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.api.model.AppDefaultVersion;
 import org.wso2.carbon.appmgt.api.model.AppStore;
-import org.wso2.carbon.appmgt.api.model.BusinessOwner;
 import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
@@ -50,73 +49,6 @@ import java.util.Set;
  * APIProvider responsible for providing helper functionality
  */
 public interface APIProvider extends APIManager {
-
-
-    /**
-     * This methode is to delete a given business owner
-     *
-     * @param businessOwnerId ID of the owner.
-     * @throws AppManagementException
-     */
-    public boolean deleteBusinessOwner(String businessOwnerId) throws AppManagementException;
-
-    /**
-     * update a Business Owner.
-     * @return Integer
-     * @throws AppManagementException
-     */
-    public boolean updateBusinessOwner(BusinessOwner businessOwner) throws AppManagementException;
-
-
-    /**
-     * @return
-     * @throws AppManagementException
-     */
-    public List<BusinessOwner> getBusinessOwners() throws AppManagementException;
-
-    /**
-     * Return the owner properties of the given owner Id.
-     *
-     * @param businessOwnerId Business owner Id.
-     * @return
-     * @throws AppManagementException if failed to get business owner.
-     */
-    public BusinessOwner getBusinessOwner(int businessOwnerId) throws AppManagementException;
-
-    /**
-     * Search the business owners with page limitation.
-     * @param startIndex
-     * @param pageSize
-     * @param searchValue
-     * @return
-     * @throws AppManagementException
-     */
-    public List<BusinessOwner> searchBusinessOwners(int startIndex, int pageSize, String searchValue) throws
-                                                                                              AppManagementException;
-
-    /**
-     * Get the count of business owners.
-     * @return
-     * @throws AppManagementException
-     */
-    public  int getBusinessOwnersCount() throws AppManagementException;
-
-    /**
-     * Save a Business Owner.
-     * @return Integer
-     * @throws AppManagementException
-     */
-    public int saveBusinessOwner(BusinessOwner businessOwner) throws AppManagementException;
-
-    /**
-     * Get Business owner Id by owner name and email.
-     * @param businessOwnerName
-     * @param businessOwnerEmail
-     * @return
-     * @throws AppManagementException
-     */
-    public int getBusinessOwnerId(String businessOwnerName, String businessOwnerEmail) throws AppManagementException;
-
     /**
      * Returns a list of all #{@link org.wso2.carbon.apimgt.api.model.Provider} available on the system.
      *

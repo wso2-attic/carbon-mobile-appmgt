@@ -403,7 +403,6 @@ public class APPMappingUtil {
             dto.setContext(context);
         }
 
-        dto.setBusinessOwnerId(webapp.getBusinessOwner());
         dto.setAppUrL(webapp.getUrl());
         dto.setIsDefaultVersion(webapp.isDefaultVersion());
         dto.setIsSite(webapp.getTreatAsASite());
@@ -656,7 +655,6 @@ public class APPMappingUtil {
         webApp.setBanner(appDTO.getBanner());
         webApp.setTrackingCode(appDTO.getTrackingCode());
         webApp.setLogoutURL(appDTO.getLogoutURL());
-        webApp.setBusinessOwner(appDTO.getBusinessOwnerId());
         webApp.setVisibleTenants(StringUtils.join(appDTO.getVisibleTenants(), ","));
         webApp.setSkipGateway(Boolean.parseBoolean(appDTO.getSkipGateway()));
 

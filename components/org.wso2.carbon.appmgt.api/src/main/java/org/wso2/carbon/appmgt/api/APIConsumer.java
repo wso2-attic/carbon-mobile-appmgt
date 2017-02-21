@@ -28,38 +28,6 @@ import java.util.Set;
  * APIConsumer responsible for providing helper functionality
  */
 public interface APIConsumer extends APIManager {
-
-    /**
-     * Returns the details of the owner for a given owner Id.
-     *
-     * @param businessOwnerId Id of business owner.
-     * @return
-     * @throws AppManagementException
-     */
-    public BusinessOwner getBusinessOwner(int businessOwnerId) throws AppManagementException;
-
-    /**
-     * Returns the details of the owner for a given owner Id in public store.
-     *
-     * @param businessOwnerId
-     * @param tenantId
-     * @return
-     * @throws AppManagementException
-     */
-    public BusinessOwner getBusinessOwnerForAppStore(int businessOwnerId, int tenantId) throws AppManagementException;
-
-    /**
-     * Returns business owner Ids by a prefix of business owner name.
-     *
-     * @param searchPrefix
-     * @param tenantId
-     * @return
-     * @throws AppManagementException
-     */
-    public List<String> getBusinessOwnerIdsBySearchPrefix(String searchPrefix, int tenantId) throws
-                                                                                           AppManagementException;
-
-
     /**
      * @param subscriberId id of the Subscriber
      * @return Subscriber

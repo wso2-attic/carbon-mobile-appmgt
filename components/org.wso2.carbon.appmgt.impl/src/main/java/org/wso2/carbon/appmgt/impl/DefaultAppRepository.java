@@ -684,10 +684,6 @@ public class DefaultAppRepository implements AppRepository {
             rxtAttributeName = AppMConstants.API_OVERVIEW_PROVIDER;
         } else if (searchKey.equalsIgnoreCase("VERSION")) {
             rxtAttributeName = AppMConstants.API_OVERVIEW_VERSION;
-        } else if (searchKey.equalsIgnoreCase("BUSINESS_OWNER_ID")) {
-            rxtAttributeName = AppMConstants.API_OVERVIEW_BUSS_OWNER;
-        } else if (searchKey.equalsIgnoreCase("TREATASASITE")) {
-            rxtAttributeName = AppMConstants.APP_OVERVIEW_TREAT_AS_A_SITE;
         }
 
         return rxtAttributeName;
@@ -1528,8 +1524,6 @@ public class DefaultAppRepository implements AppRepository {
                               (webApp.getThumbnailUrl() == null ? " " : webApp.getThumbnailUrl()));
         artifact.setAttribute(AppMConstants.APP_IMAGES_BANNER, (webApp.getBanner() == null ? " " : webApp.getBanner()));
         artifact.setAttribute(AppMConstants.API_OVERVIEW_LOGOUT_URL, webApp.getLogoutURL());
-        artifact.setAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER, webApp.getBusinessOwner());
-        artifact.setAttribute(AppMConstants.API_OVERVIEW_BUSS_OWNER_EMAIL, webApp.getBusinessOwnerEmail());
         artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBILITY, webApp.getVisibility());
         artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBLE_ROLES, webApp.getVisibleRoles());
         artifact.setAttribute(AppMConstants.API_OVERVIEW_VISIBLE_TENANTS, webApp.getVisibleTenants());
