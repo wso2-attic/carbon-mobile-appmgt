@@ -78,66 +78,9 @@ $( document ).ready(function() {
         disabledEventPropagation(e);
     });
 
-    var addToFavourite = function (data, appId) {
-        $.ajax({
-                   url: API_ADD_TO_FAVOURITE,
-                   dataType: 'JSON',
-                   type: 'POST',
-                   data: data,
-                   success: function (response, textStatus, xhr) {
-                       if (response.error == false) {
+    
 
-                           document.getElementById("favRibbon-" + appId).style.visibility = "visible";
-                           document.getElementById("listItemAddFavorite-" + appId).style.display= "none";
-                           document.getElementById("listItemRmvFavorite-" + appId).style.display= "block";
-                       } else {
-                           var message = 'Error occured while adding  web app: ' + data.name +
-                                         ' to my favourite web apps';
-                           notify(message);
-
-                       }
-                   },
-                   error: function (response) {
-                       if (response.status == 401) {
-                           var message = 'Your session has time out.Please login again';
-                           notify(message);
-                       } else {
-                           var message = 'Error occured in while adding  web app: ' + data.name +
-                                         ' to my favourite web apps';
-                           notify(message);
-                       }
-                   }
-               });
-    };
-
-    var removeFromFavourite = function (data, appId) {
-        $.ajax({
-                   url: API_REMOVE_FROM_FAVOURITE,
-                   type: 'POST',
-                   data: data,
-                   success: function (response, textStatus, xhr) {
-                       if (response.error == false) {
-                           document.getElementById("favRibbon-" + appId).style.visibility = "hidden";
-                           document.getElementById("listItemAddFavorite-" + appId).style.display= "block";
-                           document.getElementById("listItemRmvFavorite-" + appId).style.display= "none";
-                       } else {
-                           var message = 'Error occured  when remove  web app: ' + data.name
-                                         + ' from my favourite web apps';
-                           notify(message);
-                       }
-                   },
-                   error: function (response) {
-                       if (response.status == 401) {
-                           var message = 'Your session has time out.Please login again';
-                           notify(message);
-                       } else {
-                           var message = 'Error occured  when remove  web app: ' + data.name
-                                         + ' from my favourite web apps';
-                           notify(message);
-                       }
-                   }
-               });
-    };
+ 
 
     var notify = function (message) {
         noty({

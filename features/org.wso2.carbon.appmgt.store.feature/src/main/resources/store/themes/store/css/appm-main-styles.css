@@ -570,40 +570,6 @@ active: background 10% lighter, border 5% darker
     border-color: #532FAD;
 }
 
-/* favorite  - main color: #810847 */
-.background-color-favorite {
-    background-color: #810847;
-}
-
-.background-color-on-hover-favorite {
-    background-color: transparent;
-}
-
-.background-color-on-hover-favorite:hover {
-    background-color: #810847;
-}
-
-.btn-favorite {
-    color: #fff;
-    background-color: #810847;
-    border-color: #810847;
-}
-
-.btn-favorite:focus,
-.btn-favorite.focus {
-    color: #fff;
-    background-color: #8E1554;
-    border-color: #75003B;
-}
-
-.btn-favorite:hover,
-.btn-favorite:active,
-.btn-favorite.active {
-    color: #fff;
-    background-color: #9B2261;
-    border-color: #75003B;
-}
-
 /* all apps  - main color: #007A5F */
 .background-color-all-apps {
     background-color: #007A5F;
