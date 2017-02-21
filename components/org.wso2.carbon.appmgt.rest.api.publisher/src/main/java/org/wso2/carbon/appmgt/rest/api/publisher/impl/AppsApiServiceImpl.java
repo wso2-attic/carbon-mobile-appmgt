@@ -35,16 +35,13 @@ import org.wso2.carbon.appmgt.api.dto.AppPageUsageDTO;
 import org.wso2.carbon.appmgt.api.dto.AppResponseTimeDTO;
 import org.wso2.carbon.appmgt.api.dto.AppUsageByUserDTO;
 import org.wso2.carbon.appmgt.api.exception.AppUsageQueryServiceClientException;
-import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.App;
-import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.SubscriptionCount;
 import org.wso2.carbon.appmgt.api.model.Subscriptions;
-import org.wso2.carbon.appmgt.api.model.Tag;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
@@ -58,20 +55,16 @@ import org.wso2.carbon.appmgt.rest.api.publisher.AppsApiService;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.AppDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.AppListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.BinaryDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.DocumentDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.DocumentListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.LifeCycleDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.LifeCycleHistoryDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.LifeCycleHistoryListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.ResponseMessageDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.StatSummaryDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.TagListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.TierDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.TierListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.UserIdListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.utils.RestApiPublisherUtils;
 import org.wso2.carbon.appmgt.rest.api.publisher.utils.mappings.APPMappingUtil;
-import org.wso2.carbon.appmgt.rest.api.publisher.utils.mappings.DocumentationMappingUtil;
 import org.wso2.carbon.appmgt.rest.api.publisher.utils.validation.AppDTOValidator;
 import org.wso2.carbon.appmgt.rest.api.util.RestApiConstants;
 import org.wso2.carbon.appmgt.rest.api.util.utils.RestApiUtil;
@@ -97,14 +90,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -730,385 +720,6 @@ public class AppsApiServiceImpl extends AppsApiService {
     @Override
     public Response appsAppTypeIdAppIdDiscoverPost(String appType, String appId, String contentType,
                                                    String ifModifiedSince) {
-        return null;
-    }
-
-    /**
-     *  Returns all the documents of the given APP uuid that matches to the search condition
-     *
-     * @param appType application type ie:webapp,mobileapp
-     * @param appId application identifier
-     * @param limit
-     * @param offset
-     * @param accept
-     * @param ifNoneMatch
-     * @return matched documents as a list if DocumentDTOs
-     */
-    @Override
-    public Response appsAppTypeIdAppIdDocsGet(String appType, String appId, Integer limit, Integer offset, String accept, String ifNoneMatch) {
-        //pre-processing
-        //setting default limit and offset values if they are not set
-        limit = limit != null ? limit : RestApiConstants.PAGINATION_LIMIT_DEFAULT;
-        offset = offset != null ? offset : RestApiConstants.PAGINATION_OFFSET_DEFAULT;
-
-        try {
-            APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-            //this will fail if user does not have access to the API or the API does not exist
-
-            WebApp webApp = appProvider.getWebApp(appId);
-            APIIdentifier appIdentifier = webApp.getId();
-
-            List<Documentation> allDocumentation = appProvider.getAllDocumentation(appIdentifier);
-            DocumentListDTO documentListDTO = DocumentationMappingUtil.fromDocumentationListToDTO(allDocumentation,
-                    offset, limit);
-            DocumentationMappingUtil
-                    .setPaginationParams(documentListDTO, appId, offset, limit, allDocumentation.size());
-            return Response.ok().entity(documentListDTO).build();
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String msg = "Error while retrieving documents of App "+appType +" with appId "+ appId;
-                RestApiUtil.handleInternalServerError(msg, e, log);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Add documentation to a given app
-     * @param appId application uuid
-     * @param appType application type
-     * @param body
-     * @param contentType
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdDocsPost(String appId, String appType, DocumentDTO body, String contentType) {
-
-        CommonValidator.isValidAppType(appType);
-        try {
-            if(AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                Documentation documentation = DocumentationMappingUtil.fromDTOtoDocumentation(body);
-                String documentName = body.getName();
-                String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-                if (body.getType() == DocumentDTO.TypeEnum.OTHER && StringUtils.isBlank(body.getOtherTypeName())) {
-                    //check otherTypeName for not null if doc type is OTHER
-                    RestApiUtil.handleBadRequest("otherTypeName cannot be empty if type is OTHER.", log);
-                }
-                String sourceUrl = body.getSourceUrl();
-                if (body.getSourceType() == DocumentDTO.SourceTypeEnum.URL &&
-                        (StringUtils.isBlank(sourceUrl) || !RestApiUtil.isURL(sourceUrl))) {
-                    RestApiUtil.handleBadRequest("Invalid document sourceUrl Format", log);
-                }
-                //this will fail if user does not have access to the API or the API does not exist
-
-                WebApp webApp = appProvider.getWebApp(appId);
-                APIIdentifier appIdentifier = webApp.getId();
-                if (appProvider.isDocumentationExist(appIdentifier, documentName)) {
-                    String errorMessage = "Requested document '" + documentName + "' already exists";
-                    RestApiUtil.handleConflictException(errorMessage, log);
-                }
-                appProvider.addDocumentation(appIdentifier, documentation);
-
-                //retrieve the newly added document
-                String newDocumentId = documentation.getId();
-                documentation = appProvider.getDocumentation(newDocumentId, tenantDomain);
-                DocumentDTO newDocumentDTO = DocumentationMappingUtil.fromDocumentationToDTO(documentation);
-                String uriString = RestApiConstants.RESOURCE_PATH_DOCUMENTS_DOCUMENT_ID
-                        .replace(RestApiConstants.APPID_PARAM, appId)
-                        .replace(RestApiConstants.DOCUMENTID_PARAM, newDocumentId);
-                URI uri = new URI(uriString);
-                return Response.created(uri).entity(newDocumentDTO).build();
-            }else {
-                RestApiUtil.handleBadRequest("App type "+ appType + " not supported", log);
-            }
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while adding the document for "+appType+" with id : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        } catch (URISyntaxException e) {
-            String errorMessage = "Error while retrieving location for document " + body.getName() + " of App " + appId;
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
-        }
-        return null;
-    }
-
-    /**
-     * Retrieve documentation for a given documentationId and for a given app id
-     * @param appType application type ie: webapp,mobileapp
-     * @param appId application uuid
-     * @param documentId  documentID
-     * @param ifMatch
-     * @param ifUnmodifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdDocsDocumentIdGet(String appType, String appId, String documentId, String ifMatch, String ifUnmodifiedSince) {
-        Documentation documentation;
-        DocumentDTO documentDTO = null;
-        try {
-            if(AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-                //TODO:Check App access prmissions
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-                documentation = appProvider.getDocumentation(documentId, tenantDomain);
-                if (documentation == null) {
-                    RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_DOCUMENTATION, documentId, log);
-                }
-
-                documentDTO = DocumentationMappingUtil.fromDocumentationToDTO(documentation);
-            }else {
-                RestApiUtil.handleBadRequest("App type "+ appType + " not supported", log);
-            }
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while retrieving document : " + documentId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        }
-        return Response.ok().entity(documentDTO).build();
-    }
-
-    /**
-     * Delete a documentation for a given document id
-     * @param appType appType
-     * @param appId application id
-     * @param documentId document Id
-     * @param ifMatch
-     * @param ifUnmodifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdDocsDocumentIdDelete(String appType, String appId, String documentId, String ifMatch, String ifUnmodifiedSince) {
-        Documentation documentation;
-        try {
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-                WebApp webApp = appProvider.getWebApp(appId);
-                APIIdentifier appIdentifier = webApp.getId();
-                documentation = appProvider.getDocumentation(documentId, tenantDomain);
-                if (documentation == null) {
-                    RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_DOCUMENTATION, documentId, log);
-                }
-                appProvider.removeDocumentation(appIdentifier, documentId);
-            }
-
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while retrieving " + appType + " : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        }
-        return Response.ok().build();
-    }
-
-    /**
-     * Update a document with a given document id
-     * @param appId application id
-     * @param documentId documentation id
-     * @param appType application type
-     * @param body Documentation DTO
-     * @param contentType
-     * @param ifMatch
-     * @param ifUnmodifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdDocsDocumentIdPut(String appId, String documentId, String appType, DocumentDTO body, String contentType, String ifMatch, String ifUnmodifiedSince) {
-        try {
-            APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-
-            WebApp webApp = appProvider.getWebApp(appId);
-            String sourceUrl = body.getSourceUrl();
-            Documentation oldDocument = appProvider.getDocumentation(documentId, tenantDomain);
-
-            //validation checks for existence of the document
-            if (oldDocument == null) {
-                RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_DOCUMENTATION, documentId, log);
-                return null;
-            }
-            if (body.getType() == DocumentDTO.TypeEnum.OTHER && StringUtils.isBlank(body.getOtherTypeName())) {
-                //check otherTypeName for not null if doc type is OTHER
-                RestApiUtil.handleBadRequest("otherTypeName cannot be empty if type is OTHER.", log);
-                return null;
-            }
-            if (body.getSourceType() == DocumentDTO.SourceTypeEnum.URL &&
-                    (StringUtils.isBlank(sourceUrl) || !RestApiUtil.isURL(sourceUrl))) {
-                RestApiUtil.handleBadRequest("Invalid document sourceUrl Format", log);
-                return null;
-            }
-
-            //overriding some properties
-            body.setName(oldDocument.getName());
-
-            Documentation newDocumentation = DocumentationMappingUtil.fromDTOtoDocumentation(body);
-            //this will fail if user does not have access to the API or the API does not exist
-            APIIdentifier appIdentifier = webApp.getId();
-            appProvider.updateDocumentation(appIdentifier, newDocumentation);
-
-            //retrieve the updated documentation
-            newDocumentation = appProvider.getDocumentation(documentId, tenantDomain);
-            return Response.ok().entity(DocumentationMappingUtil.fromDocumentationToDTO(newDocumentation)).build();
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while updating the document " + documentId + " for API : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Document Content retrieve
-     * @param appId  id of the application
-     * @param documentId id of the documentation
-     * @param appType type of the application
-     * @param accept
-     * @param ifNoneMatch
-     * @param ifModifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdDocsDocumentIdContentGet(String appId, String documentId, String appType, String accept, String ifNoneMatch, String ifModifiedSince) {
-
-        Documentation documentation;
-        try {
-            String username = RestApiUtil.getLoggedInUsername();
-            APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-
-            WebApp webApp = appProvider.getWebApp(appId);
-            APIIdentifier appIdentifier = webApp.getId();
-            documentation = appProvider.getDocumentation(documentId, tenantDomain);
-            if (documentation == null) {
-                RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_DOCUMENTATION, documentId, log);
-                return null;
-            }
-
-            //gets the content depending on the type of the document
-            if (documentation.getSourceType().equals(Documentation.DocumentSourceType.FILE)) {
-                String resource = documentation.getFilePath();
-                Map<String, Object> docResourceMap = AppManagerUtil.getDocument(username, resource, tenantDomain);
-                Object fileDataStream = docResourceMap.get(AppMConstants.DOCUMENTATION_RESOURCE_MAP_DATA);
-                Object contentType = docResourceMap.get(AppMConstants.DOCUMENTATION_RESOURCE_MAP_CONTENT_TYPE);
-                contentType = contentType == null ? RestApiConstants.APPLICATION_OCTET_STREAM : contentType;
-                String name = docResourceMap.get(AppMConstants.DOCUMENTATION_RESOURCE_MAP_NAME).toString();
-                return Response.ok(fileDataStream)
-                        .header(RestApiConstants.HEADER_CONTENT_TYPE, contentType)
-                        .header(RestApiConstants.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
-                        .build();
-            } else if (documentation.getSourceType().equals(Documentation.DocumentSourceType.INLINE)) {
-                String content = appProvider.getDocumentationContent(appIdentifier, documentation.getName());
-                return Response.ok(content)
-                        .header(RestApiConstants.HEADER_CONTENT_TYPE, AppMConstants.DOCUMENTATION_INLINE_CONTENT_TYPE)
-                        .build();
-            } else if (documentation.getSourceType().equals(Documentation.DocumentSourceType.URL)) {
-                String sourceUrl = documentation.getSourceUrl();
-                return Response.seeOther(new URI(sourceUrl)).build();
-            }
-        } catch (AppManagementException e) {
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while retrieving document " + documentId + " of the " + appType +
-                        " with id : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        } catch (URISyntaxException e) {
-            String errorMessage = "Error while retrieving source URI location of " + documentId;
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
-        }
-        return null;
-    }
-
-    /**
-     * Document content upload
-     *
-     * @param appType           application type
-     * @param appId             application uuid
-     * @param documentId        documentation id
-     * @param fileInputStream   document content stream
-     * @param fileDetail        document file details
-     * @param inlineContent
-     * @param ifMatch
-     * @param ifUnmodifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdDocsDocumentIdContentPost(String appType, String appId, String documentId,
-                                                                InputStream fileInputStream, Attachment fileDetail,
-                                                                String inlineContent, String ifMatch, String ifUnmodifiedSince) {
-
-        try {
-            String username = RestApiUtil.getLoggedInUsername();
-            APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-
-            WebApp webApp = appProvider.getWebApp(appId);
-            APIIdentifier appIdentifier = webApp.getId();
-            if (fileInputStream != null && inlineContent != null) {
-                RestApiUtil.handleBadRequest("Only one of 'file' and 'inlineContent' should be specified", log);
-            }
-            Documentation documentation = appProvider.getDocumentation(documentId, tenantDomain);
-            if (documentation == null) {
-                RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_DOCUMENTATION, documentId, log);
-                return null;
-            }
-            //add content depending on the availability of either input stream or inline content
-            if (fileInputStream != null) {
-                if (!documentation.getSourceType().equals(Documentation.DocumentSourceType.FILE)) {
-                    RestApiUtil.handleBadRequest("Source type of document " + documentId + " is not FILE", log);
-                }
-                RestApiPublisherUtils.attachFileToDocument(webApp, documentation, fileInputStream, fileDetail);
-            } else if (inlineContent != null) {
-                if (!documentation.getSourceType().equals(Documentation.DocumentSourceType.INLINE)) {
-                    RestApiUtil.handleBadRequest("Source type of document " + documentId + " is not INLINE", log);
-                }
-                appProvider.addDocumentationContent(appIdentifier, documentation.getName(), inlineContent);
-            } else {
-                RestApiUtil.handleBadRequest("Either 'file' or 'inlineContent' should be specified", log);
-            }
-
-            //retrieving the updated doc and the URI
-            Documentation updatedDoc = appProvider.getDocumentation(documentId, tenantDomain);
-            DocumentDTO documentDTO = DocumentationMappingUtil.fromDocumentationToDTO(updatedDoc);
-            String uriString = RestApiConstants.RESOURCE_PATH_DOCUMENT_CONTENT
-                    .replace(RestApiConstants.APPID_PARAM, appId)
-                    .replace(RestApiConstants.DOCUMENTID_PARAM, documentId);
-            URI uri = new URI(uriString);
-            return Response.created(uri).entity(documentDTO).build();
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while retrieving document " + documentId + " of the API " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        } catch (URISyntaxException e) {
-            String errorMessage = "Error while retrieving source URI location of " + documentId;
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
-        }
-
         return null;
     }
 

@@ -44,8 +44,6 @@ import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIKey;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.Application;
-import org.wso2.carbon.appmgt.api.model.Documentation;
-import org.wso2.carbon.appmgt.api.model.DocumentationType;
 import org.wso2.carbon.appmgt.api.model.SubscribedAPI;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.Subscription;
@@ -1126,64 +1124,6 @@ public class APIStoreHostObject extends ScriptableObject {
         }
     }
 
-    public static NativeArray jsFunction_getAllDocumentation(Context cx,
-                                                             Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-        java.util.List<Documentation> doclist = null;
-        String providerName = "";
-        String apiName = "";
-        String version = "";
-        String username = "";
-        if (args!=null && args.length!=0 ) {
-            providerName = AppManagerUtil.replaceEmailDomain((String)args[0]);
-            apiName = (String)args[1];
-            version = (String)args[2];
-            username = (String)args[3];
-        }
-        APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, version);
-        NativeArray myn = new NativeArray(0);
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-        try {
-            doclist = apiConsumer.getAllDocumentation(apiIdentifier, username);
-        } catch (AppManagementException e) {
-            handleException("Error from Registry WebApp while getting All Documentation on " + apiName, e);
-        } catch (Exception e) {
-            handleException("Error while getting All Documentation " + apiName, e);
-        }
-        if(doclist!=null){
-        Iterator it = doclist.iterator();
-        int i = 0;
-        while (it.hasNext()) {
-            NativeObject row = new NativeObject();
-            Object docObject = it.next();
-            Documentation documentation = (Documentation) docObject;
-            Object objectSourceType = documentation.getSourceType();
-            String strSourceType = objectSourceType.toString();
-            row.put("name", row, documentation.getName());
-            row.put("sourceType", row, strSourceType);
-            row.put("summary", row, documentation.getSummary());
-            String content;
-            if (strSourceType.equals("INLINE")) {
-                content = apiConsumer.getDocumentationContent(apiIdentifier, documentation.getName());
-                row.put("content", row, content);
-            }
-            row.put("sourceUrl", row, documentation.getSourceUrl());
-            row.put("filePath", row, documentation.getFilePath());
-            DocumentationType documentationType = documentation.getType();
-            row.put("type", row, documentationType.getType());
-
-            if (documentationType == DocumentationType.OTHER) {
-                row.put("otherTypeName", row, documentation.getOtherTypeName());
-            }
-
-            myn.put(i, myn, row);
-            i++;
-        }
-        }
-        return myn;
-
-    }
-
     /**
      * Returns the subscription for the given criteria based on the subscription type. e.g. Individual, Enterprise
      * @param cx
@@ -1946,47 +1886,6 @@ public class APIStoreHostObject extends ScriptableObject {
             }
         }
         return row;
-    }
-
-    public static NativeArray jsFunction_getInlineContent(Context cx,
-                                                          Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-        String apiName;
-        String version;
-        String providerName;
-        String docName;
-        String content = null;
-        NativeArray myn = new NativeArray(0);
-
-
-        if (args!=null && isStringArray(args)) {
-            providerName = AppManagerUtil.replaceEmailDomain((String)args[0]);
-            apiName = (String)args[1];
-            version = (String)args[2];
-            docName = (String)args[3];
-            APIIdentifier apiId = new APIIdentifier(providerName, apiName,
-                    version);
-            try {
-                APIConsumer apiConsumer = getAPIConsumer(thisObj);
-                content = apiConsumer.getDocumentationContent(apiId, docName);
-            } catch (Exception e) {
-                handleException("Error while getting Inline Document Content ", e);
-            }
-
-            if(content == null){
-                content = "";
-            }
-
-            NativeObject row = new NativeObject();
-            row.put("providerName", row, providerName);
-            row.put("apiName", row, apiName);
-            row.put("apiVersion", row, version);
-            row.put("docName", row, docName);
-            row.put("content", row, content);
-            myn.put(0, myn, row);
-
-        }
-        return myn;
     }
 
     /*

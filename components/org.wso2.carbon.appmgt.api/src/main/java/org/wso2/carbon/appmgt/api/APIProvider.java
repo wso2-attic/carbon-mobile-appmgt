@@ -23,7 +23,6 @@ import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.api.model.AppDefaultVersion;
 import org.wso2.carbon.appmgt.api.model.AppStore;
-import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
 import org.wso2.carbon.appmgt.api.model.LifeCycleEvent;
@@ -346,72 +345,6 @@ public interface APIProvider extends APIManager {
      */
     public MobileApp getMobileApp(String uuid) throws AppManagementException;
 
-
-    /**
-     * Copy web applications documentations
-     *
-     * @param api        The WebApp id of the copying docs
-     * @param newVersion The version of the new WebApp
-     * @throws AppManagementException If an error occurs while trying to create
-     *                                the new version of the WebApp
-     */
-    public void copyWebappDocumentations(WebApp api, String newVersion) throws AppManagementException;
-
-    /**
-     * Removes a given documentation
-     *
-     * @param apiId   APIIdentifier
-     * @param docType the type of the documentation
-     * @param docName name of the document
-     * @throws AppManagementException if failed to remove documentation
-     */
-    public void removeDocumentation(APIIdentifier apiId,
-                                    String docType, String docName) throws AppManagementException;
-
-
-    /**
-     * Removes a given documentation
-     *
-     * @param appId   APIIdentifier
-     * @param documentId UUID of the doc
-     * @throws AppManagementException if failed to remove documentation
-     */
-    public void removeDocumentation(APIIdentifier appId, String documentId)throws AppManagementException;
-
-    /**
-     * Adds Documentation to an WebApp
-     *
-     * @param apiId         APIIdentifier
-     * @param documentation Documentation
-     * @throws AppManagementException if failed to add documentation
-     */
-    public void addDocumentation(APIIdentifier apiId,
-                                 Documentation documentation) throws AppManagementException;
-    /**
-     * Add a file to a document of source type FILE
-     *
-     * @param appId App identifier the document belongs to
-     * @param documentation document
-     * @param filename name of the file
-     * @param content content of the file as an Input Stream
-     * @param contentType content type of the file
-     * @throws AppManagementException if failed to add the file
-     */
-    void addFileToDocumentation(WebApp appId, Documentation documentation, String filename, InputStream content,
-                                String contentType) throws AppManagementException;
-
-
-    /**
-     * This method used to save the documentation content
-     *
-     * @param identifier,        WebApp identifier
-     * @param documentationName, name of the inline documentation
-     * @param text,              content of the inline documentation
-     * @throws AppManagementException if failed to add the document as a resource to registry
-     */
-    public void addDocumentationContent(APIIdentifier identifier, String documentationName, String text)
-            throws AppManagementException;
-
     /**
      * This method used to update the WebApp definition content - Swagger
      *
@@ -423,26 +356,6 @@ public interface APIProvider extends APIManager {
      */
     public void addAPIDefinitionContent(APIIdentifier identifier, String documentationName, String text)
     					throws AppManagementException;
-
-    /**
-     * Updates a given documentation
-     *
-     * @param apiId         APIIdentifier
-     * @param documentation Documentation
-     * @throws AppManagementException if failed to update docs
-     */
-    public void updateDocumentation(APIIdentifier apiId,
-                                    Documentation documentation) throws AppManagementException;
-
-    /**
-     * Copies current Documentation into another version of the same WebApp.
-     *
-     * @param toVersion Version to which Documentation should be copied.
-     * @param apiId     id of the APIIdentifier
-     * @throws AppManagementException if failed to copy docs
-     */
-    public void copyAllDocumentation(APIIdentifier apiId, String toVersion)
-            throws AppManagementException;
 
     /**
      * Returns the details of all the life-cycle changes done per WebApp.

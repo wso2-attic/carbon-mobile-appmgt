@@ -2,7 +2,6 @@ package org.wso2.carbon.appmgt.rest.api.publisher;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.AppDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.DocumentDTO;
 
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
@@ -21,13 +20,6 @@ public abstract class AppsApiService {
     public abstract Response appsAppTypeIdAppIdDelete(String appType,String appId,String ifMatch,String ifUnmodifiedSince);
     public abstract Response appsAppTypeIdAppIdCreateNewVersionPost(String appType,String appId,AppDTO body,String contentType,String ifModifiedSince);
     public abstract Response appsAppTypeIdAppIdDiscoverPost(String appType,String appId,String contentType,String ifModifiedSince);
-    public abstract Response appsAppTypeIdAppIdDocsGet(String appType,String appId,Integer limit,Integer offset,String accept,String ifNoneMatch);
-    public abstract Response appsAppTypeIdAppIdDocsPost(String appId,String appType,DocumentDTO body,String contentType);
-    public abstract Response appsAppTypeIdAppIdDocsDocumentIdGet(String appType,String appId,String documentId,String ifMatch,String ifUnmodifiedSince);
-    public abstract Response appsAppTypeIdAppIdDocsDocumentIdDelete(String appType,String appId,String documentId,String ifMatch,String ifUnmodifiedSince);
-    public abstract Response appsAppTypeIdAppIdDocsDocumentIdPut(String appId,String documentId,String appType,DocumentDTO body,String contentType,String ifMatch,String ifUnmodifiedSince);
-    public abstract Response appsAppTypeIdAppIdDocsDocumentIdContentGet(String appId,String documentId,String appType,String accept,String ifNoneMatch,String ifModifiedSince);
-    public abstract Response appsAppTypeIdAppIdDocsDocumentIdContentPost(String appType,String appId,String documentId,InputStream fileInputStream,Attachment fileDetail,String inlineContent,String ifMatch,String ifUnmodifiedSince);
     public abstract Response appsAppTypeIdAppIdLifecycleGet(String appType,String appId,String accept,String ifNoneMatch);
     public abstract Response appsAppTypeIdAppIdLifecycleHistoryGet(String appType,String appId,String accept,String ifNoneMatch);
     public abstract Response appsAppTypeIdAppIdSubscriptionsGet(String appType,String appId,String accept,String ifNoneMatch,String ifModifiedSince);
