@@ -49,7 +49,6 @@ import org.wso2.carbon.appmgt.api.model.DocumentationType;
 import org.wso2.carbon.appmgt.api.model.SubscribedAPI;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.Subscription;
-import org.wso2.carbon.appmgt.api.model.Tag;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.api.model.URITemplate;
 import org.wso2.carbon.appmgt.api.model.WebApp;
@@ -730,115 +729,6 @@ public class APIStoreHostObject extends ScriptableObject {
         return Boolean.parseBoolean(config.getFirstProperty(AppMConstants.SELF_SIGN_UP_ENABLED));
     }
 
-    public static NativeArray jsFunction_getAPIsWithTag(Context cx,
-                                                        Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-        NativeArray apiArray = new NativeArray(0);
-        if (args!=null && isStringArray(args)) {
-            String tagName = args[0].toString();
-            Set<WebApp> apiSet;
-            APIConsumer apiConsumer = getAPIConsumer(thisObj);
-            try {
-                apiSet = apiConsumer.getAPIsWithTag(tagName);
-            } catch (AppManagementException e) {
-                log.error("Error from Registry WebApp while getting APIs With Tag Information", e);
-                return apiArray;
-            } catch (Exception e) {
-                log.error("Error while getting APIs With Tag Information", e);
-                return apiArray;
-            }
-            if (apiSet != null) {
-                Iterator it = apiSet.iterator();
-                int i = 0;
-                while (it.hasNext()) {
-                    NativeObject currentApi = new NativeObject();
-                    Object apiObject = it.next();
-                    WebApp api = (WebApp) apiObject;
-                    APIIdentifier apiIdentifier = api.getId();
-                    currentApi.put("name", currentApi, apiIdentifier.getApiName());
-                    currentApi.put("provider", currentApi,
-                                   AppManagerUtil.replaceEmailDomainBack(apiIdentifier.getProviderName()));
-                    currentApi.put("version", currentApi,
-                                   apiIdentifier.getVersion());
-                    currentApi.put("description", currentApi, api.getDescription());
-                    currentApi.put("rates", currentApi, api.getRating());
-                    if (api.getThumbnailUrl() == null) {
-                        currentApi.put("thumbnailurl", currentApi,
-                                       "images/api-default.png");
-                    } else {
-                        currentApi.put("thumbnailurl", currentApi,
-                                       AppManagerUtil.prependWebContextRoot(api.getThumbnailUrl()));
-                    }
-                    currentApi.put("visibility", currentApi, api.getVisibility());
-                    currentApi.put("visibleRoles", currentApi, api.getVisibleRoles());
-                    currentApi.put("description", currentApi, api.getDescription());
-                    apiArray.put(i, apiArray, currentApi);
-                    i++;
-                }
-            }
-
-        }// end of the if
-        return apiArray;
-    }
-
-    public static NativeObject jsFunction_getPaginatedAPIsWithTag(Context cx,
-                                                        Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-        NativeArray apiArray = new NativeArray(0);
-        NativeObject resultObj = new NativeObject();
-        Map<String,Object> resultMap=new HashMap<String, Object>();
-        if (args!=null && isStringArray(args)) {
-            String tagName = args[0].toString();
-            int start = Integer.parseInt(args[1].toString());
-            int end = Integer.parseInt(args[2].toString());
-            Set<WebApp> apiSet;
-            APIConsumer apiConsumer = getAPIConsumer(thisObj);
-            try {
-                resultMap = apiConsumer.getPaginatedAPIsWithTag(tagName, start, end);
-                apiSet= (Set<WebApp>) resultMap.get("apis");
-            } catch (AppManagementException e) {
-                log.error("Error from Registry WebApp while getting APIs With Tag Information", e);
-                return resultObj;
-            } catch (Exception e) {
-                log.error("Error while getting APIs With Tag Information", e);
-                return resultObj;
-            }
-            if (apiSet != null) {
-                Iterator it = apiSet.iterator();
-                int i = 0;
-                while (it.hasNext()) {
-                    NativeObject currentApi = new NativeObject();
-                    Object apiObject = it.next();
-                    WebApp api = (WebApp) apiObject;
-                    APIIdentifier apiIdentifier = api.getId();
-                    currentApi.put("name", currentApi, apiIdentifier.getApiName());
-                    currentApi.put("provider", currentApi,
-                                   AppManagerUtil.replaceEmailDomainBack(apiIdentifier.getProviderName()));
-                    currentApi.put("version", currentApi,
-                                   apiIdentifier.getVersion());
-                    currentApi.put("description", currentApi, api.getDescription());
-                    currentApi.put("rates", currentApi, api.getRating());
-                    if (api.getThumbnailUrl() == null) {
-                        currentApi.put("thumbnailurl", currentApi,
-                                       "images/api-default.png");
-                    } else {
-                        currentApi.put("thumbnailurl", currentApi,
-                                       AppManagerUtil.prependWebContextRoot(api.getThumbnailUrl()));
-                    }
-                    currentApi.put("visibility", currentApi, api.getVisibility());
-                    currentApi.put("visibleRoles", currentApi, api.getVisibleRoles());
-                    currentApi.put("description", currentApi, api.getDescription());
-                    apiArray.put(i, apiArray, currentApi);
-                    i++;
-                }
-                resultObj.put("apis",resultObj,apiArray);
-                resultObj.put("totalLength",resultObj,resultMap.get("length"));
-            }
-
-        }// end of the if
-        return resultObj;
-    }
-
     public static NativeArray jsFunction_getSubscribedAPIs(Context cx,
                                                            Scriptable thisObj, Object[] args, Function funObj)
             throws ScriptException, AppManagementException {
@@ -874,59 +764,6 @@ public class APIStoreHostObject extends ScriptableObject {
             }
         }// end of the if
         return apiArray;
-    }
-
-    public static NativeArray jsFunction_getAllTags(Context cx,
-                                                    Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-        NativeArray tagArray = new NativeArray(0);
-        Map<String, String> attributeMap = new HashMap<>();
-        Set<Tag> tags;
-        String tenantDomain = null;
-        String assetType =  null;
-        if (args != null && isStringArray(args)) {
-            //There will be separate two calls for this method with one argument and with three arguments.
-            if (args.length == 2) {
-                tenantDomain = args[0].toString();
-                assetType = args[1].toString();
-            }
-            if (args.length == 3) {
-                tenantDomain = args[0].toString();
-                assetType = args[1].toString();
-                attributeMap.put(AppMConstants.APP_OVERVIEW_TREAT_AS_A_SITE, args[2].toString());
-            }
-        } else {
-            String errorMessage = "Invalid number or invalid type of arguments";
-            handleException(errorMessage);
-        }
-        APIConsumer appConsumer = getAPIConsumer(thisObj);
-        try {
-            tags = appConsumer.getAllTags(tenantDomain, assetType, attributeMap);
-        } catch (AppManagementException e) {
-            log.error("Error from registry while getting WebApp tags.", e);
-            return tagArray;
-        } catch (Exception e) {
-            log.error("Error while getting WebApp tags", e);
-            return tagArray;
-        }
-        if(tags!=null){
-        Iterator tagsI = tags.iterator();
-        int i = 0;
-        while (tagsI.hasNext()) {
-
-            NativeObject currentTag = new NativeObject();
-            Object tagObject = tagsI.next();
-            Tag tag = (Tag) tagObject;
-
-            currentTag.put("name", currentTag, tag.getName());
-            currentTag.put("count", currentTag, tag.getNoOfOccurrences());
-
-            tagArray.put(i, tagArray, currentTag);
-            i++;
-        }
-        }
-
-        return tagArray;
     }
 
     public static NativeArray jsFunction_getAllPublishedAPIs(Context cx,

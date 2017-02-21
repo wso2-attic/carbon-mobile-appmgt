@@ -23,21 +23,36 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.appmgt.api.APIConsumer;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.model.*;
-import org.wso2.carbon.appmgt.api.model.Tag;
+import org.wso2.carbon.appmgt.api.model.APIIdentifier;
+import org.wso2.carbon.appmgt.api.model.APIStatus;
+import org.wso2.carbon.appmgt.api.model.Application;
+import org.wso2.carbon.appmgt.api.model.SubscribedAPI;
+import org.wso2.carbon.appmgt.api.model.Subscriber;
+import org.wso2.carbon.appmgt.api.model.Subscription;
+import org.wso2.carbon.appmgt.api.model.WebApp;
+import org.wso2.carbon.appmgt.api.model.WebAppSearchOption;
+import org.wso2.carbon.appmgt.api.model.WebAppSortOption;
 import org.wso2.carbon.appmgt.impl.dto.SubscriptionWorkflowDTO;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.appmgt.impl.utils.APINameComparator;
-import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.appmgt.impl.utils.APIVersionComparator;
-import org.wso2.carbon.appmgt.impl.workflow.*;
+import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
+import org.wso2.carbon.appmgt.impl.workflow.WorkflowConstants;
+import org.wso2.carbon.appmgt.impl.workflow.WorkflowException;
+import org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutor;
+import org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutorFactory;
+import org.wso2.carbon.appmgt.impl.workflow.WorkflowStatus;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.governance.api.exception.GovernanceException;
 import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
 import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
-import org.wso2.carbon.registry.core.*;
+import org.wso2.carbon.registry.core.ActionConstants;
+import org.wso2.carbon.registry.core.Association;
 import org.wso2.carbon.registry.core.Collection;
+import org.wso2.carbon.registry.core.Registry;
+import org.wso2.carbon.registry.core.RegistryConstants;
+import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.config.RegistryContext;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.pagination.PaginationContext;
@@ -47,7 +62,16 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,12 +90,9 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
     private static final Log log = LogFactory.getLog(APIConsumerImpl.class);
 
-    /* Map to Store APIs against Tag */
-    private Map<String, Set<WebApp>> taggedAPIs;
     private boolean isTenantModeStoreView;
     private String requestedTenant;
     private boolean isTagCacheEnabled;
-    private Set<Tag> tagSet;
     private long tagCacheValidityTime;
     private long lastUpdatedTime;
     private Object tagCacheMutex = new Object();
@@ -107,129 +128,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             handleException("Failed to get Subscriber", e);
         }
         return subscriber;
-    }
-
-    /**
-     * Returns the set of APIs with the given tag from the taggedAPIs Map
-     *
-     * @param tag
-     * @return
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public Set<WebApp> getAPIsWithTag(String tag) throws AppManagementException {
-        if (taggedAPIs != null) {
-            return taggedAPIs.get(tag);
-        }
-        this.getAllTags(this.tenantDomain);
-        if (taggedAPIs != null) {
-            return taggedAPIs.get(tag);
-        }
-        return null;
-    }
-
-    /**
-     * Returns the set of APIs with the given tag from the taggedAPIs Map
-     *
-     * @param tag
-     * @return
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public Map<String,Object> getPaginatedAPIsWithTag(String tag,int start,int end) throws
-                                                                                    AppManagementException {
-        List<WebApp> apiSet = new ArrayList<WebApp>();
-        Set<WebApp> resultSet = new TreeSet<WebApp>(new APIVersionComparator());
-        Map<String,Object> results = new HashMap<String, Object>();
-        Set<WebApp> taggedAPISet=this.getAPIsWithTag(tag);
-        if(taggedAPISet!=null){
-        if(taggedAPISet.size()<end){
-        end=taggedAPISet.size();
-        }
-
-        apiSet.addAll(taggedAPISet);
-        for(int i=start;i<end;i++) {
-          resultSet.add(apiSet.get(i));
-        }
-
-            results.put("apis",resultSet);
-            results.put("length",taggedAPISet.size());
-        }else{
-            results.put("apis",null);
-            results.put("length",0);
-
-        }
-        return results ;
-    }
-
-
-    /**
-     * Returns the set of apps with the given tag, retrieved from registry.
-     *
-     * @param registry Current registry; tenant/SuperTenant.
-     * @param tag
-     * @param attributeMap
-     * @return
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    private Set<WebApp> getAppsWithTag(Registry registry, String tag, String assetType,
-                                       Map<String, String> attributeMap)
-            throws AppManagementException {
-        Set<WebApp> apiSet = new TreeSet<WebApp>(new APINameComparator());
-        boolean isTenantFlowStarted = false;
-        try {
-        	if(tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)){
-        		isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-        	}
-            String resourceByTagQueryPath = RegistryConstants.QUERIES_COLLECTION_PATH + "/resource-by-tag";
-            Map<String, String> params = new HashMap<String, String>();
-            params.put("1", tag);
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(assetType) || AppMConstants.SITE_ASSET_TYPE.equals(assetType)){
-                params.put("2",AppMConstants.MediaType.WEB_APP);
-            } else if(AppMConstants.MOBILE_ASSET_TYPE.equals(assetType)) {
-                params.put("2",AppMConstants.MediaType.MOBILE_APP);
-            } else {
-                handleException("Could not retrieved app for tag.App type :" + assetType +" does not exist");
-            }
-
-            params.put(RegistryConstants.RESULT_TYPE_PROPERTY_NAME, RegistryConstants.RESOURCE_UUID_RESULT_TYPE);
-            Collection collection = registry.executeQuery(resourceByTagQueryPath, params);
-
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, assetType);
-
-            for (String row : collection.getChildren()) {
-                boolean isTagRetrievable = false;
-                String uuid = row.substring(row.indexOf(";") + 1, row.length());
-                GenericArtifact genericArtifact = artifactManager.getGenericArtifact(uuid);
-                if(attributeMap == null || attributeMap.isEmpty()) {
-                    isTagRetrievable = true;
-                } else {
-                    //genericArtifact can be null when user doesn't have permission to artifact.
-                    if (genericArtifact != null) {
-                        String artifactTreatAsASiteValue = genericArtifact.getAttribute(
-                                AppMConstants.APP_OVERVIEW_TREAT_AS_A_SITE).toLowerCase();
-                        String attributeMapTreatAsASiteValue = attributeMap.get(
-                                AppMConstants.APP_OVERVIEW_TREAT_AS_A_SITE).toString().toLowerCase();
-                        if (attributeMapTreatAsASiteValue.equals(artifactTreatAsASiteValue)) {
-                            isTagRetrievable = true;
-                        }
-                    }
-                }
-
-                if (genericArtifact != null && genericArtifact.getLifecycleState().equals(AppMConstants.APP_LC_PUBLISHED)
-                        && isTagRetrievable) {
-                    apiSet.add(AppManagerUtil.getAPI(genericArtifact));
-                }
-            }
-
-        } catch (RegistryException e) {
-            handleException("Failed to get WebApp for tag " + tag, e);
-        } finally {
-        	if (isTenantFlowStarted) {
-        		PrivilegedCarbonContext.endTenantFlow();
-        	}
-        }
-        return apiSet;
     }
 
     /**
@@ -737,121 +635,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         }
 
 
-    }
-
-    public Set<Tag> getAllTags(String requestedTenantDomain) throws AppManagementException {
-        return getAllTags(requestedTenantDomain, null, null);
-    }
-
-    /**
-     * @param requestedTenantDomain
-     * @param assetType Currently we don't use asset type. Asset type could be webapp, mobileapp or any other asset type.
-     * @param attributeMap Attribute map for the give assetType.
-     * @return matching tag set which qualified the conditions of assetTye and attributeMap.
-     * @throws AppManagementException
-     */
-    public Set<Tag> getAllTags(String requestedTenantDomain, String assetType, Map<String, String> attributeMap) throws
-            AppManagementException {
-
-        this.isTenantModeStoreView = (requestedTenantDomain != null);
-
-        if(requestedTenantDomain != null){
-            this.requestedTenant = requestedTenantDomain;
-        }
-
-        /* We keep track of the lastUpdatedTime of the TagCache to determine its freshness.
-         */
-        long lastUpdatedTimeAtStart = lastUpdatedTime;
-        long currentTimeAtStart = System.currentTimeMillis();
-        if(isTagCacheEnabled && ( (currentTimeAtStart- lastUpdatedTimeAtStart) < tagCacheValidityTime)){
-            if(tagSet != null){
-                return tagSet;
-            }
-        }
-
-        Map<String, Set<WebApp>> tempTaggedAPIs = new HashMap<String, Set<WebApp>>();
-        TreeSet<Tag> tempTagSet = new TreeSet<Tag>(new Comparator<Tag>() {
-            @Override
-            public int compare(Tag o1, Tag o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        Registry userRegistry = null;
-        String tagsQueryPath = null;
-        try {
-            tagsQueryPath = RegistryConstants.QUERIES_COLLECTION_PATH + "/tag-summary-appmgt";
-            Map<String, String> params = new HashMap<String, String>();
-            params.put(RegistryConstants.RESULT_TYPE_PROPERTY_NAME, RegistryConstants.TAG_SUMMARY_RESULT_TYPE);
-
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(assetType) || AppMConstants.SITE_ASSET_TYPE.equals(assetType)){
-                params.put("1",AppMConstants.MediaType.WEB_APP);
-                params.put("2",AppMConstants.WEB_APP_LIFECYCLE_STATUS);
-                params.put("3",AppMConstants.APP_LC_PUBLISHED);
-            } else if(AppMConstants.MOBILE_ASSET_TYPE.equals(assetType)) {
-                params.put("1",AppMConstants.MediaType.MOBILE_APP);
-                params.put("2",AppMConstants.MOBILE_APP_LIFECYCLE_STATUS);
-                params.put("3",AppMConstants.APP_LC_PUBLISHED);
-            } else {
-                handleException("Could not retrieved tags.App type :" + assetType +" does not exist");
-            }
-
-            if ((this.isTenantModeStoreView && this.tenantDomain==null) || (this.isTenantModeStoreView && isTenantDomainNotMatching(requestedTenantDomain))) {//Tenant based store anonymous mode
-                int tenantId = ServiceReferenceHolder.getInstance().getRealmService().getTenantManager()
-                        .getTenantId(this.requestedTenant);
-                userRegistry = ServiceReferenceHolder.getInstance().
-                        getRegistryService().getGovernanceUserRegistry(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME, tenantId);
-            } else {
-                userRegistry = registry;
-            }
-            Collection collection = userRegistry.executeQuery(tagsQueryPath, params);
-            for (String fullTag : collection.getChildren()) {
-                //remove hardcoded path value
-                String tagName = fullTag.substring(fullTag.indexOf(";") + 1, fullTag.indexOf(":"));
-
-                Set<WebApp> apisWithTag = getAppsWithTag(userRegistry, tagName, assetType, attributeMap);
-                    /* Add the APIs against the tag name */
-                    if (apisWithTag.size() != 0) {
-                        if (tempTaggedAPIs.containsKey(tagName)) {
-                            for (WebApp api : apisWithTag) {
-                                tempTaggedAPIs.get(tagName).add(api);
-                            }
-                        } else {
-                            tempTaggedAPIs.put(tagName, apisWithTag);
-                        }
-                    }
-            }
-
-            if(tempTaggedAPIs != null){
-                Iterator<Map.Entry<String,Set<WebApp>>>  entryIterator = tempTaggedAPIs.entrySet().iterator();
-                while (entryIterator.hasNext()){
-                    Map.Entry<String,Set<WebApp>> entry = entryIterator.next();
-                    tempTagSet.add(new Tag(entry.getKey(),entry.getValue().size()));
-                }
-            }
-            synchronized (tagCacheMutex) {
-                lastUpdatedTime = System.currentTimeMillis();
-                this.taggedAPIs = tempTaggedAPIs;
-                this.tagSet = tempTagSet;
-            }
-
-        } catch (RegistryException e) {
-        	try {
-        		//Before a tenant login to the store or publisher at least one time, 
-        		//a registry exception is thrown when the tenant store is accessed in anonymous mode.
-        		//This fix checks whether query resource available in the registry. If not
-        		// give a warn. 
-				if (!userRegistry.resourceExists(tagsQueryPath)) {
-					log.warn("Failed to retrieve tags query resource at " + tagsQueryPath);
-					return tagSet;
-				}
-			} catch (RegistryException e1) {
-				//ignore
-			}
-            handleException("Failed to get all the tags", e);
-        } catch (UserStoreException e) {
-            handleException("Failed to get all the tags", e);
-        }
-        return tagSet;
     }
 
     public Set<WebApp> getPublishedAPIsByProvider(String providerId, int limit)
@@ -1795,10 +1578,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             handleException("Error while checking subscription in registry for mobileapp with id : " + appId, e);
         }
         return isSubscribed;
-    }
-
-    public Map<String, Set<WebApp>> getTaggedAPIs() {
-        return taggedAPIs;
     }
 
     @Override

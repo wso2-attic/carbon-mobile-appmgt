@@ -1299,43 +1299,6 @@ public class AppsApiServiceImpl extends AppsApiService {
         return Response.ok().build();
     }
 
-
-    @Override
-    public Response appsAppTypeTagsGet(String appType, String accept, String ifNoneMatch) {
-        TagListDTO tagListDTO = new TagListDTO();
-        try {
-            CommonValidator.isValidAppType(appType);
-
-            APIConsumer appConsumer = RestApiUtil.getLoggedInUserConsumer();
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-            Map<String, String> attributeMap = new HashMap<>();
-            if (AppMConstants.SITE_ASSET_TYPE.equalsIgnoreCase(appType)) {
-                attributeMap.put(AppMConstants.APP_OVERVIEW_TREAT_AS_A_SITE, "TRUE");
-            } else if (AppMConstants.WEBAPP_ASSET_TYPE.equalsIgnoreCase(appType)){
-                attributeMap.put(AppMConstants.APP_OVERVIEW_TREAT_AS_A_SITE, "FALSE");
-            }
-
-            //Make the asset type as 'webapp'.
-            appType = APPMappingUtil.updateAssetType(appType);
-
-            List<String> tagList = new ArrayList<>();
-            Iterator tagIterator = appConsumer.getAllTags(tenantDomain, appType, attributeMap).iterator();
-            if (!tagIterator.hasNext()) {
-                return RestApiUtil.buildNotFoundException("Tags", null).getResponse();
-            }
-            while (tagIterator.hasNext()) {
-                Tag tag = (Tag) tagIterator.next();
-                tagList.add(tag.getName());
-            }
-            tagListDTO.setTags(tagList);
-        } catch (AppManagementException e) {
-            String errorMessage = "Error retrieving tags for " + appType + "s.";
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
-        }
-        return Response.ok().entity(tagListDTO).build();
-    }
-
-
     @Override
     public Response appsMobileScheduleInstallPost(String contentType, ScheduleDTO schedule,
                                                   SecurityContext securityContext) {

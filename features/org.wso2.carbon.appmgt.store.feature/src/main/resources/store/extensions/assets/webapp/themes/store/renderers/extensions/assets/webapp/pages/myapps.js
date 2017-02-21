@@ -18,7 +18,6 @@ var render = function (theme, data, meta, require) {
     }
     bodyContext.searchQuery =searchQuery;
 
-    data.tags.tagUrl = getTagUrl(data);
     var searchUrl = '/extensions/assets/webapp/myapps';
 
     theme('2-column-left', {
@@ -150,23 +149,3 @@ function createLeftNavLinks(data) {
     return leftNavigationData;
 }
 
-function getTagUrl(data) {
-    var tagUrl;
-    var isSelfSubscriptionEnabled = data.config.isSelfSubscriptionEnabled;
-    var isEnterpriseSubscriptionEnabled = data.config.isEnterpriseSubscriptionEnabled;
-    if (!isSelfSubscriptionEnabled && !isEnterpriseSubscriptionEnabled) {
-        tagUrl = '/extensions/assets/webapp/apps';
-    } else {
-        tagUrl = '/assets/webapp';
-    }
-    return tagUrl;
-}
-
-function hideTag(data){
-    var isSelfSubscriptionEnabled = data.config.isSelfSubscriptionEnabled;
-    var isEnterpriseSubscriptionEnabled = data.config.isEnterpriseSubscriptionEnabled;
-    if (!isSelfSubscriptionEnabled && !isEnterpriseSubscriptionEnabled) {
-        return false;
-    }
-    return true;
-}

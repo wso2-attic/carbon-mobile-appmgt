@@ -13,7 +13,6 @@ require('/modules/store.js').exec(function (ctx) {
             log = ctx.log,
             sso = ctx.sso,
             query = ctx.params.query,
-            tag = ctx.params.tag,
             store = ctx.store,
             user = ctx.user,
             server = ctx.server,
@@ -60,14 +59,7 @@ require('/modules/store.js').exec(function (ctx) {
         }
     }
 
-    if (tag) {
-        urlQuery = 'tag=' + tag + '&';
-        var options= {};
-        options.tag = tag;
-        options.type = type;
-        options.lifecycleState = ["published"];
-        assets = store.taggeds(type, options, paging);
-    } else if (query) {
+    if (query) {
         urlQuery = 'query=' + query + '&';
         query = require('/modules/search.js').build(query);
         options = {
@@ -210,9 +202,6 @@ require('/modules/store.js').exec(function (ctx) {
             type: type,
             selectedCategory: selectedCategory,
             selectedPlatform: selectedPlatform,
-            tags: {
-                    data:{allTags: store.tags(type), searchedTag: tag}
-            },
             assets: assets,
             pagination: {
                   leftNav: leftNav,

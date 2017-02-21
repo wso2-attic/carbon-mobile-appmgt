@@ -115,7 +115,6 @@ public abstract class AbstractAPIManager implements APIManager {
      */
     private void registerCustomQueries(UserRegistry registry, String username)
             throws RegistryException, AppManagementException {
-        String tagsQueryPath = RegistryConstants.QUERIES_COLLECTION_PATH + "/tag-summary-appmgt";
         String latestAPIsQueryPath = RegistryConstants.QUERIES_COLLECTION_PATH + "/latest-apis";
         String resourcesByTag = RegistryConstants.QUERIES_COLLECTION_PATH + "/resource-by-tag";
         String path = RegistryUtils.getAbsolutePath(RegistryContext.getBaseInstance(),
@@ -143,39 +142,6 @@ public abstract class AbstractAPIManager implements APIManager {
 
         }
 
-        if (!registry.resourceExists(tagsQueryPath)) {
-            Resource resource = registry.newResource();
-
-            //Tag Search Query
-            //'MOCK_PATH' used to bypass ChrootWrapper -> filterSearchResult. A valid registry path is
-            // a must for executeQuery results to be passed to client side
-            String sql1 =
-                    "SELECT  " +
-                    "   '/_system/governance/repository/components/org.wso2.carbon.governance' AS MOCK_PATH, " +
-                    "   RT.REG_TAG_NAME AS TAG_NAME, " +
-                    "   COUNT(RT.REG_TAG_NAME) AS USED_COUNT " +
-                    "FROM " +
-                    "   REG_RESOURCE_TAG RRT, " +
-                    "   REG_TAG RT, " +
-                    "   REG_RESOURCE R, " +
-                    "   REG_RESOURCE_PROPERTY RRP, " +
-                    "   REG_PROPERTY RP " +
-                    "WHERE " +
-                    "   RT.REG_ID = RRT.REG_TAG_ID  " +
-                    "   AND R.REG_MEDIA_TYPE = ? " +
-                    "   AND RRT.REG_VERSION = R.REG_VERSION " +
-                    "   AND RRP.REG_VERSION = R.REG_VERSION " +
-                    "   AND RP.REG_NAME = ? " +
-                    "   AND RRP.REG_PROPERTY_ID = RP.REG_ID " +
-                    "   AND RP.REG_VALUE LIKE ? " +
-                    "GROUP BY " +
-                    "   RT.REG_TAG_NAME";
-            resource.setContent(sql1);
-            resource.setMediaType(RegistryConstants.SQL_QUERY_MEDIA_TYPE);
-            resource.addProperty(RegistryConstants.RESULT_TYPE_PROPERTY_NAME,
-                                 RegistryConstants.TAG_SUMMARY_RESULT_TYPE);
-            registry.put(tagsQueryPath, resource);
-        }
         if (!registry.resourceExists(latestAPIsQueryPath)) {
             //Recently added APIs
             Resource resource = registry.newResource();

@@ -1249,101 +1249,6 @@ public class AppsApiServiceImpl extends AppsApiService {
     }
 
     @Override
-    public Response appsAppTypeIdAppIdTagsGet(String appType, String appId, String accept, String ifNoneMatch) {
-        TagListDTO tagListDTO = new TagListDTO();
-        List<String> tags = new ArrayList<>();
-        try {
-            if (AppMConstants.MOBILE_ASSET_TYPE.equals(appType) || AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                for (Tag tag : appProvider.getAllTags(appType, appId)) {
-                    tags.add(tag.getName());
-                }
-                tagListDTO.setTags(tags);
-            } else {
-                RestApiUtil.handleBadRequest("Unsupported application type '" + appType + "' provided", log);
-            }
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the
-            // existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error retrieving tags for " + appType + " with id : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        }
-        return Response.ok().entity(tagListDTO).build();
-    }
-
-    /**
-     * Add a tag to an application
-     *
-     * @param appType           appType application type ie: webapp, mobileapp
-     * @param appId             application uuid
-     * @param body              tag list
-     * @param contentType
-     * @param ifMatch
-     * @param ifUnmodifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdTagsPut(String appType, String appId, TagListDTO body, String contentType,
-                                              String ifMatch, String ifUnmodifiedSince) {
-        beanValidator = new BeanValidator();
-        //Validate common mandatory fields for mobile and webapp
-        beanValidator.validate(body);
-        try {
-            if (AppMConstants.MOBILE_ASSET_TYPE.equals(appType) || AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-                List<String> tagList = body.getTags();
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                appProvider.addTags(appType, appId, tagList);
-            } else {
-                RestApiUtil.handleBadRequest("Unsupported application type '" + appType + "' provided", log);
-            }
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the
-            // existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while adding a tag to " + appType + " with id : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        }
-        return Response.ok().build();
-    }
-
-
-    @Override
-    public Response appsAppTypeIdAppIdTagsDelete(String appType, String appId, TagListDTO body, String ifMatch,
-                                                 String ifUnmodifiedSince) {
-
-        beanValidator = new BeanValidator();
-        //Validate common mandatory fields for mobile and webapp
-        beanValidator.validate(body);
-        try {
-            if (AppMConstants.MOBILE_ASSET_TYPE.equals(appType) || AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-                List<String> tags = body.getTags();
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                appProvider.removeTag(appType, appId, tags);
-            } else {
-                RestApiUtil.handleBadRequest("Unsupported application type '" + appType + "' provided", log);
-            }
-        } catch (AppManagementException e) {
-            //Auth failure occurs when cross tenant accessing APIs. Sends 404, since we don't need to expose the
-            // existence of the resource
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(appType, appId, e, log);
-            } else {
-                String errorMessage = "Error while deleting tags from " + appType + " with id : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        }
-        return Response.ok().build();
-    }
-
-    @Override
     public Response appsAppTypeThrottlingtiersGet(String appType, String accept,
                                                   String ifNoneMatch) {
         TierListDTO tierListDTO = new TierListDTO();
@@ -1565,27 +1470,6 @@ public class AppsApiServiceImpl extends AppsApiService {
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
         return statSummaryDTO;
-    }
-
-    @Override
-    public Response appsAppTypeTagsGet(String appType, String accept, String ifNoneMatch) {
-        Set<Tag> tagSet = new HashSet<>();
-        try {
-            if (AppMConstants.MOBILE_ASSET_TYPE.equals(appType) || AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                tagSet = appProvider.getAllTags(appType);
-                if (tagSet.isEmpty()) {
-                    return RestApiUtil.buildNotFoundException("Tags", null).getResponse();
-                }
-            } else {
-                RestApiUtil.handleBadRequest("Unsupported application type '" + appType + "' provided", log);
-            }
-        } catch (AppManagementException e) {
-            String errorMessage = "Error retrieving tags for " + appType + "s.";
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
-
-        }
-        return Response.ok().entity(tagSet).build();
     }
 
     /**

@@ -32,7 +32,12 @@ import org.apache.commons.logging.LogFactory;
 import org.jaggeryjs.scriptengine.exceptions.ScriptException;
 import org.jaggeryjs.scriptengine.util.HostObjectUtil;
 import org.jaxen.JaxenException;
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.hostobjects.internal.HostObjectComponent;
@@ -53,8 +58,12 @@ import org.wso2.carbon.governance.api.services.ServiceManager;
 import org.wso2.carbon.governance.api.services.dataobjects.Service;
 import org.wso2.carbon.governance.api.util.GovernanceConstants;
 import org.wso2.carbon.governance.api.util.GovernanceUtils;
-import org.wso2.carbon.registry.core.*;
-import org.wso2.carbon.registry.core.Collection;
+import org.wso2.carbon.registry.core.Association;
+import org.wso2.carbon.registry.core.Comment;
+import org.wso2.carbon.registry.core.Registry;
+import org.wso2.carbon.registry.core.RegistryConstants;
+import org.wso2.carbon.registry.core.Resource;
+import org.wso2.carbon.registry.core.Tag;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.session.UserRegistry;
 import org.wso2.carbon.registry.core.utils.RegistryUtils;
@@ -70,7 +79,17 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 //import org.wso2.carbon.user.mgt.stub.AddUserUserAdminExceptionException;
 
@@ -729,32 +748,6 @@ public class AssetStoreHostObject extends ScriptableObject {
             }
         }// end of the if
         return apiArray;
-    }
-
-    public static NativeArray jsFunction_getAllTags(Context cx,
-                                                    Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-        NativeArray tagArray = new NativeArray(0);
-        try {
-            Collection collection = getRegistry(thisObj).executeQuery(
-                    RegistryConstants.QUERIES_COLLECTION_PATH + "/tags",
-                    Collections.<String, String>emptyMap());
-            int i = 0;
-            TreeMap<String, Integer> map = new TreeMap<String, Integer>();
-            for (String fullTag : collection.getChildren()) {
-                String tag = fullTag.split(";")[1].split(":")[1];
-                map.put(tag, 1 + (map.containsKey(tag) ? map.get(tag) : 0));
-            }
-            for (Map.Entry<String, Integer> e : map.entrySet()) {
-                NativeObject currentTag = new NativeObject();
-                currentTag.put("name", currentTag, e.getKey());
-                currentTag.put("count", currentTag, e.getValue());
-                tagArray.put(i++, tagArray, currentTag);
-            }
-        } catch (Exception e) {
-            log.error("Error while getting All Tags", e);
-        }
-        return tagArray;
     }
 
     public static NativeArray jsFunction_getAllPublishedAPIs(Context cx,

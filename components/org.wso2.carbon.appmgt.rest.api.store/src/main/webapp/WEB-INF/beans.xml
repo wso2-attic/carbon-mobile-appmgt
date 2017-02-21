@@ -11,7 +11,6 @@
     <bean class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer" />
     <jaxrs:server id="services" address="/">
         <jaxrs:serviceBeans>
-            <bean class="org.wso2.carbon.appmgt.rest.api.store.TagsApi" />
             <bean class="org.wso2.carbon.appmgt.rest.api.store.AppsApi" />
             <bean class="org.wso2.carbon.appmgt.rest.api.store.DevicesApi" />
             <bean class="org.wso2.carbon.appmgt.rest.api.store.AdministrationApi" />

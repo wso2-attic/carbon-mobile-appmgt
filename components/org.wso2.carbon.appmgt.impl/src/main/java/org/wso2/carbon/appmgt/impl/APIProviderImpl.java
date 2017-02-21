@@ -46,7 +46,6 @@ import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.Provider;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
-import org.wso2.carbon.appmgt.api.model.Tag;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.api.model.Usage;
 import org.wso2.carbon.appmgt.api.model.WebApp;
@@ -2258,123 +2257,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
 
         return rxtAttributeName;
-    }
-
-    @Override
-    public void addTags(String appType, String appId, List<String> tags) throws AppManagementException {
-        try {
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            GenericArtifact appArtifact = artifactManager.getGenericArtifact(appId);
-            if (appArtifact != null) {
-                for(String tag : tags){
-                    registry.applyTag(appArtifact.getPath(), tag);
-                }
-            } else {
-                handleResourceNotFoundException("Failed to get " + appType + " artifact corresponding to artifactId " +
-                        appId + ". Artifact does not exist");
-            }
-        } catch (RegistryException e) {
-            handleException("Error occurred while adding tags"+StringUtils.join(tags, ",")+" to " + appType +" with id : " + appId, e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-    }
-
-    @Override
-    public void removeTag(String appType, String appId, List<String> tags) throws AppManagementException {
-        try {
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            GenericArtifact appArtifact = artifactManager.getGenericArtifact(appId);
-            if (appArtifact != null) {
-                for(String tag : tags) {
-                    registry.removeTag(appArtifact.getPath(), tag);
-                }
-            } else {
-                handleResourceNotFoundException("Failed to retrieve " + appType +
-                        " artifact corresponding to artifactId " +appId + ". Artifact does not exist");
-            }
-        } catch (RegistryException e) {
-            handleException("Error occurred while removing tags '" + StringUtils.join(tags, ",") + "' from "
-                    + appType + " with id : " + appId, e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-    }
-
-    @Override
-    public Set<Tag> getAllTags(String appType) throws AppManagementException {
-        Set<Tag> tagSet = new HashSet<>();
-        try {
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            Map<String, String> params = new HashMap<String, String>();
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)){
-                params.put("1",AppMConstants.MediaType.WEB_APP);
-                params.put("2",AppMConstants.WEB_APP_LIFECYCLE_STATUS);
-                params.put("3","%");
-            } else if(AppMConstants.MOBILE_ASSET_TYPE.equals(appType)) {
-                params.put("1",AppMConstants.MediaType.MOBILE_APP);
-                params.put("2",AppMConstants.MOBILE_APP_LIFECYCLE_STATUS);
-                params.put("3","%");
-            } else {
-                handleException("Could not retrieve tags. Unsupported applictaion type :" + appType +" provided");
-            }
-
-            String tagsQueryPath = RegistryConstants.QUERIES_COLLECTION_PATH + "/tag-summary-appmgt";
-
-            org.wso2.carbon.registry.core.Collection collection = registry.executeQuery(tagsQueryPath, params);
-            for (String fullTag : collection.getChildren()) {
-
-                String tagName = fullTag.substring(fullTag.indexOf(";") + 1, fullTag.indexOf(":"));
-                int numberOfOccurrence = Integer.parseInt(fullTag.substring(fullTag.indexOf(":")+1));
-                tagSet.add(new Tag(tagName, numberOfOccurrence));
-            }
-
-        } catch (RegistryException e) {
-            handleException("Error occurred while retrieving tags for " + appType +"s" , e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-        return tagSet;
-    }
-
-    @Override
-    public Set<Tag> getAllTags(String appType, String appId) throws AppManagementException {
-        Set<Tag> tagSet = new HashSet<>();
-        try {
-            org.wso2.carbon.registry.core.Tag[] tags = null;
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            GenericArtifact appArtifact = artifactManager.getGenericArtifact(appId);
-            if (appArtifact != null) {
-              String artifactPath = appArtifact.getPath();
-                tags = registry.getTags(artifactPath);
-                for(org.wso2.carbon.registry.core.Tag tag : tags){
-                    tagSet.add(new Tag(tag.getTagName()));
-                }
-            } else {
-                handleResourceNotFoundException("Failed to get " + appType + " artifact corresponding to artifactId " +
-                        appId + ". Artifact does not exist");
-            }
-        } catch (RegistryException e) {
-            handleException("Error occurred while retrieving tags from " + appType +" with id : " + appId, e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-        return tagSet;
     }
 
     public String addResourceFile(String resourcePath, FileContent resourceFile) throws AppManagementException {

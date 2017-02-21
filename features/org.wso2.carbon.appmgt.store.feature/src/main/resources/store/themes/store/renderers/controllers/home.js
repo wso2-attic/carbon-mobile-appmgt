@@ -1,5 +1,4 @@
 var render = function (theme, data, meta, require) {
-    data.tags.tagUrl = "/assets/";
 
     data.header.active = 'store';
     var enabledTypeList = data.config.enabledTypeList;

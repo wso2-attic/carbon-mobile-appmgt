@@ -46,8 +46,7 @@ var render = function (theme, data, meta, require) {
             }
         }
     };
-
-    data.tags.tagUrl = getTagAndSearchUrl(data).tagUrl;
+    
     var searchUrl = getTagAndSearchUrl(data).searchUrl;
 
     theme('2-column-left', {

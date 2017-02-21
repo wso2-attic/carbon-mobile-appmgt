@@ -36,27 +36,6 @@ public interface APIConsumer extends APIManager {
     public Subscriber getSubscriber(String subscriberId) throws AppManagementException;
 
     /**
-     * Returns a list of #{@link org.wso2.carbon.apimgt.api.model.API} bearing the selected tag
-     *
-     * @param tag name of the tag
-     * @return set of WebApp having the given tag name
-     * @throws AppManagementException if failed to get set of WebApp
-     */
-    public Set<WebApp> getAPIsWithTag(String tag) throws AppManagementException;
-
-    /**
-     * Returns a paginated list of #{@link org.wso2.carbon.apimgt.api.model.API} bearing the selected tag
-     *
-     * @param tag   name of the tag
-     * @param start starting number
-     * @param end   ending number
-     * @return set of WebApp having the given tag name
-     * @throws AppManagementException if failed to get set of WebApp
-     */
-    public Map<String, Object> getPaginatedAPIsWithTag(String tag, int start, int end) throws
-                                                                                       AppManagementException;
-
-    /**
      * Returns a list of all published APIs. If a given WebApp has multiple APIs, only the latest version will be
      * included in this list.
      *
@@ -107,26 +86,6 @@ public interface APIConsumer extends APIManager {
      */
     public Set<WebApp> getRecentlyAddedAPIs(int limit, String tenantDomain) throws
                                                                             AppManagementException;
-
-    /**
-     * Get all tags of published Apps
-     *
-     * @return a list of all tags applied to all apps published.
-     * @throws AppManagementException if failed to get all the tags
-     */
-    public Set<Tag> getAllTags(String tenantDomain) throws AppManagementException;
-
-    /**
-     * @param tenantDomain
-     * @param assetType    Currently we don't use asset type. Asset type could be webapp, mobileapp or any other asset
-     *                     type.
-     * @param attributeMap Attribute map for the give assetType.
-     * @return matching tag set which qualified the conditions of assetTye and attributeMap.
-     * @throws AppManagementException
-     */
-    public Set<Tag> getAllTags(String tenantDomain, String assetType, Map<String, String> attributeMap)
-            throws AppManagementException;
-
     /**
      * Returns a set of SubscribedAPI purchased by the given Subscriber
      *
@@ -444,13 +403,6 @@ public interface APIConsumer extends APIManager {
             throws AppManagementException;
 
     public boolean isSubscribedToMobileApp(String userId, String appId) throws AppManagementException;
-
-    /**
-     * Return tagged apps
-     *
-     * @return Tagged Apps
-     */
-    public Map<String, Set<WebApp>> getTaggedAPIs();
 
     public void addSubscription(String subscriberName, WebApp webApp, String applicationName) throws AppManagementException;
 
