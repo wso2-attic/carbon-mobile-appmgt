@@ -43,18 +43,6 @@ public class UserAwareAPIProvider extends APIProviderImpl {
     }
 
     @Override
-    public void addWebApp(WebApp app) throws AppManagementException {
-        checkCreatePermission();
-        super.addWebApp(app);
-    }
-
-    @Override
-    public String createWebApp(WebApp webApp) throws AppManagementException {
-        checkCreatePermission();
-        return super.createWebApp(webApp);
-    }
-
-    @Override
     public String createNewVersion(App app) throws AppManagementException {
         checkCreatePermission();
         return super.createNewVersion(app);

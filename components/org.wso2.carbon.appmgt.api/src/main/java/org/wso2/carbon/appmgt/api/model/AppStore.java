@@ -28,8 +28,6 @@ public class AppStore {
     private boolean published;
     private String publisherClassName;
 
-    private ExternalAppStorePublisher publisher;
-
     public String getPublisherClassName() {
         return publisherClassName;
     }
@@ -37,13 +35,6 @@ public class AppStore {
     public void setPublisherClassName(String publisherClassName) {
         this.publisherClassName = publisherClassName;
     }
-
-    public ExternalAppStorePublisher getPublisher() {
-        return publisher;
-    }
-
-
-
 
     public void setType(String type) {
         this.type = type;

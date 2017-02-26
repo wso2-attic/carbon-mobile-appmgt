@@ -24,7 +24,6 @@ import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.api.APIProvider;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.APIManagerFactory;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.dto.PublishApplicationWorkflowDTO;
@@ -63,12 +62,6 @@ public class PublishAPPSimpleWorkflowExecutor extends WorkflowExecutor {
             }
             APIProvider provider = APIManagerFactory.getInstance().getAPIProvider(fullName);
             APIIdentifier apiId = new APIIdentifier(publishAPPDTO.getAppProvider(), publishAPPDTO.getAppName(), publishAPPDTO.getAppVersion());
-            WebApp api = provider.getAPI(apiId);
-            APIStatus newStatus = null;
-            if (api != null) {
-                newStatus = getApiStatus(publishAPPDTO.getNewState());
-               // provider.changeAPIStatus(api, newStatus, fullName, true);
-            }
             if(publishAPPDTO.getLcState().equalsIgnoreCase(AppMConstants.ApplicationStatus.APPLICATION_CREATED)) {
                 super.execute(workflowDTO);
             }
@@ -102,13 +95,7 @@ public class PublishAPPSimpleWorkflowExecutor extends WorkflowExecutor {
 
             apiIdentifier = new APIIdentifier(uId, apiName, version);
             APIProvider provider = APIManagerFactory.getInstance().getAPIProvider(fullName);
-            WebApp app = provider.getAPI(apiIdentifier);
             PublishApplicationWorkflowDTO publishAPPDTO = (PublishApplicationWorkflowDTO)workflowDTO;
-
-            if (app != null) {
-                APIStatus newStatus = getApiStatus(publishAPPDTO.getNewState());
-               // provider.changeAPIStatus(app, newStatus, fullName, true);
-            }
         } catch (AppManagementException e) {
             //throw exception
             log.error("Error while publishing API",e);

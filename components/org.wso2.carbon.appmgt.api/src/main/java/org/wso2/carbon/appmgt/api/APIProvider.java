@@ -452,15 +452,6 @@ public interface APIProvider extends APIManager {
     public boolean isDefaultVersion(APIIdentifier identifier) throws AppManagementException;
 
     /**
-     * Check if the given WebApp has any other versions in any lifecycle state.
-     *
-     * @param identifier
-     * @return true if given app has more versions
-     * @throws AppManagementException
-     */
-    public boolean hasMoreVersions(APIIdentifier identifier) throws AppManagementException;
-
-    /**
      * Change the lifecycle status of a given application
      * @param appType application type
      * @param appId application type

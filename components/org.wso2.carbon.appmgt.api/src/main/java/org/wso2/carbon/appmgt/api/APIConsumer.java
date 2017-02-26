@@ -36,18 +36,6 @@ public interface APIConsumer extends APIManager {
     public Subscriber getSubscriber(String subscriberId) throws AppManagementException;
 
     /**
-     * Returns a paginated list of all published APIs. If a given WebApp has multiple APIs, only the latest version will
-     * be included in this list.
-     *
-     * @param tenantDomain tenant domain
-     * @param start        starting number
-     * @param end          ending number
-     * @return set of WebApp
-     * @throws AppManagementException if failed to WebApp set
-     */
-    public Map<String, Object> getAllPaginatedPublishedAPIs(String tenantDomain, int start, int end) throws
-                                                                                                     AppManagementException;
-    /**
      * Get average rating of an App by UUID
      *
      * @param uuid
@@ -89,20 +77,6 @@ public interface APIConsumer extends APIManager {
                                                                             AppManagementException;
 
     /**
-     * Add new Subscriber
-     *
-     * @param identifier       APIIdentifier
-     * @param subscriptionType Type of the subscription. E.g. Individual, Enterprise
-     * @param userId           id of the user
-     * @param applicationId    Application Id   @return String subscription status
-     * @throws AppManagementException if failed to add subscription details to database
-     */
-    public String addSubscription(APIIdentifier identifier, String subscriptionType, String userId, int applicationId,
-                                  String trustedIdp)
-            throws AppManagementException;
-
-
-    /**
      * Get the subscription for given search criteria.
      *
      * @param apiIdentifier APIIdentifier
@@ -137,17 +111,6 @@ public interface APIConsumer extends APIManager {
      * @throws AppManagementException if failed to add subscription details to database
      */
     public void removeSubscriber(APIIdentifier identifier, String userId)
-            throws AppManagementException;
-
-    /**
-     * This method is to update the subscriber.
-     *
-     * @param identifier    APIIdentifier
-     * @param userId        user id
-     * @param applicationId Application Id
-     * @throws AppManagementException if failed to update subscription
-     */
-    public void updateSubscriptions(APIIdentifier identifier, String userId, int applicationId)
             throws AppManagementException;
 
     /**

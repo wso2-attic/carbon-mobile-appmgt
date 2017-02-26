@@ -27,7 +27,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.appmgt.api.IdentityApplicationManagementAdapter;
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.idp.sso.SSOConfiguratorUtil;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
@@ -82,27 +81,6 @@ public class IS5xxSAMLSSOConfigurator extends ISBaseSAMLSSOConfigurator implemen
     @Override
     public boolean createProvider(SSOProvider provider) {
         return appIdpMgt.createProvider(provider, idpName, authenticationStep);
-    }
-
-    @Override
-    public boolean createProvider(WebApp webApp) {
-        return appIdpMgt.createProvider(webApp, idpName, authenticationStep, SSOConfiguratorUtil.getGatewayUrl(webApp));
-    }
-
-    @Override
-    public boolean removeProvider(SSOProvider provider) {
-        return appIdpMgt.removeProvider(provider);
-    }
-
-    @Override
-    public boolean updateProvider(SSOProvider provider) {
-        return appIdpMgt.updateProvider(provider, idpName, authenticationStep);
-    }
-
-    @Override
-    public boolean updateProvider(WebApp application) {
-        return appIdpMgt.updateProvider(application, idpName, authenticationStep,
-                SSOConfiguratorUtil.getGatewayUrl(application));
     }
 
     @Override

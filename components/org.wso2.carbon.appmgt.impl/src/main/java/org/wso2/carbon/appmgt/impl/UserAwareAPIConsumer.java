@@ -46,14 +46,6 @@ public class UserAwareAPIConsumer extends APIConsumerImpl {
     }
 
     @Override
-    public String addSubscription(APIIdentifier identifier, String subscriptionType,
-                                String userId, int applicationId, String trustedIdps) throws
-                                                                                      AppManagementException {
-        checkSubscribePermission();
-        return super.addSubscription(identifier, subscriptionType, userId, applicationId, trustedIdps);
-    }
-
-    @Override
     public Subscription getSubscription(APIIdentifier apiIdentifier, int applicationId, String subscriptionType) throws
                                                                                                                  AppManagementException {
         checkSubscribePermission();

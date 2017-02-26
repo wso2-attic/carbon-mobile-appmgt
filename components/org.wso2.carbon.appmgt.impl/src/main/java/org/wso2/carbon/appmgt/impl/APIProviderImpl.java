@@ -55,9 +55,6 @@ import org.wso2.carbon.appmgt.impl.dto.Environment;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.appmgt.impl.entitlement.EntitlementServiceFactory;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
-import org.wso2.carbon.appmgt.impl.template.APITemplateBuilder;
-import org.wso2.carbon.appmgt.impl.template.APITemplateBuilderImpl;
-import org.wso2.carbon.appmgt.impl.utils.APINameComparator;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.governance.api.exception.GovernanceException;
@@ -941,18 +938,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
     /**
-     * Check if the given app has any other versions in any state.
-     *
-     * @param identifier
-     * @return true if given app has more version
-     * @throws AppManagementException
-     */
-    @Override
-    public boolean hasMoreVersions(APIIdentifier identifier) throws AppManagementException {
-        return appMDAO.hasMoreVersions(identifier);
-    }
-
-    /**
      * Change the lifecycle state of a given application
      *
      * @param appType         application type ie: webapp, mobileapp
@@ -1160,12 +1145,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
 
     private App createApp(GenericArtifact artifact, String appType) throws AppManagementException {
-
         AppFactory appFactory = null;
-
-        if(AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)){
-            appFactory = new WebAppFactory();
-        }else if(AppMConstants.MOBILE_ASSET_TYPE.equals(appType)){
+        if(AppMConstants.MOBILE_ASSET_TYPE.equals(appType)){
             appFactory = new MobileAppFactory();
         }
 
