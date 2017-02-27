@@ -221,10 +221,10 @@ require('/modules/store.js').exec(function (ctx) {
             }
         } else if (isMobileAppEnabled) {
             //Get mobile apps tags
-            var mobileAppTags = store.tags(MOBILEAPP_TYPE);
-            if (mobileAppTags) {
-                tags = tags.concat(mobileAppTags);
-            }
+            <!--var mobileAppTags = store.tags(MOBILEAPP_TYPE);-->
+            <!--if (mobileAppTags) {-->
+                <!--tags = tags.concat(mobileAppTags);-->
+            <!--}-->
         }
 
 

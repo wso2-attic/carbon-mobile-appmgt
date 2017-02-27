@@ -32,7 +32,6 @@ import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.api.APIProvider;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.APIManagerFactory;
 import org.wso2.carbon.appmgt.impl.dao.AppMDAO;
@@ -87,13 +86,6 @@ public class PublishAPPWSWorkflowExecutor extends WorkflowExecutor {
             String adminUserUsername = CarbonContext.getThreadLocalCarbonContext().getUserRealm().getRealmConfiguration().getAdminUserName();
             APIProvider provider = APIManagerFactory.getInstance().getAPIProvider(adminUserUsername);
             APIIdentifier apiId = new APIIdentifier(publishAPPDTO.getAppProvider(), publishAPPDTO.getAppName(), publishAPPDTO.getAppVersion());
-            WebApp api = provider.getAPI(apiId);
-            if (api != null) {
-                APIStatus oldState = getApiStatus(publishAPPDTO.getLcState());
-                APIStatus newStatus = getApiStatus("IN-REVIEW");
-                api.setStatus(oldState);
-              //  provider.changeAPIStatus(api, newStatus, adminUserUsername, true);
-            }
         } catch (AppManagementException e) {
             log.error("Could not update APP lifecycle state to IN-REVIEW", e);
             throw new WorkflowException("Could not update APP lifecycle state to IN-REVIEW", e);
@@ -214,12 +206,6 @@ public class PublishAPPWSWorkflowExecutor extends WorkflowExecutor {
                 String[] arr = decodeValues(reference);
                 APIIdentifier apiIdentifier = new APIIdentifier(arr[2], arr[0], arr[1]);
                 APIProvider provider = APIManagerFactory.getInstance().getAPIProvider(adminUserUsername);
-                WebApp app = provider.getAPI(apiIdentifier);
-
-                if (app != null) {
-                    APIStatus newStatus = getApiStatus("rejected");
-                  //  provider.changeAPIStatus(app, newStatus, adminUserUsername, true);
-                }
 
                 String apiPath = AppManagerUtil.getAPIPath(apiIdentifier);
 
@@ -258,12 +244,6 @@ public class PublishAPPWSWorkflowExecutor extends WorkflowExecutor {
                 APIIdentifier appIdentifier = new APIIdentifier(appDecodedValue[2], appDecodedValue[0],
                         appDecodedValue[1]);
                 APIProvider provider = APIManagerFactory.getInstance().getAPIProvider(adminUsername);
-                WebApp app = provider.getAPI(appIdentifier);
-
-                if (app != null) {
-                    APIStatus newStatus = getApiStatus(workflowDTO.getStatus().name());
-                //    provider.changeAPIStatus(app, newStatus, adminUsername, true);
-                }
             } catch (AppManagementException e) {
                 log.error("Error while retrieving relevant workflow reference", e);
             } catch (UserStoreException e) {

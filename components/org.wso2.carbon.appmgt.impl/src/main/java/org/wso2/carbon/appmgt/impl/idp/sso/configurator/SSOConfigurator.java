@@ -19,7 +19,6 @@
 package org.wso2.carbon.appmgt.impl.idp.sso.configurator;
 
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 
 import java.util.Map;
 
@@ -38,36 +37,6 @@ public interface SSOConfigurator {
      * @return true/false - successful execution
      */
     public boolean createProvider(SSOProvider provider);
-
-    /**
-     * Used to create a SSO provider in 3rd party IDP provider.
-     *
-     * @param application
-     * @return true/false - successful execution
-     */
-    public boolean createProvider(WebApp application);
-
-    /**
-     * Used to update an already existing SSO provider in 3rd party IDP provider.
-     * @param provider
-     * @return true/false - successful execution
-     */
-    public boolean updateProvider(SSOProvider provider);
-
-    /**
-     * Used to update an already existing SSO provider in 3rd party IDP provider.
-     *
-     * @param application
-     * @return true/false - successful execution
-     */
-    public boolean updateProvider(WebApp application);
-
-    /**
-     * Used to remove an existing SSO Provider in 3rd party IDP.
-     * @param provider
-     * @return true/false - successful execution
-     */
-    public boolean removeProvider(SSOProvider provider);
 
     /**
      * Used to retrieve a list of claims provided by the 3rd party IDP provider.

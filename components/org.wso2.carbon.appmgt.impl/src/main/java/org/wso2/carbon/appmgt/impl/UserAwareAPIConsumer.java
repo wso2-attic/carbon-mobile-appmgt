@@ -19,12 +19,8 @@ package org.wso2.carbon.appmgt.impl;
 import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.Application;
-import org.wso2.carbon.appmgt.api.model.WebAppSearchOption;
-import org.wso2.carbon.appmgt.api.model.WebAppSortOption;
 import org.wso2.carbon.appmgt.api.model.Subscription;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
-
-import java.util.List;
 
 /**
  * User aware APIConsumer implementation which ensures that the invoking user has the
@@ -47,14 +43,6 @@ public class UserAwareAPIConsumer extends APIConsumerImpl {
     UserAwareAPIConsumer(String username) throws AppManagementException {
         super(username);
         this.username = username;
-    }
-
-    @Override
-    public String addSubscription(APIIdentifier identifier, String subscriptionType,
-                                String userId, int applicationId, String trustedIdps) throws
-                                                                                      AppManagementException {
-        checkSubscribePermission();
-        return super.addSubscription(identifier, subscriptionType, userId, applicationId, trustedIdps);
     }
 
     @Override
@@ -84,64 +72,6 @@ public class UserAwareAPIConsumer extends APIConsumerImpl {
         super.updateApplication(application);
     }
 
-    @Override
-    public void addToFavouriteApps(APIIdentifier identifier, String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        checkSubscribePermission();
-        super.addToFavouriteApps(identifier, username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public void removeFromFavouriteApps(APIIdentifier identifier, String username, int tenantIdOfUser,
-                                        int tenantIdOfStore) throws AppManagementException {
-        checkSubscribePermission();
-        super.removeFromFavouriteApps(identifier, username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public boolean isFavouriteApp(APIIdentifier identifier, String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        checkSubscribePermission();
-        return super.isFavouriteApp(identifier, username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public List<APIIdentifier> getFavouriteApps(String username, int tenantIdOfUser, int tenantIdOfStore,
-                                                WebAppSortOption sortOption)
-            throws AppManagementException {
-        checkSubscribePermission();
-        return super.getFavouriteApps(username, tenantIdOfUser, tenantIdOfStore, sortOption);
-    }
-
-    @Override
-    public List<APIIdentifier> searchFavouriteApps(String username, int tenantIdOfUser, int tenantIdOfStore,
-                                                   WebAppSearchOption searchOption, String searchValue)
-            throws AppManagementException {
-        checkSubscribePermission();
-        return super.searchFavouriteApps(username, tenantIdOfUser, tenantIdOfStore, searchOption, searchValue);
-    }
-
-    @Override
-    public void setFavouritePage(String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        checkSubscribePermission();
-        super.setFavouritePage(username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public void removeFavouritePage(String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        checkSubscribePermission();
-        super.removeFavouritePage(username, tenantIdOfUser, tenantIdOfStore);
-    }
-
-    @Override
-    public boolean hasFavouritePage(String username, int tenantIdOfUser, int tenantIdOfStore)
-            throws AppManagementException {
-        checkSubscribePermission();
-        return super.hasFavouritePage(username, tenantIdOfUser, tenantIdOfStore);
-
-    }
     public void checkSubscribePermission() throws AppManagementException {
         AppManagerUtil.checkPermission(username, AppMConstants.Permissions.WEB_APP_SUBSCRIBE);
     }

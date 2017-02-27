@@ -36,10 +36,7 @@ import org.wso2.carbon.appmgt.api.model.APPLifecycleActions;
 import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.api.model.AppDefaultVersion;
 import org.wso2.carbon.appmgt.api.model.AppStore;
-import org.wso2.carbon.appmgt.api.model.BusinessOwner;
-import org.wso2.carbon.appmgt.api.model.Documentation;
 import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
-import org.wso2.carbon.appmgt.api.model.ExternalAppStorePublisher;
 import org.wso2.carbon.appmgt.api.model.FileContent;
 import org.wso2.carbon.appmgt.api.model.JavaPolicy;
 import org.wso2.carbon.appmgt.api.model.LifeCycleEvent;
@@ -47,10 +44,8 @@ import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.Provider;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
-import org.wso2.carbon.appmgt.api.model.Tag;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.api.model.Usage;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicy;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyValidationResult;
@@ -60,9 +55,6 @@ import org.wso2.carbon.appmgt.impl.dto.Environment;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.appmgt.impl.entitlement.EntitlementServiceFactory;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
-import org.wso2.carbon.appmgt.impl.template.APITemplateBuilder;
-import org.wso2.carbon.appmgt.impl.template.APITemplateBuilderImpl;
-import org.wso2.carbon.appmgt.impl.utils.APINameComparator;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.governance.api.exception.GovernanceException;
@@ -89,7 +81,6 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -121,102 +112,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         super(username);
     }
 
-    /**
-     * Delete business owner.
-     * @param businessOwnerId ID of the owner.
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public boolean deleteBusinessOwner(String businessOwnerId) throws AppManagementException{
-        boolean isBusinessOwnerAssociatedWithApps = appMDAO.isBusinessOwnerAssociatedWithApps(businessOwnerId,
-                                                                                              registry, tenantDomain);
-        if (!isBusinessOwnerAssociatedWithApps) {
-            appMDAO.deleteBusinessOwner(businessOwnerId);
-            // return true if business owner is successfully deleted.
-            return true;
-        }
-        // return false if business owner is associated with one or more web apps.
-        return false;
-    }
-    /**
-     *Update a business owner.
-     * @param businessOwner
-     * @throws AppManagementException
-     */
-    @Override
-    public boolean updateBusinessOwner(BusinessOwner businessOwner) throws AppManagementException {
-        boolean isUpdated = false;
-        if (appMDAO.getBusinessOwner(businessOwner.getBusinessOwnerId(), tenantId) != null) {
-            appMDAO.updateBusinessOwner(businessOwner);
-            isUpdated =true;
-        }
-        return isUpdated;
-    }
-
-
-    /**
-     * Get all business Owners.
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public List<BusinessOwner> getBusinessOwners() throws AppManagementException {
-        return appMDAO.getBusinessOwners(tenantId);
-    }
-
-    /**
-     * Get business owners.
-     * @param businessOwnerId Business owner Id.
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public BusinessOwner getBusinessOwner(int businessOwnerId) throws AppManagementException {
-        return appMDAO.getBusinessOwner(businessOwnerId, tenantId);
-    }
-
-    /**
-     * Search business owners with pagination.
-     * @param startIndex
-     * @param pageSize
-     * @param searchValue
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public  List<BusinessOwner> searchBusinessOwners(int startIndex, int pageSize, String searchValue) throws
-                                                                                          AppManagementException {
-        return appMDAO.searchBusinessOwners(startIndex, pageSize, searchValue, tenantId);
-    }
-
-    @Override
-    public  int getBusinessOwnersCount() throws AppManagementException {
-        return appMDAO.getBusinessOwnersCount(tenantId);
-    }
-
-    /**
-     *Save business owner.
-     * @param businessOwner
-     * @throws AppManagementException
-     */
-    @Override
-    public int saveBusinessOwner(BusinessOwner businessOwner) throws AppManagementException {
-        return appMDAO.saveBusinessOwner(businessOwner, tenantId);
-    }
-
-    /**
-     * Get Business owner Id by owner name and email.
-     * @param businessOwnerName
-     * @param businessOwnerEmail
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public int getBusinessOwnerId(String businessOwnerName, String businessOwnerEmail) throws AppManagementException {
-        return appMDAO.getBusinessOwnerId(businessOwnerName, businessOwnerEmail, tenantId);
-    }
-
     public Set<Provider> getAllProviders() throws AppManagementException {
         Set<Provider> providerSet = new HashSet<Provider>();
         GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
@@ -238,40 +133,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
         return providerSet;
     }
-
-    public List<WebApp> getAPIsByProvider(String providerId) throws AppManagementException {
-
-        List<WebApp> apiSortedList = new ArrayList<WebApp>();
-
-        try {
-            providerId = AppManagerUtil.replaceEmailDomain(providerId);
-            String providerPath = AppMConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR +
-                                  providerId;
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.API_KEY);
-            Association[] associations = registry.getAssociations(providerPath,
-                                                                  AppMConstants.PROVIDER_ASSOCIATION);
-            for (Association association : associations) {
-                String apiPath = association.getDestinationPath();
-                Resource resource = registry.get(apiPath);
-                String apiArtifactId = resource.getUUID();
-                if (apiArtifactId != null) {
-                    GenericArtifact apiArtifact = artifactManager.getGenericArtifact(apiArtifactId);
-                    apiSortedList.add(AppManagerUtil.getAPI(apiArtifact, registry));
-                } else {
-                    throw new GovernanceException("artifact id is null of " + apiPath);
-                }
-            }
-
-        } catch (RegistryException e) {
-            handleException("Failed to get APIs for provider : " + providerId, e);
-        }
-        Collections.sort(apiSortedList, new APINameComparator());
-
-        return apiSortedList;
-
-    }
-
 
     public Set<Subscriber> getSubscribersOfProvider(String providerId)
             throws AppManagementException {
@@ -450,32 +311,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
     /**
-     * Adds a new WebApp to the Store
-     *
-     * @param app WebApp
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     *          if failed to add WebApp
-     */
-    public void addWebApp(WebApp app) throws AppManagementException {
-        try {
-            createAPI(app);
-//            appMDAO.addWebApp(app);
-//            if (AppManagerUtil.isAPIManagementEnabled()) {
-//            	Cache contextCache = AppManagerUtil.getAPIContextCache();
-//            	Boolean apiContext = null;
-//            	if (contextCache.get(app.getContext()) != null) {
-//            		apiContext = Boolean.parseBoolean(contextCache.get(app.getContext()).toString());
-//            	}
-//            	if (apiContext == null) {
-//                    contextCache.put(app.getContext(), true);
-//                }
-//            }
-        } catch (AppManagementException e) {
-            throw new AppManagementException("Error in adding WebApp :"+app.getId().getApiName(),e);
-        }
-    }
-
-    /**
      * Create a new mobile applcation artifact
      *
      * @param mobileApp Mobile App
@@ -530,32 +365,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return artifactId;
     }
 
-    @Override
-    public String createWebApp(WebApp webApp) throws AppManagementException {
-
-        final String appName = webApp.getId().getApiName();
-        try {
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                    AppMConstants.WEBAPP_ASSET_TYPE);
-            Map<String, List<String>> attributeListMap = new HashMap<String, List<String>>();
-            attributeListMap.put(AppMConstants.API_OVERVIEW_NAME, new ArrayList<String>() {{
-                add(appName);
-            }});
-            GenericArtifact[] existingArtifacts = artifactManager.findGenericArtifacts(attributeListMap);
-
-            if (existingArtifacts != null && existingArtifacts.length > 0) {
-                handleResourceAlreadyExistsException("A duplicate webapp already exists with name : " +
-                        appName);
-            }
-        } catch (GovernanceException e) {
-            handleException("Error occurred while checking existence for webapp with name '" + appName);
-        }
-        AppRepository appRepository = new DefaultAppRepository(registry);
-        String appId = appRepository.saveApp(webApp);
-        return appId;
-
-    }
-
     /**
      * Create new version of the application
      * @param app applictaion
@@ -567,31 +376,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         AppRepository appRepository = new DefaultAppRepository(registry);
         String uuid = appRepository.createNewVersion(app);
         return uuid;
-    }
-
-    /**
-     * Retrieve webapp for the given uuid
-     * @param uuid uuid of the Application
-     * @return Webapp
-     * @throws AppManagementException
-     */
-    @Override
-    public WebApp getWebApp(String uuid) throws AppManagementException {
-        GenericArtifact artifact = null;
-        WebApp webApp = null;
-
-        try {
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, AppMConstants.WEBAPP_ASSET_TYPE);
-            artifact = artifactManager.getGenericArtifact(uuid);
-            if (artifact == null) {
-                handleResourceNotFoundException("Webapp does not exist with app id :" + uuid);
-            }
-            webApp = AppManagerUtil.getAPI(artifact, registry);
-
-        } catch (GovernanceException e) {
-            handleException("Error occurred while retrieving webapp registry artifact with uuid " + uuid);
-        }
-        return webApp;
     }
 
     /**
@@ -616,62 +400,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             handleException("Error occurred while retrieving webapp registry artifact with uuid " + uuid);
         }
         return mobileApp;
-    }
-
-
-    private String createWebAppArtifact(WebApp webApp) throws AppManagementException {
-        String artifactId = null;
-
-        GenericArtifactManager artifactManager = null;
-        try {
-            final String webAppName = webApp.getId().getApiName();
-            Map<String, List<String>> attributeListMap = new HashMap<String, List<String>>();
-
-            artifactManager = AppManagerUtil.getArtifactManager(registry,
-                    AppMConstants.WEBAPP_ASSET_TYPE);
-
-            attributeListMap.put(AppMConstants.API_OVERVIEW_NAME, new ArrayList<String>() {{
-                add(webAppName);
-            }});
-            GenericArtifact[] existingArtifacts = artifactManager.findGenericArtifacts(attributeListMap);
-            if (existingArtifacts != null && existingArtifacts.length > 0) {
-                handleResourceAlreadyExistsException("A duplicate web application already exists for name : " +
-                        webAppName);
-            }
-            registry.beginTransaction();
-            GenericArtifact genericArtifact =
-                    artifactManager.newGovernanceArtifact(new QName(webApp.getId().getApiName()));
-            GenericArtifact artifact = AppManagerUtil.createWebAppArtifactContent(genericArtifact, webApp);
-            artifactManager.addGenericArtifact(artifact);
-            artifactId = artifact.getId();
-            changeLifeCycleStatus(AppMConstants.WEBAPP_LIFE_CYCLE, artifactId, APPLifecycleActions.CREATE.getStatus());
-            String artifactPath = GovernanceUtils.getArtifactPath(registry, artifact.getId());
-
-            Set<String> tagSet = webApp.getTags();
-            if (tagSet != null) {
-                for (String tag : tagSet) {
-                    registry.applyTag(artifactPath, tag);
-                }
-            }
-            if (webApp.getAppVisibility() != null) {
-                AppManagerUtil.setResourcePermissions(webApp.getId().getProviderName(),
-                        AppMConstants.API_RESTRICTED_VISIBILITY, webApp.getAppVisibility(), artifactPath);
-            }
-            String providerPath = AppManagerUtil.getAPIProviderPath(webApp.getId());
-            //provider ------provides----> WebApp
-            registry.addAssociation(providerPath, artifactPath, AppMConstants.PROVIDER_ASSOCIATION);
-            registry.commitTransaction();
-        } catch (RegistryException e) {
-            try {
-                registry.rollbackTransaction();
-            } catch (RegistryException re) {
-                handleException(
-                        "Error while rolling back the transaction for web application: "
-                                + webApp.getId().getApiName(), re);
-            }
-            handleException("Error occurred while creating the web application : " + webApp.getId().getApiName(), e);
-        }
-        return artifactId;
     }
 
     /**
@@ -878,83 +606,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
 
-
-
-    private void updateApiArtifact(WebApp api, boolean updateMetadata,boolean updatePermissions) throws
-                                                                                                 AppManagementException {
-
-        //Validate Transports
-        validateAndSetTransports(api);
-
-        try {
-        	registry.beginTransaction();
-            String apiArtifactId = registry.get(AppManagerUtil.getAPIPath(api.getId())).getUUID();
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.API_KEY);
-            GenericArtifact artifact = artifactManager.getGenericArtifact(apiArtifactId);
-            GenericArtifact updateApiArtifact = AppManagerUtil.createAPIArtifactContent(artifact, api);
-            String artifactPath = GovernanceUtils.getArtifactPath(registry, updateApiArtifact.getId());
-            org.wso2.carbon.registry.core.Tag[] oldTags = registry.getTags(artifactPath);
-            if (oldTags != null) {
-                for (org.wso2.carbon.registry.core.Tag tag : oldTags) {
-                    registry.removeTag(artifactPath, tag.getTagName());
-                }
-            }
-
-            Set<String> tagSet = api.getTags();
-            if (tagSet != null) {
-                for (String tag : tagSet) {
-                    registry.applyTag(artifactPath, tag);
-                }
-            }
-
-
-            if (updateMetadata) {
-
-                if (api.getWsdlUrl() != null && !"".equals(api.getWsdlUrl())) {
-                    String path = AppManagerUtil.createWSDL(registry, api);
-                    if (path != null) {
-                        registry.addAssociation(artifactPath, path, CommonConstants.ASSOCIATION_TYPE01);
-                        updateApiArtifact.setAttribute(AppMConstants.API_OVERVIEW_WSDL, api.getWsdlUrl()); //reset the wsdl path to permlink
-                    }
-                }
-
-                if (api.getUrl() != null && !"".equals(api.getUrl())){
-                    String path = AppManagerUtil.createEndpoint(api.getUrl(), registry);
-                    if (path != null) {
-                        registry.addAssociation(artifactPath, path, CommonConstants.ASSOCIATION_TYPE01);
-                    }
-                }
-            }
-
-            artifactManager.updateGenericArtifact(updateApiArtifact);
-
-            //write WebApp Status to a separate property. This is done to support querying APIs using custom query (SQL)
-            //to gain performance
-            String apiStatus = api.getStatus().getStatus();
-            saveAPIStatus(artifactPath, apiStatus);
-            if(updatePermissions){
-                clearResourcePermissions(artifactPath, api.getId());
-                String visibleRolesList = api.getVisibleRoles();
-                String[] visibleRoles = new String[0];
-                if (visibleRolesList != null) {
-                    visibleRoles = visibleRolesList.split(",");
-                }
-                AppManagerUtil.setResourcePermissions(api.getId().getProviderName(), api.getVisibility(),visibleRoles,artifactPath);
-            }
-            registry.commitTransaction();
-        } catch (Exception e) {
-        	 try {
-                 registry.rollbackTransaction();
-             } catch (RegistryException re) {
-                 handleException("Error while rolling back the transaction for WebApp: " +
-                                 api.getId().getApiName(), re);
-             }
-             handleException("Error while performing registry transaction operation", e);
-
-        }
-    }
-
     private void updateMobileAppArtifact(MobileApp mobileApp, boolean updatePermissions) throws
             AppManagementException {
 
@@ -1002,514 +653,10 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
-    private void createUpdateAPIDefinition(WebApp api) throws AppManagementException {
-    	APIIdentifier identifier = api.getId();
-
-    	try{
-    		String jsonText = AppManagerUtil.createSwaggerJSONContent(api);
-
-    		String resourcePath = AppManagerUtil.getAPIDefinitionFilePath(identifier.getApiName(), identifier.getVersion());
-
-    		Resource resource = registry.newResource();
-
-    		resource.setContent(jsonText);
-    		resource.setMediaType("application/json");
-    		registry.put(resourcePath, resource);
-
-    		/*Set permissions to anonymous role */
-    		AppManagerUtil.setResourcePermissions(api.getId().getProviderName(), null, null, resourcePath);
-
-    	} catch (RegistryException e) {
-    		handleException("Error while adding WebApp Definition for " + identifier.getApiName() + "-" + identifier.getVersion(), e);
-		} catch (AppManagementException e) {
-			handleException("Error while adding WebApp Definition for " + identifier.getApiName() + "-" + identifier.getVersion(), e);
-		}
-    }
-
-    private void validateAndSetTransports(WebApp api) throws AppManagementException {
-        String transports = api.getTransports();
-        if(transports != null && !("null".equalsIgnoreCase(transports))){
-            if (transports.contains(",")) {
-                StringTokenizer st = new StringTokenizer(transports, ",");
-                while (st.hasMoreTokens()) {
-                    checkIfValidTransport(st.nextToken());
-                }
-            }else{
-                checkIfValidTransport(transports);
-            }
-        }else{
-            api.setTransports(Constants.TRANSPORT_HTTP+","+Constants.TRANSPORT_HTTPS);
-            return;
-        }
-    }
-
     private void checkIfValidTransport(String transport) throws AppManagementException {
         if(!Constants.TRANSPORT_HTTP.equalsIgnoreCase(transport) && !Constants.TRANSPORT_HTTPS.equalsIgnoreCase(transport)){
             handleException("Unsupported Transport [" + transport + "]");
         }
-    }
-
-    /**
-     * This method dynamically returns the mandatory and selected java policy handlers list for given app
-     *
-     * @param api :WebApp class which contains details about web applications
-     * @return :handlers list with properties to be applied
-     * @throws AppManagementException on error
-     */
-    private APITemplateBuilder getAPITemplateBuilder(WebApp api) throws AppManagementException {
-        APITemplateBuilderImpl velocityTemplateBuilder = new APITemplateBuilderImpl(api);
-
-        //List of JavaPolicy class which contains policy related details
-        List<JavaPolicy> policies = new ArrayList<JavaPolicy>();
-        //contains properties related to relevant policy and will be used to generate the synapse api config file
-        Map<String, String> properties;
-        int counterPolicies; //counter :policies
-
-        try {
-            //fetch all the java policy handlers details which need to be included to synapse api config file
-            policies = appMDAO.getMappedJavaPolicyList(api.getUUID(),true);
-            //loop through each policy
-            for (counterPolicies = 0; counterPolicies < policies.size(); counterPolicies++) {
-                if (policies.get(counterPolicies).getProperties() == null) {
-                    //if policy doesn't contain any properties assign an empty map and add java policy as a handler
-                    velocityTemplateBuilder.addHandler(policies.get(counterPolicies).getFullQualifiName(),
-                            Collections.EMPTY_MAP);
-                } else {
-                    //contains properties related to all the policies
-                    JSONObject objPolicyProperties;
-                    properties = new HashMap<String, String>();
-
-                    //get property JSON object related to current policy in the loop
-                    objPolicyProperties = policies.get(counterPolicies).getProperties();
-
-                    //if policy contains any properties, run a loop and assign them
-                    Set<String> keys = objPolicyProperties.keySet();
-                    for (String key : keys) {
-                        properties.put(key, objPolicyProperties.get(key).toString());
-                    }
-                    //add policy as a handler and also the relevant properties
-                    velocityTemplateBuilder.addHandler(policies.get(counterPolicies).getFullQualifiName(), properties);
-                }
-            }
-
-        } catch (AppManagementException e) {
-            handleException("Error occurred while adding java policy handlers to Application : " +
-                    api.getId().toString(), e);
-        }
-        return velocityTemplateBuilder;
-    }
-
-    /**
-     * @param webapp     origin web application
-     * @param newVersion The version of the new WebApp
-     * @throws AppManagementException
-     */
-    @Override
-    public void copyWebappDocumentations(WebApp webapp, String newVersion) throws AppManagementException {
-
-        try {
-
-            // Retain the docs
-            List<Documentation> docs = getAllDocumentation(webapp.getId());
-            APIIdentifier newId = new APIIdentifier(webapp.getId().getProviderName(),
-                    webapp.getId().getApiName(), newVersion);
-            WebApp newAPI = getAPI(newId, webapp.getId());
-
-            if (log.isDebugEnabled()) {
-                log.debug("Copying documenatation of the web application - " + webapp.getApiName() +
-                        "with the new version - " + newVersion);
-            }
-
-            for (Documentation doc : docs) {
-
-			    /* copying the file in registry for new api */
-                Documentation.DocumentSourceType sourceType = doc.getSourceType();
-                if (sourceType == Documentation.DocumentSourceType.FILE) {
-                    String absoluteSourceFilePath = doc.getFilePath();
-                    // extract the prepend
-                    // ->/registry/resource/_system/governance/ and for
-                    // tenant
-                    // /t/my.com/registry/resource/_system/governance/
-                    int prependIndex =
-                            absoluteSourceFilePath.indexOf(AppMConstants.API_LOCATION);
-                    String prependPath = absoluteSourceFilePath.substring(0, prependIndex);
-                    // get the file name from absolute file path
-                    int fileNameIndex =
-                            absoluteSourceFilePath.lastIndexOf(RegistryConstants.PATH_SEPARATOR);
-                    String fileName = absoluteSourceFilePath.substring(fileNameIndex + 1);
-                    // create relative file path of old location
-                    String sourceFilePath = absoluteSourceFilePath.substring(prependIndex);
-                    // create the relative file path where file should be
-                    // copied
-                    String targetFilePath =
-                            AppMConstants.API_LOCATION +
-                                    RegistryConstants.PATH_SEPARATOR +
-                                    newId.getProviderName() +
-                                    RegistryConstants.PATH_SEPARATOR +
-                                    newId.getApiName() +
-                                    RegistryConstants.PATH_SEPARATOR +
-                                    newId.getVersion() +
-                                    RegistryConstants.PATH_SEPARATOR +
-                                    AppMConstants.DOC_DIR +
-                                    RegistryConstants.PATH_SEPARATOR +
-                                    AppMConstants.DOCUMENT_FILE_DIR +
-                                    RegistryConstants.PATH_SEPARATOR + fileName;
-                    // copy the file from old location to new location(for
-                    // new api)
-
-                    registry.copy(sourceFilePath, targetFilePath);
-
-                    // update the filepath attribute in doc artifact to
-                    // create new doc artifact for new version of api
-                    doc.setFilePath(prependPath + targetFilePath);
-                }
-
-                createDocumentation(newAPI.getId(), doc);
-                String content = getDocumentationContent(webapp.getId(), doc.getName());
-                if (content != null) {
-                    addDocumentationContent(newAPI.getId(), doc.getName(), content);
-                }
-            }
-        } catch (RegistryException e) {
-            handleException("Error occurred while copying web application : " + webapp.getApiName());
-        }
-    }
-
-    /**
-     * Removes a given documentation
-     * @param apiId   APIIdentifier
-     * @param docName name of the document
-     * @param docType the type of the documentation
-     * @throws AppManagementException
-     */
-    @Override
-    public void removeDocumentation(APIIdentifier apiId, String docName, String docType)
-            throws AppManagementException {
-        String docPath = AppManagerUtil.getAPIDocPath(apiId) + docName;
-
-        try {
-            String apiArtifactId = registry.get(docPath).getUUID();
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.DOCUMENTATION_KEY);
-            GenericArtifact artifact = artifactManager.getGenericArtifact(apiArtifactId);
-            String docFilePath =  artifact.getAttribute(AppMConstants.DOC_FILE_PATH);
-
-            if(docFilePath!=null)
-            {
-                File tempFile = new File(docFilePath);
-                String fileName = tempFile.getName();
-                docFilePath = AppManagerUtil.getDocumentationFilePath(apiId,fileName);
-                if(registry.resourceExists(docFilePath))
-                {
-                    registry.delete(docFilePath);
-                }
-            }
-
-            Association[] associations = registry.getAssociations(docPath,
-                                                                  AppMConstants.DOCUMENTATION_KEY);
-            for (Association association : associations) {
-                registry.delete(association.getDestinationPath());
-            }
-            String docContentPath = AppManagerUtil.getAPIDocContentPath(apiId, docName);
-
-            //Remove Inline-documentation contents
-            if (registry.resourceExists(docContentPath)) {
-                registry.delete(docContentPath);
-            }
-
-        } catch (RegistryException e) {
-            handleException("Failed to delete documentation", e);
-        }
-    }
-
-    /**
-     *
-     * @param apiId   APIIdentifier
-     * @param docId UUID of the doc
-     * @throws AppManagementException if failed to remove documentation
-     */
-    public void removeDocumentation(APIIdentifier apiId, String docId)
-            throws AppManagementException {
-        String docPath ;
-
-        try {
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                    AppMConstants.DOCUMENTATION_KEY);
-            GenericArtifact artifact = artifactManager.getGenericArtifact(docId);
-            docPath = artifact.getPath();
-            String docFilePath =  artifact.getAttribute(AppMConstants.DOC_FILE_PATH);
-
-            if(docFilePath!=null)
-            {
-                File tempFile = new File(docFilePath);
-                String fileName = tempFile.getName();
-                docFilePath = AppManagerUtil.getDocumentationFilePath(apiId,fileName);
-                if(registry.resourceExists(docFilePath))
-                {
-                    registry.delete(docFilePath);
-                }
-            }
-
-            Association[] associations = registry.getAssociations(docPath,
-                    AppMConstants.DOCUMENTATION_KEY);
-
-            for (Association association : associations) {
-                registry.delete(association.getDestinationPath());
-            }
-        } catch (RegistryException e) {
-            handleException("Failed to delete documentation", e);
-        }
-    }
-
-    @Override
-    public void addDocumentation(APIIdentifier apiId, Documentation documentation)
-            throws AppManagementException {
-        createDocumentation(apiId, documentation);
-    }
-
-    public void addDocumentationContent(APIIdentifier identifier, String documentationName, String text)
-            throws AppManagementException {
-
-        String documentationPath = AppManagerUtil.getAPIDocPath(identifier) + documentationName;
-        String contentPath = AppManagerUtil.getAPIDocPath(identifier) + AppMConstants.INLINE_DOCUMENT_CONTENT_DIR +
-                             RegistryConstants.PATH_SEPARATOR + documentationName;
-        try {
-            Resource docContent;
-            if (!registry.resourceExists(contentPath)) {
-            	docContent = registry.newResource();
-            } else {
-            	docContent = registry.get(contentPath);
-            }
-
-            /* This is a temporary fix for doc content replace issue. We need to add
-             * separate methods to add inline content resource in document update */
-            if (!AppMConstants.NO_CONTENT_UPDATE.equals(text)) {
-            	docContent.setContent(text);
-            }
-
-            docContent.setMediaType(AppMConstants.DOCUMENTATION_INLINE_CONTENT_TYPE);
-            registry.put(contentPath, docContent);
-            registry.addAssociation(documentationPath, contentPath,
-                                    AppMConstants.DOCUMENTATION_CONTENT_ASSOCIATION);
-            String[] authorizedRoles = getAuthorizedRoles(documentationPath);
-            String apiPath = AppManagerUtil.getAPIPath(identifier);
-            AppManagerUtil.setResourcePermissions(getAPI(apiPath).getId().getProviderName(),
-            		getAPI(apiPath).getVisibility(),authorizedRoles,contentPath);
-        } catch (RegistryException e) {
-            String msg = "Failed to add the documentation content of : "
-                         + documentationName + " of WebApp :" + identifier.getApiName();
-            handleException(msg, e);
-        } catch (UserStoreException e) {
-            String msg = "Failed to add the documentation content of : "
-                         + documentationName + " of WebApp :" + identifier.getApiName();
-            handleException(msg, e);
-        }
-    }
-
-    /**
-     * Add a file to a document of source type FILE
-     *
-     * @param webApp
-     * @param documentation document
-     * @param filename name of the file
-     * @param content content of the file as an Input Stream
-     * @param contentType content type of the file
-     * @throws AppManagementException if failed to add the file
-     */
-    public void addFileToDocumentation(WebApp webApp, Documentation documentation, String filename,
-                                       InputStream content, String contentType) throws AppManagementException {
-        if (Documentation.DocumentSourceType.FILE.equals(documentation.getSourceType())) {
-            FileContent documentContent = new FileContent();
-            documentContent.setContent(content);
-            documentContent.setContentType(contentType);
-
-            String filePath = AppManagerUtil.getDocumentationFilePath(webApp.getId(), filename);
-
-            try {
-                String visibleRolesList = webApp.getVisibleRoles();
-                String[] visibleRoles = new String[0];
-                if (visibleRolesList != null) {
-                    visibleRoles = visibleRolesList.split(",");
-                }
-                AppManagerUtil.setResourcePermissions(webApp.getId().getProviderName(), webApp.getVisibility(), visibleRoles,
-                        filePath);
-                documentation.setFilePath(addResourceFile(filePath, documentContent));
-                AppManagerUtil.setFilePermission(filePath);
-            } catch (AppManagementException e) {
-                handleException("Failed to add file to document " + documentation.getName(), e);
-            }
-        } else {
-            String errorMsg = "Cannot add file to the Document. Document " + documentation.getName()
-                    + "'s Source type is not FILE.";
-            handleException(errorMsg);
-        }
-    }
-
-    public void addAPIDefinitionContent(APIIdentifier identifier, String documentationName, String text)
-    					throws AppManagementException {
-    	String contentPath = AppManagerUtil.getAPIDefinitionFilePath(identifier.getApiName(), identifier.getVersion());
-
-    	try {
-            Resource docContent = registry.newResource();
-            docContent.setContent(text);
-            docContent.setMediaType("text/plain");
-            registry.put(contentPath, docContent);
-
-            String apiPath = AppManagerUtil.getAPIPath(identifier);
-            WebApp api = getAPI(apiPath);
-            String visibleRolesList = api.getVisibleRoles();
-            String[] visibleRoles = new String[0];
-            if (visibleRolesList != null) {
-                visibleRoles = visibleRolesList.split(",");
-            }
-    		AppManagerUtil.setResourcePermissions(api.getId().getProviderName(), api.getVisibility(), visibleRoles, contentPath);
-    	} catch (RegistryException e) {
-            String msg = "Failed to add the WebApp Definition content of : "
-                         + documentationName + " of WebApp :" + identifier.getApiName();
-            handleException(msg, e);
-        }
-    }
-
-    /**
-     * Updates a given documentation
-     *
-     * @param apiId         APIIdentifier
-     * @param documentation Documentation
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     *          if failed to update docs
-     */
-    public void updateDocumentation(APIIdentifier apiId, Documentation documentation)
-            throws AppManagementException {
-
-        String docPath = AppMConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR +
-                         apiId.getProviderName() + RegistryConstants.PATH_SEPARATOR + apiId.getApiName() +
-                         RegistryConstants.PATH_SEPARATOR + apiId.getVersion() + RegistryConstants.PATH_SEPARATOR +
-                         AppMConstants.DOC_DIR + RegistryConstants.PATH_SEPARATOR + documentation.getName();
-        try {
-            String apiArtifactId = registry.get(docPath).getUUID();
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                                AppMConstants.DOCUMENTATION_KEY);
-            GenericArtifact artifact = artifactManager.getGenericArtifact(apiArtifactId);
-            String apiPath = AppManagerUtil.getAPIPath(apiId);
-            GenericArtifact updateApiArtifact = AppManagerUtil.createDocArtifactContent(artifact, apiId, documentation);
-            artifactManager.updateGenericArtifact(updateApiArtifact);
-            clearResourcePermissions(docPath, apiId);
-
-            WebApp api=getAPI(apiPath);
-            String visibleRolesList = api.getVisibleRoles();
-            String[] visibleRoles = new String[0];
-            if (visibleRolesList != null) {
-                visibleRoles = visibleRolesList.split(",");
-            }
-
-            AppManagerUtil.setResourcePermissions(api.getId().getProviderName(), api.getVisibility(),visibleRoles,artifact.getPath());
-
-            String docFilePath = artifact.getAttribute(AppMConstants.DOC_FILE_PATH);
-            if(docFilePath != null && !docFilePath.equals("")) {
-                //The docFilePatch comes as /t/tenanatdoman/registry/resource/_system/governance/apimgt/applicationdata..
-                //We need to remove the /t/tenanatdoman/registry/resource/_system/governance section to set permissions.
-                int startIndex = docFilePath.indexOf("governance") + "governance".length();
-                String filePath = docFilePath.substring(startIndex, docFilePath.length());
-                AppManagerUtil.setResourcePermissions(getAPI(apiPath).getId().getProviderName(),
-                        getAPI(apiPath).getVisibility(), visibleRoles, filePath);
-            }
-
-        } catch (RegistryException e) {
-            handleException("Failed to update documentation", e);
-        }
-
-    }
-
-    public void copyAllDocumentation(APIIdentifier apiId, String toVersion)
-            throws AppManagementException {
-
-        String oldVersion = AppManagerUtil.getAPIDocPath(apiId);
-        String newVersion = AppMConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR +
-                            apiId.getProviderName() + RegistryConstants.PATH_SEPARATOR + apiId.getApiName() +
-                            RegistryConstants.PATH_SEPARATOR + toVersion + RegistryConstants.PATH_SEPARATOR +
-                            AppMConstants.DOC_DIR;
-
-        try {
-            Resource resource = registry.get(oldVersion);
-            if (resource instanceof org.wso2.carbon.registry.core.Collection) {
-                String[] docsPaths = ((org.wso2.carbon.registry.core.Collection) resource).getChildren();
-                for (String docPath : docsPaths) {
-                    registry.copy(docPath, newVersion);
-                }
-            }
-        } catch (RegistryException e) {
-            handleException("Failed to copy docs to new version : " + newVersion, e);
-        }
-    }
-
-    /**
-     * Create an Api
-     *
-     * @param api WebApp
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException if failed to create WebApp
-     */
-    private void createAPI(WebApp api) throws AppManagementException {
-        GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry,
-                                                                            AppMConstants.API_KEY);
-
-        //Validate Transports
-        validateAndSetTransports(api);
-        try {
-            registry.beginTransaction();
-            GenericArtifact genericArtifact =
-                    artifactManager.newGovernanceArtifact(new QName(api.getId().getApiName()));
-            GenericArtifact artifact = AppManagerUtil.createAPIArtifactContent(genericArtifact, api);
-            artifactManager.addGenericArtifact(artifact);
-            String artifactPath = GovernanceUtils.getArtifactPath(registry, artifact.getId());
-            String providerPath = AppManagerUtil.getAPIProviderPath(api.getId());
-            //provider ------provides----> WebApp
-            registry.addAssociation(providerPath, artifactPath, AppMConstants.PROVIDER_ASSOCIATION);
-            Set<String> tagSet = api.getTags();
-            if (tagSet != null && tagSet.size() > 0) {
-                for (String tag : tagSet) {
-                    registry.applyTag(artifactPath, tag);
-                }
-            }
-            if (api.getWsdlUrl() != null && !"".equals(api.getWsdlUrl())) {
-                String path = AppManagerUtil.createWSDL(registry, api);
-                if (path != null) {
-                    registry.addAssociation(artifactPath, path, CommonConstants.ASSOCIATION_TYPE01);
-                    artifact.setAttribute(AppMConstants.API_OVERVIEW_WSDL, api.getWsdlUrl()); //reset the wsdl path to permlink
-                    artifactManager.updateGenericArtifact(artifact); //update the  artifact
-                }
-            }
-
-            if (api.getUrl() != null && !"".equals(api.getUrl())){
-                String path = AppManagerUtil.createEndpoint(api.getUrl(), registry);
-                if (path != null) {
-                    registry.addAssociation(artifactPath, path, CommonConstants.ASSOCIATION_TYPE01);
-                }
-            }
-            //write WebApp Status to a separate property. This is done to support querying APIs using custom query (SQL)
-            //to gain performance
-            String apiStatus = api.getStatus().getStatus();
-            saveAPIStatus(artifactPath, apiStatus);
-            String visibleRolesList = api.getVisibleRoles();
-            String[] visibleRoles = new String[0];
-            if (visibleRolesList != null) {
-                visibleRoles = visibleRolesList.split(",");
-            }
-            AppManagerUtil.setResourcePermissions(api.getId().getProviderName(), api.getVisibility(), visibleRoles, artifactPath);
-            registry.commitTransaction();
-
-            /* Generate WebApp Definition for Swagger */
-            createUpdateAPIDefinition(api);
-
-        } catch (Exception e) {
-        	 try {
-                 registry.rollbackTransaction();
-             } catch (RegistryException re) {
-                 handleException("Error while rolling back the transaction for WebApp: " +
-                                 api.getId().getApiName(), re);
-             }
-             handleException("Error while performing registry transaction operation", e);
-        }
-
     }
 
     /**
@@ -1538,46 +685,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             }
         } catch (UserStoreException e) {
             handleException("Error while adding role permissions to WebApp", e);
-        }
-    }
-    /**
-     * Create a documentation
-     *
-     * @param apiId         APIIdentifier
-     * @param documentation Documentation
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException if failed to add documentation
-     */
-    private void createDocumentation(APIIdentifier apiId, Documentation documentation)
-            throws AppManagementException {
-        try {
-            GenericArtifactManager artifactManager = new GenericArtifactManager(registry,
-                                                                                AppMConstants.DOCUMENTATION_KEY);
-            GenericArtifact artifact =
-                    artifactManager.newGovernanceArtifact(new QName(documentation.getName()));
-            artifactManager.addGenericArtifact(
-                    AppManagerUtil.createDocArtifactContent(artifact, apiId, documentation));
-            documentation.setId(artifact.getId());
-            String apiPath = AppManagerUtil.getAPIPath(apiId);
-            //Adding association from api to documentation . (WebApp -----> doc)
-            registry.addAssociation(apiPath, artifact.getPath(),
-                                    AppMConstants.DOCUMENTATION_ASSOCIATION);
-            String[] authorizedRoles=getAuthorizedRoles(apiPath);
-            AppManagerUtil.setResourcePermissions(getAPI(apiPath).getId().getProviderName(),
-            		getAPI(apiPath).getVisibility(), authorizedRoles, artifact.getPath());
-
-            String docFilePath = artifact.getAttribute(AppMConstants.DOC_FILE_PATH);
-            if(docFilePath != null && !docFilePath.equals("")){
-                //The docFilePatch comes as /t/tenanatdoman/registry/resource/_system/governance/apimgt/applicationdata..
-                //We need to remove the /t/tenanatdoman/registry/resource/_system/governance section to set permissions.
-                int startIndex = docFilePath.indexOf("governance") + "governance".length();
-                String filePath = docFilePath.substring(startIndex, docFilePath.length());
-                AppManagerUtil.setResourcePermissions(getAPI(apiPath).getId().getProviderName(),
-                        getAPI(apiPath).getVisibility(), authorizedRoles, filePath);
-            }
-        } catch (RegistryException e) {
-            handleException("Failed to add documentation", e);
-        } catch (UserStoreException e) {
-            handleException("Failed to add documentation", e);
         }
     }
 
@@ -1613,96 +720,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 																						   AppManagementException {
 		return appMDAO.moveSubscriptions(fromIdentifier, toIdentifier);
 	}
-
-    public List<WebApp> searchAPIs(String searchTerm, String searchType, String providerId) throws
-                                                                                            AppManagementException {
-        List<WebApp> apiSortedList = new ArrayList<WebApp>();
-        String regex = "(?i)[\\w.|-]*" + searchTerm.trim() + "[\\w.|-]*";
-
-        Pattern pattern;
-        Matcher matcher;
-        try {
-            List<WebApp> apiList;
-            if(providerId!=null){
-                apiList= getAPIsByProvider(providerId);
-            }else{
-                apiList= getAllAPIs();
-            }
-            if (apiList == null || apiList.size() == 0) {
-                return apiSortedList;
-            }
-            pattern = Pattern.compile(regex);
-            for (WebApp api : apiList) {
-
-                if (searchType.equalsIgnoreCase("Name")) {
-                    String api1 = api.getId().getApiName();
-                    matcher = pattern.matcher(api1);
-                }else if (searchType.equalsIgnoreCase("Provider")) {
-                    String api1 = api.getId().getProviderName();
-                    matcher = pattern.matcher(api1);
-                } else if (searchType.equalsIgnoreCase("Version")) {
-                    String api1 = api.getId().getVersion();
-                    matcher = pattern.matcher(api1);
-                } else if (searchType.equalsIgnoreCase("Context")) {
-                    String api1 = api.getContext();
-                    matcher = pattern.matcher(api1);
-                } else {
-                    String apiName = api.getId().getApiName();
-                    matcher = pattern.matcher(apiName);
-                }
-
-                if (matcher.find()) {
-                    apiSortedList.add(api);
-                }
-
-            }
-        } catch (AppManagementException e) {
-            handleException("Failed to search APIs with type", e);
-        }
-        Collections.sort(apiSortedList, new APINameComparator());
-        return apiSortedList;
-    }
-
-    /**
-     * Get a list of APIs published by the given provider. If a given WebApp has multiple APIs, only the latest version
-     * will be included in this list.
-     *
-     * @param providerId , provider id
-     * @param appType    Asset Type(either webapp/mobileapp)
-     * @return set of WebApp
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException if failed to get set of WebApp
-     */
-    public List<WebApp> getAPIsByProvider(String providerId, String appType) throws AppManagementException {
-
-        List<WebApp> apiSortedList = new ArrayList<WebApp>();
-
-        try {
-            providerId = AppManagerUtil.replaceEmailDomain(providerId);
-            String providerPath = AppMConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR +
-                    providerId;
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            Association[] associations = registry.getAssociations(providerPath,
-                                                                  AppMConstants.PROVIDER_ASSOCIATION);
-            for (Association association : associations) {
-                String apiPath = association.getDestinationPath();
-                Resource resource = registry.get(apiPath);
-                String apiArtifactId = resource.getUUID();
-                if (apiArtifactId != null) {
-                    GenericArtifact apiArtifact = artifactManager.getGenericArtifact(apiArtifactId);
-                    apiSortedList.add(AppManagerUtil.getGenericApp(apiArtifact, registry));
-                } else {
-                    throw new GovernanceException("artifact id is null of " + apiPath);
-                }
-            }
-
-        } catch (RegistryException e) {
-            handleException("Failed to get APIs for provider : " + providerId, e);
-        }
-        Collections.sort(apiSortedList, new APINameComparator());
-
-        return apiSortedList;
-
-    }
 
     @Override
     public List<App> searchApps(String appType, Map<String, String> searchTerms) throws AppManagementException {
@@ -1800,16 +817,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 	}
 
     @Override
-    public List<WebApp> getAllWebApps() throws AppManagementException {
-        return appMDAO.getAllWebApps();
-    }
-
-    @Override
-    public List<WebApp> getAllWebApps(String tenantDomain) throws AppManagementException {
-        return appMDAO.getAllWebApps(tenantDomain);
-    }
-
-    @Override
     public Map<String, Long> getSubscriptionCountByAPPs(String provider, String fromDate, String toDate,
                                                         boolean isSubscriptionOn) throws AppManagementException {
         Map<String, Long> subscriptions = null;
@@ -1820,12 +827,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                                     + fromDate + "to" + toDate, e);
         }
         return subscriptions;
-    }
-
-    public List<WebApp> getAppsWithEndpoint(String tenantDomain) throws AppManagementException {
-        List<WebApp> appSortedList = appMDAO.getAllWebApps(tenantDomain);
-        Collections.sort(appSortedList, new APINameComparator());
-        return appSortedList;
     }
 
     @Override
@@ -1854,41 +855,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return storesFromConfig;
     }
 
-    @Override
-    public void updateAppsInExternalAppStores(WebApp webApp, Set<AppStore> appStores)
-            throws AppManagementException {
-        // get the stores where given app is already published
-        Set<AppStore> publishedStores = getPublishedExternalAppStores(webApp.getId());
-        Set<AppStore> notPublishedAppStores = new HashSet<AppStore>();
-        Set<AppStore> removedAppStores = new HashSet<AppStore>();
-
-        if (publishedStores != null && publishedStores.size() > 0) {
-            removedAppStores.addAll(publishedStores);
-            removedAppStores.removeAll(appStores);
-
-            notPublishedAppStores.addAll(appStores);
-            notPublishedAppStores.removeAll(publishedStores);
-        } else {
-            notPublishedAppStores.addAll(appStores);
-        }
-
-        //Publish app to external app Store which are not yet published
-        try {
-            publishToExternalAppStores(webApp, notPublishedAppStores);
-        } catch (AppManagementException e) {
-            handleException("Failed to publish app to external store.App -> " + webApp.getApiName(), e);
-        }
-        //Delete app from external app Store
-        try {
-            if(removedAppStores.size() > 0) {
-                deleteFromExternalAppStores(webApp, removedAppStores);
-            }
-        } catch (AppManagementException e) {
-            handleException("Failed to delete app from external store.App -> " + webApp.getApiName(), e);
-        }
-    }
-
-
     /**
      * Get the stores where given app is already published.
      * @param identifier WebApp Identifier
@@ -1909,105 +875,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             return null;
         }
     }
-
-
-    /**
-     * Publish the APP to external App Stores and add the published
-     * external store details to DB.
-     *
-     * @param webApp    The APP which need to published
-     * @param appStores The APPStores set, to which need to publish APP
-     * @throws AppManagementException If failed to publish to any external store
-     */
-    private void publishToExternalAppStores(WebApp webApp, Set<AppStore> appStores)
-            throws AppManagementException {
-        if (log.isDebugEnabled()) {
-            String msg = String.format("Publish the web app -> %s to external stores ", webApp.getApiName());
-            log.debug(msg);
-        }
-        Set<AppStore> publishedStores = new HashSet<AppStore>();
-        StringBuilder errorStatus = new StringBuilder("Failure to publish to External Stores : ");
-        List<String> failedAppStores = new ArrayList<String>();
-        boolean failure = false;
-        if (appStores.size() > 0) {
-            for (AppStore store : appStores) {
-                try {
-                    String publisherClassName = store.getPublisherClassName();
-                    if (publisherClassName == null) {
-                        throw new AppManagementException("Publisher class name is not defined in the external " +
-                                "store configuration for store with id" + store.getName());
-                    }
-                    ExternalAppStorePublisher publisher = AppManagerUtil.getExternalStorePublisher(publisherClassName);
-                    // First  publish the APP to external APP Store
-                    publisher.publishToStore(webApp, store);
-                    //collect the published store to add to DB
-                    publishedStores.add(store);
-                } catch (AppManagementException e) {
-                    failure = true;
-                    String msg = "Could not publish app :" + webApp.getApiName() +
-                            " to external store :" + store.getDisplayName();
-                    log.error(msg,e);
-                    failedAppStores.add(store.getDisplayName());
-                }
-            }
-            if (publishedStores.size() > 0) {
-                //Save the detail of published app stores in DB
-                addExternalAppStoresDetails(webApp.getId(), publishedStores);
-            }
-        }
-
-        if (failure) {
-            String failedStores = StringUtils.join(failedAppStores,',');
-            errorStatus.append(failedStores);
-            throw new AppManagementException(errorStatus.toString());
-        }
-
-    }
-
-    /**
-     * Delete the given web app from given external stores and remove the related
-     * records from DB.
-     *
-     * @param webApp           Web App
-     * @param removedAppStores App Stores
-     * @throws AppManagementException
-     */
-    private void deleteFromExternalAppStores(WebApp webApp, Set<AppStore> removedAppStores)
-            throws AppManagementException {
-        Set<AppStore> removalCompletedStores = new HashSet<AppStore>();
-        StringBuilder errorStatus = new StringBuilder("Failed to delete from External Stores : ");
-        List<String> failedAppStores = new ArrayList<String>();
-        boolean failure = false;
-        if (removedAppStores.size() > 0) {
-            for (AppStore store : removedAppStores) {
-
-                try {
-                    String publisherClassName = store.getPublisherClassName();
-                    ExternalAppStorePublisher publisher = AppManagerUtil.getExternalStorePublisher(publisherClassName);
-                    //delete from external store
-                    publisher.deleteFromStore(webApp, store);
-                    removalCompletedStores.add(store);
-                } catch (AppManagementException e) {
-                    failure = true;
-                    String msg = "Could not delete app :" + webApp.getApiName() +
-                            " from external store :" + store.getDisplayName();
-                    log.error(msg,e);
-                    failedAppStores.add(store.getDisplayName());
-                }
-
-            }
-            if (removalCompletedStores.size() != 0) {
-                //remove records from database
-                removeExternalAppStoreDetails(webApp.getId(), removalCompletedStores);
-            }
-
-            if (failure) {
-                String failedStores = StringUtils.join(failedAppStores,',');
-                errorStatus.append(failedStores);
-            }
-        }
-    }
-
 
     /**
      * Store the published external stores details in DB.
@@ -2068,34 +935,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     @Override
     public boolean isDefaultVersion(APIIdentifier identifier) throws AppManagementException {
         return appMDAO.isDefaultVersion(identifier);
-    }
-
-    /**
-     * Check if the given app has any other versions in any state.
-     *
-     * @param identifier
-     * @return true if given app has more version
-     * @throws AppManagementException
-     */
-    @Override
-    public boolean hasMoreVersions(APIIdentifier identifier) throws AppManagementException {
-        return appMDAO.hasMoreVersions(identifier);
-    }
-
-    /**
-     * Get WebApp basic details by app uuid.
-     *
-     * @param uuid
-     * @return Asset details
-     * @throws AppManagementException
-     */
-    @Override
-    public WebApp getAppDetailsFromUUID(String uuid) throws AppManagementException {
-        WebApp webApp = appMDAO.getAppDetailsFromUUID(uuid);
-        if (webApp == null) {
-            handleResourceNotFoundException("Webapp does not exist with requested appID : " + uuid);
-        }
-        return webApp;
     }
 
     /**
@@ -2306,12 +1145,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
 
     private App createApp(GenericArtifact artifact, String appType) throws AppManagementException {
-
         AppFactory appFactory = null;
-
-        if(AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)){
-            appFactory = new WebAppFactory();
-        }else if(AppMConstants.MOBILE_ASSET_TYPE.equals(appType)){
+        if(AppMConstants.MOBILE_ASSET_TYPE.equals(appType)){
             appFactory = new MobileAppFactory();
         }
 
@@ -2355,123 +1190,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
 
         return rxtAttributeName;
-    }
-
-    @Override
-    public void addTags(String appType, String appId, List<String> tags) throws AppManagementException {
-        try {
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            GenericArtifact appArtifact = artifactManager.getGenericArtifact(appId);
-            if (appArtifact != null) {
-                for(String tag : tags){
-                    registry.applyTag(appArtifact.getPath(), tag);
-                }
-            } else {
-                handleResourceNotFoundException("Failed to get " + appType + " artifact corresponding to artifactId " +
-                        appId + ". Artifact does not exist");
-            }
-        } catch (RegistryException e) {
-            handleException("Error occurred while adding tags"+StringUtils.join(tags, ",")+" to " + appType +" with id : " + appId, e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-    }
-
-    @Override
-    public void removeTag(String appType, String appId, List<String> tags) throws AppManagementException {
-        try {
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            GenericArtifact appArtifact = artifactManager.getGenericArtifact(appId);
-            if (appArtifact != null) {
-                for(String tag : tags) {
-                    registry.removeTag(appArtifact.getPath(), tag);
-                }
-            } else {
-                handleResourceNotFoundException("Failed to retrieve " + appType +
-                        " artifact corresponding to artifactId " +appId + ". Artifact does not exist");
-            }
-        } catch (RegistryException e) {
-            handleException("Error occurred while removing tags '" + StringUtils.join(tags, ",") + "' from "
-                    + appType + " with id : " + appId, e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-    }
-
-    @Override
-    public Set<Tag> getAllTags(String appType) throws AppManagementException {
-        Set<Tag> tagSet = new HashSet<>();
-        try {
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            Map<String, String> params = new HashMap<String, String>();
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)){
-                params.put("1",AppMConstants.MediaType.WEB_APP);
-                params.put("2",AppMConstants.WEB_APP_LIFECYCLE_STATUS);
-                params.put("3","%");
-            } else if(AppMConstants.MOBILE_ASSET_TYPE.equals(appType)) {
-                params.put("1",AppMConstants.MediaType.MOBILE_APP);
-                params.put("2",AppMConstants.MOBILE_APP_LIFECYCLE_STATUS);
-                params.put("3","%");
-            } else {
-                handleException("Could not retrieve tags. Unsupported applictaion type :" + appType +" provided");
-            }
-
-            String tagsQueryPath = RegistryConstants.QUERIES_COLLECTION_PATH + "/tag-summary-appmgt";
-
-            org.wso2.carbon.registry.core.Collection collection = registry.executeQuery(tagsQueryPath, params);
-            for (String fullTag : collection.getChildren()) {
-
-                String tagName = fullTag.substring(fullTag.indexOf(";") + 1, fullTag.indexOf(":"));
-                int numberOfOccurrence = Integer.parseInt(fullTag.substring(fullTag.indexOf(":")+1));
-                tagSet.add(new Tag(tagName, numberOfOccurrence));
-            }
-
-        } catch (RegistryException e) {
-            handleException("Error occurred while retrieving tags for " + appType +"s" , e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-        return tagSet;
-    }
-
-    @Override
-    public Set<Tag> getAllTags(String appType, String appId) throws AppManagementException {
-        Set<Tag> tagSet = new HashSet<>();
-        try {
-            org.wso2.carbon.registry.core.Tag[] tags = null;
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(this.tenantDomain, true);
-
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, appType);
-            GenericArtifact appArtifact = artifactManager.getGenericArtifact(appId);
-            if (appArtifact != null) {
-              String artifactPath = appArtifact.getPath();
-                tags = registry.getTags(artifactPath);
-                for(org.wso2.carbon.registry.core.Tag tag : tags){
-                    tagSet.add(new Tag(tag.getTagName()));
-                }
-            } else {
-                handleResourceNotFoundException("Failed to get " + appType + " artifact corresponding to artifactId " +
-                        appId + ". Artifact does not exist");
-            }
-        } catch (RegistryException e) {
-            handleException("Error occurred while retrieving tags from " + appType +" with id : " + appId, e);
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
-        }
-        return tagSet;
     }
 
     public String addResourceFile(String resourcePath, FileContent resourceFile) throws AppManagementException {

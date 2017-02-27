@@ -63,15 +63,6 @@
                         <a id="btnLaunch" href="{{appUrl}}" class="btn btn-primary" target="_blank">
                             <i class="fw fw-deploy"></i>Launch
                         </a>
-                        {{#if isFavouriteApp}}
-                            <a href="#" id="btnRemoveFromFav" class="btn btn-default">
-                                {{t "Remove from Favorites"}}
-                            </a>
-                        {{else}}
-                            <a href="#" id="btnAddToFav" class="btn btn-favorite">
-                                <i class="fw fw-heart"></i>{{t "Add to Favorites"}}
-                            </a>
-                        {{/if}}
                         {{#ifCond asset.attributes.overview_allowAnonymous "==" "false"}}
                             {{#if isSelfSubscriptionEnabled}}
                                 {{#if isSubscribed}}

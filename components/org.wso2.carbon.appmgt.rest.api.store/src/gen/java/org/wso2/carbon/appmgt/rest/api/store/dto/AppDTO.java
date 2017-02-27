@@ -1,17 +1,11 @@
 package org.wso2.carbon.appmgt.rest.api.store.dto;
 
-import java.math.BigDecimal;
-import java.util.*;
-
-import io.swagger.annotations.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.validation.constraints.NotNull;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.NotNull;
-
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,10 +46,6 @@ public class AppDTO  {
   
   
   private String provider = null;
-
-
-  private String businessOwnerId = null;
-
 
   @NotNull
   private String appDefinition = null;
@@ -250,19 +240,6 @@ public class AppDTO  {
   public void setProvider(String provider) {
     this.provider = provider;
   }
-
-
-  /**
-   **/
-  @ApiModelProperty(value = "")
-  @JsonProperty("businessOwnerId")
-  public String getBusinessOwnerId() {
-    return businessOwnerId;
-  }
-  public void setBusinessOwnerId(String businessOwnerId) {
-    this.businessOwnerId = businessOwnerId;
-  }
-
 
   /**
    * Swagger definition of the App which contains details about URI templates and scopes
@@ -524,7 +501,6 @@ public class AppDTO  {
     sb.append("  context: ").append(context).append("\n");
     sb.append("  version: ").append(version).append("\n");
     sb.append("  provider: ").append(provider).append("\n");
-    sb.append("  businessOwnerId: ").append(businessOwnerId).append("\n");
     sb.append("  appDefinition: ").append(appDefinition).append("\n");
     sb.append("  isDefaultVersion: ").append(isDefaultVersion).append("\n");
     sb.append("  transport: ").append(transport).append("\n");

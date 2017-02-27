@@ -31,29 +31,6 @@ import java.util.Set;
 public interface APIManager {
 
     /**
-     * Returns a list of all existing APIs by all providers. The WebApp objects returned by this
-     * method may be partially initialized (due to performance reasons). Each WebApp instance
-     * is guaranteed to have the WebApp name, version, provider name, context, status and icon URL.
-     * All other fields may not be initialized. Therefore, the objects returned by this method
-     * must not be used to access any metadata item related to an WebApp, other than the ones listed
-     * above. For that purpose a fully initialized WebApp object instance should be acquired by
-     * calling the getAPI(APIIdentifier) method.
-     *
-     * @return a List of WebApp objects (partially initialized), possibly empty
-     * @throws AppManagementException on error
-     */
-    public List<WebApp> getAllAPIs() throws AppManagementException;
-
-    /**
-     * Returns details of an WebApp
-     *
-     * @param identifier APIIdentifier
-     * @return An WebApp object related to the given identifier or null
-     * @throws AppManagementException if failed get WebApp from APIIdentifier
-     */
-    public WebApp getAPI(APIIdentifier identifier) throws AppManagementException;
-
-    /**
      * Checks the Availability of given APIIdentifier
      *
      * @param identifier APIIdentifier
@@ -83,71 +60,6 @@ public interface APIManager {
             throws AppManagementException;
 
     /**
-     * Returns a list of documentation attached to a particular WebApp
-     *
-     * @param appId APIIdentifier
-     * @return List<Documentation>
-     * @throws AppManagementException if failed to get Documentations
-     */
-    public List<Documentation> getAllDocumentation(APIIdentifier appId)
-            throws AppManagementException;
-
-    /**
-     * Returns a list of documentation attached to a particular WebApp
-     *
-     * @param apiId APIIdentifier
-     * @return List<Documentation>
-     * @throws AppManagementException if failed to get Documentations
-     */
-    public List<Documentation> getAllDocumentation(APIIdentifier apiId,String loggedUserName)
-            throws AppManagementException;
-
-    /**
-     * Returns the specified document attached to the given WebApp
-     *
-     * @param apiId   APIIdentifier
-     * @param docType type of the documentation
-     * @param docName name of the doc
-     * @return Documentation
-     * @throws AppManagementException if failed to get Documentation
-     */
-    public Documentation getDocumentation(APIIdentifier apiId,
-                                          DocumentationType docType,
-                                          String docName) throws AppManagementException;
-
-    /**
-     * Checks whether the given document already exists for the given app
-     *
-     * @param identifier API Identifier
-     * @param docName Name of the document
-     * @return true if document already exists for the given api
-     * @throws AppManagementException if failed to check existence of the documentation
-     */
-    boolean isDocumentationExist(APIIdentifier identifier, String docName) throws AppManagementException;
-
-    /**
-     * Get a documentation by artifact Id
-     *
-     * @param docId   DocumentID
-     * @param requestedTenantDomain tenant domain of the registry where the artifact is located
-     * @return Documentation
-     * @throws AppManagementException if failed to get Documentation
-     */
-    Documentation getDocumentation(String docId, String requestedTenantDomain) throws AppManagementException;
-
-
-    /**
-     * This method used to get the content of a documentation
-     *
-     * @param identifier,        WebApp identifier
-     * @param documentationName, name of the inline documentation
-     * @return if failed to get doc content
-     * @throws AppManagementException if the asking documentation content is unavailable
-     */
-    public String getDocumentationContent(APIIdentifier identifier, String documentationName)
-            throws AppManagementException;
-
-    /**
      * Creates a new subscriber. The newly created subscriber id will be set in the given object.
      *
      * @param subscriber The subscriber to be added
@@ -171,15 +83,6 @@ public interface APIManager {
      * @throws AppManagementException if failed to get Subscriber
      */
     public Subscriber getSubscriber(int subscriberId) throws AppManagementException;
-
-    /**
-     * Returns a set of APIs purchased by the given Subscriber
-     *
-     * @param subscriber Subscriber
-     * @return Set<WebApp>
-     * @throws AppManagementException if failed to get WebApp for subscriber
-     */
-    public Set<WebApp> getSubscriberAPIs(Subscriber subscriber) throws AppManagementException;
 
     /**
      * Associates the given icon image with the specified path.

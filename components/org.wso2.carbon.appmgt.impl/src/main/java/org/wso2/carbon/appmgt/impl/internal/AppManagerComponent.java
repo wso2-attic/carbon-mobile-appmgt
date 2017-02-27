@@ -34,7 +34,6 @@ import org.wso2.carbon.appmgt.impl.config.TenantConfiguration;
 import org.wso2.carbon.appmgt.impl.config.TenantConfigurationLoader;
 import org.wso2.carbon.appmgt.impl.idp.sso.configurator.IS510IdentityApplicationManagementFactory;
 import org.wso2.carbon.appmgt.impl.listners.UserAddListener;
-import org.wso2.carbon.appmgt.impl.observers.APIStatusObserverList;
 import org.wso2.carbon.appmgt.impl.observers.SignupObserver;
 import org.wso2.carbon.appmgt.impl.service.APIMGTSampleService;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
@@ -165,7 +164,6 @@ public class AppManagerComponent {
             //ServiceReferenceHolder.getInstance().setAPIManagerConfigurationService(configurationService);
             registration = componentContext.getBundleContext().registerService(
                     AppManagerConfigurationService.class.getName(), configurationService, null);
-            APIStatusObserverList.getInstance().init(configuration);
 
             // Register the default implementation of the tenant configuration service.
             TenantConfigurationService tenantConfigurationService = new TenantConfigurationServiceImpl();

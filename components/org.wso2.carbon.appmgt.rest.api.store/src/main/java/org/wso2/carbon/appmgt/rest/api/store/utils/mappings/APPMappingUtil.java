@@ -21,22 +21,18 @@ package org.wso2.carbon.appmgt.rest.api.store.utils.mappings;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.appmgt.api.APIProvider;
-import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.api.model.CustomProperty;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
-import org.wso2.carbon.appmgt.api.model.Tier;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.appmgt.rest.api.store.dto.AppDTO;
-import org.wso2.carbon.appmgt.rest.api.store.dto.AppSummaryDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.AppListDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.AppRatingListDTO;
+import org.wso2.carbon.appmgt.rest.api.store.dto.AppSummaryDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.CustomPropertyDTO;
 import org.wso2.carbon.appmgt.rest.api.util.RestApiConstants;
 import org.wso2.carbon.appmgt.rest.api.util.utils.RestApiUtil;
@@ -52,7 +48,6 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -151,38 +146,10 @@ public class APPMappingUtil {
         return appListDTO;
     }
 
-    /**
-     * Creates a minimal DTO representation of an WebApp object
-     *
-     * @param app WebApp object
-     * @return a minimal representation DTO
-     */
-    public static AppSummaryDTO fromAPIToInfoDTO(WebApp app) {
-        AppSummaryDTO appSummaryDTO = new AppSummaryDTO();
-        appSummaryDTO.setDescription(app.getDescription());
-        String context = app.getContext();
-        if (context != null) {
-            if (context.endsWith("/" + RestApiConstants.API_VERSION_PARAM)) {
-                context = context.replace("/" + RestApiConstants.API_VERSION_PARAM, "");
-            }
-            appSummaryDTO.setContext(context);
-        }
-        appSummaryDTO.setId(app.getUUID());
-        APIIdentifier appId = app.getId();
-        appSummaryDTO.setName(appId.getApiName());
-        appSummaryDTO.setVersion(appId.getVersion());
-        String providerName = app.getId().getProviderName();
-        appSummaryDTO.setProvider(AppManagerUtil.replaceEmailDomainBack(providerName));
-        appSummaryDTO.setLifecycleState(app.getLifeCycleStatus().getStatus());
-        return appSummaryDTO;
-    }
-
     public static AppSummaryDTO fromAppToInfoDTO(App app) {
         //check if app visibility is permitted and the lifecycle status published
         if (isVisibilityAllowed(app) && (APIStatus.PUBLISHED).equals(app.getLifeCycleStatus())) {
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(app.getType())) {
-                return fromWebAppToInfoDTO((WebApp) app);
-            } else if (AppMConstants.MOBILE_ASSET_TYPE.equals(app.getType())) {
+            if (AppMConstants.MOBILE_ASSET_TYPE.equals(app.getType())) {
                 return fromMobileAppToInfoDTO((MobileApp) app);
             }
         }
@@ -197,29 +164,6 @@ public class APPMappingUtil {
         appSummaryDTO.setVersion(app.getVersion());
         appSummaryDTO.setProvider(AppManagerUtil.replaceEmailDomainBack(app.getAppProvider()));
         appSummaryDTO.setDescription(app.getDescription());
-        appSummaryDTO.setLifecycleState(app.getLifeCycleStatus().getStatus());
-        appSummaryDTO.setRating(BigDecimal.valueOf(app.getRating()));
-        return appSummaryDTO;
-
-    }
-
-    private static AppSummaryDTO fromWebAppToInfoDTO(WebApp app) {
-
-        AppSummaryDTO appSummaryDTO = new AppSummaryDTO();
-        appSummaryDTO.setDescription(app.getDescription());
-        String context = app.getContext();
-        if (context != null) {
-            if (context.endsWith("/" + RestApiConstants.API_VERSION_PARAM)) {
-                context = context.replace("/" + RestApiConstants.API_VERSION_PARAM, "");
-            }
-            appSummaryDTO.setContext(context);
-        }
-        appSummaryDTO.setId(app.getUUID());
-        APIIdentifier apiId = app.getId();
-        appSummaryDTO.setName(apiId.getApiName());
-        appSummaryDTO.setVersion(apiId.getVersion());
-        String providerName = app.getId().getProviderName();
-        appSummaryDTO.setProvider(AppManagerUtil.replaceEmailDomainBack(providerName));
         appSummaryDTO.setLifecycleState(app.getLifeCycleStatus().getStatus());
         appSummaryDTO.setRating(BigDecimal.valueOf(app.getRating()));
         return appSummaryDTO;
@@ -291,28 +235,6 @@ public class APPMappingUtil {
         appRatingListDTO.setPrevious(paginatedPrevious);
     }
 
-    /**
-     * Returns the API given the uuid or the id in {provider}-{api}-{version} format
-     *
-     * @param appId uuid or the id in {provider}-{api}-{version} format
-     * @return API which represents the given id
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public static WebApp getAPIFromApiIdOrUUID(String appId)
-            throws AppManagementException {
-        //modify this method to support mobile apps
-        APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-        if (RestApiUtil.isUUID(appId)) {
-            WebApp webapp = appProvider.getAppDetailsFromUUID(appId);
-            appId = webapp.getId().getProviderName() + "-" + webapp.getId().getApiName() + "-" +
-                    webapp.getId().getVersion();
-        }
-
-        APIIdentifier appIdentifier = getAppIdentifierFromApiId(appId);
-        WebApp webapp = appProvider.getAPI(appIdentifier);
-        return webapp;
-    }
-
     public static APIIdentifier getAppIdentifierFromApiId(String appID) {
         //if appID contains -AT-, that need to be replaced before splitting
         appID = AppManagerUtil.replaceEmailDomainBack(appID);
@@ -330,59 +252,12 @@ public class APPMappingUtil {
         return new APIIdentifier(providerNameEmailReplaced, apiName, version);
     }
 
-
-    public static AppDTO fromAPItoDTO(WebApp model) throws AppManagementException {
-        AppDTO dto = new AppDTO();
-        dto.setName(model.getId().getApiName());
-        dto.setVersion(model.getId().getVersion());
-        String providerName = model.getId().getProviderName();
-        dto.setProvider(AppManagerUtil.replaceEmailDomainBack(providerName));
-        dto.setId(model.getUUID());
-        String context = model.getContext();
-        if (context != null) {
-            if (context.endsWith("/" + RestApiConstants.API_VERSION_PARAM)) {
-                context = context.replace("/" + RestApiConstants.API_VERSION_PARAM, "");
-            }
-            dto.setContext(context);
-        }
-        dto.setDescription(model.getDescription());
-        dto.setIsDefaultVersion(model.isDefaultVersion());
-        dto.setIsSite(model.getTreatAsASite());
-        dto.setThumbnailUrl(model.getThumbnailUrl());
-        dto.setLifecycleState(model.getLifeCycleStatus().getStatus());
-        Set<String> apiTags = model.getTags();
-        List<String> tagsToReturn = new ArrayList<>();
-        tagsToReturn.addAll(apiTags);
-        dto.setTags(tagsToReturn);
-        Set<Tier> apiTiers = model.getAvailableTiers();
-        List<String> tiersToReturn = new ArrayList<>();
-        for (Tier tier : apiTiers) {
-            tiersToReturn.add(tier.getName());
-        }
-        if (model.getTransports() != null) {
-            dto.setTransport(Arrays.asList(model.getTransports().split(",")));
-        }
-
-        if (model.getLifeCycleName() != null) {
-            dto.setLifecycle(model.getLifeCycleName());
-        }
-
-        dto.setType(model.getType());
-        dto.setDisplayName(model.getDisplayName());
-        dto.setCreatedtime(model.getCreatedTime());
-
-        return dto;
-    }
-
     public static AppDTO fromAppToDTO(App app) {
-
         AppDTO appDTO = null;
 
         //check if app visibility is permitted and the lifecycle status published
         if (isVisibilityAllowed(app) && APIStatus.PUBLISHED.equals(app.getLifeCycleStatus())) {
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(app.getType())) {
-                appDTO = fromWebAppToDTO((WebApp) app);
-            } else if (AppMConstants.MOBILE_ASSET_TYPE.equals(app.getType())) {
+            if (AppMConstants.MOBILE_ASSET_TYPE.equals(app.getType())) {
                 appDTO = fromMobileAppToDTO((MobileApp) app);
             }
         }
@@ -436,54 +311,6 @@ public class APPMappingUtil {
             log.error("Error while initializing User store");
             return false;
         }
-    }
-
-    private static AppDTO fromWebAppToDTO(WebApp webapp) {
-
-        AppDTO dto = new AppDTO();
-        dto.setName(webapp.getId().getApiName());
-        dto.setVersion(webapp.getId().getVersion());
-        String providerName = webapp.getId().getProviderName();
-        dto.setProvider(AppManagerUtil.replaceEmailDomainBack(providerName));
-        dto.setBusinessOwnerId(webapp.getBusinessOwner());
-        dto.setId(webapp.getUUID());
-        String context = webapp.getContext();
-        if (context != null) {
-            if (context.endsWith("/" + RestApiConstants.API_VERSION_PARAM)) {
-                context = context.replace("/" + RestApiConstants.API_VERSION_PARAM, "");
-            }
-            dto.setContext(context);
-        }
-        dto.setDescription(webapp.getDescription());
-        dto.setIsDefaultVersion(webapp.isDefaultVersion());
-        dto.setIsSite(webapp.getTreatAsASite());
-        dto.setThumbnailUrl(webapp.getThumbnailUrl());
-        dto.setBanner(webapp.getBanner());
-        dto.setScreenshots(null);
-        dto.setLifecycleState(webapp.getLifeCycleStatus().getStatus());
-        dto.setRating(BigDecimal.valueOf(webapp.getRating()));
-        Set<String> apiTags = webapp.getTags();
-        List<String> tagsToReturn = new ArrayList<>();
-        tagsToReturn.addAll(apiTags);
-        dto.setTags(tagsToReturn);
-        Set<Tier> apiTiers = webapp.getAvailableTiers();
-        List<String> tiersToReturn = new ArrayList<>();
-        for (Tier tier : apiTiers) {
-            tiersToReturn.add(tier.getName());
-        }
-        if (webapp.getTransports() != null) {
-            dto.setTransport(Arrays.asList(webapp.getTransports().split(",")));
-        }
-        if (webapp.getLifeCycleName() != null) {
-            dto.setLifecycle(webapp.getLifeCycleName());
-        }
-
-        dto.setType(webapp.getType());
-
-        dto.setDisplayName(webapp.getDisplayName());
-        dto.setCreatedtime(webapp.getCreatedTime());
-
-        return dto;
     }
 
     private static AppDTO fromMobileAppToDTO(MobileApp mobileApp) {

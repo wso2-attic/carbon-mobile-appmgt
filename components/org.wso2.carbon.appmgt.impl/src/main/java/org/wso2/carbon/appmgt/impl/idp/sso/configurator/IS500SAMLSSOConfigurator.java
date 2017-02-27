@@ -26,14 +26,23 @@ import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.idp.sso.SSOConfiguratorUtil;
 import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
 import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
-import org.wso2.carbon.identity.application.common.model.xsd.*;
-import org.wso2.carbon.identity.application.mgt.stub.IdentityApplicationManagementServiceIdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.xsd.AuthenticationStep;
+import org.wso2.carbon.identity.application.common.model.xsd.Claim;
+import org.wso2.carbon.identity.application.common.model.xsd.ClaimConfig;
+import org.wso2.carbon.identity.application.common.model.xsd.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.xsd.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.xsd.InboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.xsd.InboundAuthenticationRequestConfig;
+import org.wso2.carbon.identity.application.common.model.xsd.InboundProvisioningConfig;
+import org.wso2.carbon.identity.application.common.model.xsd.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.xsd.OutboundProvisioningConfig;
+import org.wso2.carbon.identity.application.common.model.xsd.PermissionsAndRoleConfig;
+import org.wso2.carbon.identity.application.common.model.xsd.Property;
+import org.wso2.carbon.identity.application.common.model.xsd.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.stub.IdentityApplicationManagementServiceStub;
-import org.wso2.carbon.identity.sso.saml.stub.IdentitySAMLSSOConfigServiceIdentityException;
 import org.wso2.carbon.identity.sso.saml.stub.IdentitySAMLSSOConfigServiceStub;
 import org.wso2.carbon.identity.sso.saml.stub.types.SAMLSSOServiceProviderDTO;
 import org.wso2.carbon.identity.sso.saml.stub.types.SAMLSSOServiceProviderInfoDTO;
@@ -114,142 +123,6 @@ public class IS500SAMLSSOConfigurator extends ISBaseSAMLSSOConfigurator implemen
             log.error("Error adding a new Service Provider", e);
         }
         return status;
-    }
-
-    @Override
-    public boolean createProvider(WebApp webApp) {
-        String acsUrl = getACSUrl(webApp);
-        SSOProvider ssoProvider = webApp.getSsoProviderDetails();
-        boolean status = false;
-        if (ssoProvider == null) {
-            log.warn("No SSO Configurator details given. Manual setup of SSO Provider required.");
-        } else {
-            if (acsUrl != null && acsUrl.length() > 0) {
-                ssoProvider.setAssertionConsumerURL(acsUrl);
-            } else {
-                ssoProvider.setAssertionConsumerURL(SSOConfiguratorUtil.getACSURL(webApp));
-            }
-
-            ssoProvider.setLogoutUrl(ssoProvider.getLogoutUrl());
-
-            ServiceProvider serviceProvider;
-            SAMLSSOServiceProviderDTO serviceProviderDTO = generateDTO(ssoProvider);
-            try {
-                status = ssoStub.addRPServiceProvider(serviceProviderDTO);
-                String attributeConsumingServiceIndex = getServiceProvider(ssoProvider.getIssuerName()).getAttributeConsumingServiceIndex();
-                serviceProvider = generateSPCreate(ssoProvider);
-                appMgtStub.createApplication(serviceProvider);
-                serviceProvider = appMgtStub.getApplication(serviceProvider.getApplicationName());
-                serviceProvider = generateSPUpdate(ssoProvider, serviceProvider, attributeConsumingServiceIndex);
-                appMgtStub.updateApplication(serviceProvider);
-            } catch (Exception e) {
-                log.error("Error adding a new Service Provider", e);
-            }
-        }
-        return status;
-    }
-
-    private String getACSUrl(WebApp webApp) {
-
-        String acsURL = webApp.getAcsURL();
-
-        if(acsURL == null){
-            acsURL = "";
-        }
-
-        return acsURL.trim();
-    }
-
-    @Override
-    public boolean removeProvider(SSOProvider provider) {
-        boolean status = false;
-        try {
-            appMgtStub.deleteApplication(provider.getIssuerName());
-            status = true;
-        } catch (Exception e) {
-            log.error("Error removing Service Provider", e);
-        }
-
-        return status;
-    }
-
-    @Override
-    public boolean updateProvider(SSOProvider provider) {
-        SAMLSSOServiceProviderDTO serviceProviderDTO = generateDTO(provider);
-        ServiceProvider serviceProvider = null;
-        boolean isUpdated = false;
-
-        try {
-            serviceProvider = appMgtStub.getApplication(provider.getIssuerName());
-            if (serviceProvider != null) {
-                ssoStub.removeServiceProvider(provider.getIssuerName());
-                ssoStub.addRPServiceProvider(serviceProviderDTO);
-                updateServiceProvider(provider, serviceProvider);
-                appMgtStub.updateApplication(serviceProvider);
-                isUpdated = true;
-            } else {
-                createProvider(provider);
-            }
-        } catch (RemoteException e) {
-            //An exception is not thrown here in the purpose of continuing in rest of webapp update
-            log.error("Error occurred in invoking remote service while updating service provider : " +
-                    provider.getProviderName(), e);
-        } catch (IdentityApplicationManagementServiceIdentityApplicationManagementException e) {
-            //An exception is not thrown here in the purpose of continuing in rest of webapp update
-            log.error("Error in invoking IdentityApplicationManagementService while updating the provider : " +
-                    provider.getProviderName(), e);
-        } catch (IdentitySAMLSSOConfigServiceIdentityException e) {
-            log.error("Error occurred in invoking IdentitySAMLSSOConfigService while updating provider : " +
-                    provider.getIssuerName(), e);
-        }
-        return isUpdated;
-    }
-
-
-    @Override
-    public boolean updateProvider(WebApp application) {
-        String acsUrl = application.getAcsURL().trim();
-        SSOProvider ssoProvider = application.getSsoProviderDetails();
-        boolean isUpdated = false;
-
-        if (ssoProvider == null) {
-            log.warn("No SSO Configurator details given. Manual setup of SSO Provider required.");
-        } else {
-            if (acsUrl != null && acsUrl.length() > 0) {
-                ssoProvider.setAssertionConsumerURL(acsUrl);
-            } else {
-                ssoProvider.setAssertionConsumerURL(SSOConfiguratorUtil.getACSURL(application));
-            }
-
-            ssoProvider.setLogoutUrl(ssoProvider.getLogoutUrl());
-
-            SAMLSSOServiceProviderDTO serviceProviderDTO = generateDTO(ssoProvider);
-            ServiceProvider serviceProvider = null;
-            try {
-                serviceProvider = appMgtStub.getApplication(ssoProvider.getIssuerName());
-                if (serviceProvider != null) {
-                    ssoStub.removeServiceProvider(ssoProvider.getIssuerName());
-                    ssoStub.addRPServiceProvider(serviceProviderDTO);
-                    updateServiceProvider(ssoProvider, serviceProvider);
-                    appMgtStub.updateApplication(serviceProvider);
-                    isUpdated = true;
-                } else {
-                    createProvider(ssoProvider);
-                }
-            } catch (RemoteException e) {
-                //An exception is not thrown here in the purpose of continuing in rest of webapp update
-                log.error("Error occurred in invoking remote service while updating service provider : " +
-                          ssoProvider.getProviderName(), e);
-            } catch (IdentityApplicationManagementServiceIdentityApplicationManagementException e) {
-                //An exception is not thrown here in the purpose of continuing in rest of webapp update
-                log.error("Error in invoking IdentityApplicationManagementService while updating the provider : " +
-                          ssoProvider.getProviderName(), e);
-            } catch (IdentitySAMLSSOConfigServiceIdentityException e) {
-                log.error("Error occurred in invoking IdentitySAMLSSOConfigService while updating provider : " +
-                          ssoProvider.getIssuerName(), e);
-            }
-        }
-        return isUpdated;
     }
 
     @Override

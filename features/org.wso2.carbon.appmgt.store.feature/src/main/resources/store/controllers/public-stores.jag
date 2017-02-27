@@ -2,7 +2,6 @@
 var a;
 include('/jagg/jagg.jag');
 var manager = jagg.module("manager");
-var favourites = jagg.module("favourites");
 var tenantDomains = manager.getActiveTenantDomains().tenantDomains;
 var caramel = require('caramel'),
         contextPath = caramel.configs().context,
@@ -25,12 +24,6 @@ if (Array.isArray(tenantDomains) && (tenantDomains.length > 1)) {
         for (var i = ((currentPageNumber - 1) * PAGE_SIZE); i < numberOfTenantDomains; i++) {
 
             var landingPage = "";
-            if (userName) {
-                var isFavouritePageSelected = favourites.hasFavouritePage(userName, userTenantId, tenantDomains[i]).status;
-                if (isFavouritePageSelected) {
-                    landingPage = config.pages.favouritePage;
-                }
-            }
 
             var store ={};
             store['name'] = tenantDomains[i];
@@ -53,12 +46,6 @@ if (Array.isArray(tenantDomains) && (tenantDomains.length > 1)) {
     }, request, response, session);
 } else {
     var landingPage = "/assets/";
-    if (userName != null) {
-        var isFavouritePageSelected = favourites.hasFavouritePage(userName, userTenantId, "carbon.super").status;
-        if (isFavouritePageSelected) {
-            landingPage = config.pages.favouritePage;
-        }
-    }
     var redirectURl = contextPath + landingPage;
     if (reversProxyEnabled) {
         redirectURl = reverseProxyHost + redirectURl;

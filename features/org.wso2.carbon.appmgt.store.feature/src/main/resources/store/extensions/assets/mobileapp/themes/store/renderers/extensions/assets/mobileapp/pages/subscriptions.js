@@ -7,7 +7,6 @@ var render = function (theme, data, meta, require) {
 
     var enabledTypeList = storeObj.getEnabledAssetTypeList();
     data.header.hideFavouriteMenu = true;
-    data.tags.tagUrl = "/assets/mobileapp";
     if(data.userAssets){
 
 
@@ -69,7 +68,6 @@ var render = function (theme, data, meta, require) {
                     partial: 'left-column',
                     context: {
                         navigation: createLeftNavLinks(data),
-                        tags: data.tags,
                         recentApps: data.recentAssets,
                         assetType: data.assetType,
                         hideTag: true

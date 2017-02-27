@@ -110,9 +110,6 @@ require('/modules/store.js').exec(function (ctx) {
         myAssets: { user: user, type: type, title: title},
         selfUnsubscription : selfUnsubscription,
         isDeviceSubscriptionEnabled : isDeviceSubscriptionEnabled,
-        tags: {
-            data: store.tags(type, null)
-        },
         assetType: "mobileapp",
         config: {
             isSelfSubscriptionEnabled: isSelfSubscriptionEnabled,

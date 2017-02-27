@@ -19,7 +19,6 @@
 package org.wso2.carbon.appmgt.api;
 
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 
 /**
  * Abstraction on WSO2 Identity Server based Application Management remote calls.
@@ -35,42 +34,6 @@ public interface IdentityApplicationManagementAdapter {
      * @return
      */
     boolean createProvider(SSOProvider provider, String idpName, String authenticationStep);
-
-    /**
-     * Creates service provider in IS side
-     * @param webApp
-     * @param idpName
-     * @param authenticationStep
-     * @param gatewayUrl
-     * @return
-     */
-    boolean createProvider(WebApp webApp, String idpName, String authenticationStep, String gatewayUrl);
-
-    /**
-     * Deletes the service provider from IS side.
-     * @param provider
-     * @return
-     */
-    boolean removeProvider(SSOProvider provider);
-
-    /**
-     * Updates the service provider in IS side.
-     * @param provider
-     * @param idpName
-     * @param authenticationStep
-     * @return
-     */
-    boolean updateProvider(SSOProvider provider, String idpName, String authenticationStep);
-
-    /**
-     * Updates the service provider in IS side.
-     * @param application
-     * @param idpName
-     * @param authenticationStep
-     * @param gatewayUrl
-     * @return
-     */
-    boolean updateProvider(WebApp application, String idpName, String authenticationStep, String gatewayUrl);
 
     /**
      * Returns the Single sign on service provider given the SAML Issuer name.

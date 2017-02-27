@@ -7,15 +7,11 @@ import org.wso2.carbon.appmgt.rest.api.publisher.dto.AppDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.AppListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.AppSummaryDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.BinaryDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.DocumentDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.DocumentListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.LifeCycleDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.LifeCycleHistoryListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.PListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.ResponseMessageDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.StatSummaryDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.StaticContentDTO;
-import org.wso2.carbon.appmgt.rest.api.publisher.dto.TagListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.TierListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.dto.UserIdListDTO;
 import org.wso2.carbon.appmgt.rest.api.publisher.factories.AppsApiServiceFactory;
@@ -320,159 +316,6 @@ public class AppsApi  {
     return delegate.appsAppTypeIdAppIdDiscoverPost(appType,appId,contentType,ifModifiedSince);
     }
     @GET
-    @Path("/{appType}/id/{appId}/docs")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get API Documents", notes = "Get a list of documents belonging to an API.", response = DocumentListDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nDocument list is returned."),
-        
-        @io.swagger.annotations.ApiResponse(code = 304, message = "Not Modified.\nEmpty body because the client has already the latest version of the requested resource."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nRequested API does not exist."),
-        
-        @io.swagger.annotations.ApiResponse(code = 406, message = "Not Acceptable.\nThe requested media type is not supported") })
-
-    public Response appsAppTypeIdAppIdDocsGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Maximum size of resource array to return.", defaultValue="25") @QueryParam("limit") Integer limit,
-    @ApiParam(value = "Starting point within the complete list of items qualified.", defaultValue="0") @QueryParam("offset") Integer offset,
-    @ApiParam(value = "Media types acceptable for the response. Default is JSON."  , defaultValue="JSON")@HeaderParam("Accept") String accept,
-    @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch)
-    {
-    return delegate.appsAppTypeIdAppIdDocsGet(appType,appId,limit,offset,accept,ifNoneMatch);
-    }
-    @POST
-    @Path("/{appType}/id/{appId}/docs")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Add a new document", notes = "Add a new document to an API", response = DocumentDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 201, message = "Created.\nSuccessful response with the newly created Document object as entity in the body.\nLocation header contains URL of newly added document."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error"),
-        
-        @io.swagger.annotations.ApiResponse(code = 415, message = "Unsupported media type.\nThe entity of the request was in a not supported format.") })
-
-    public Response appsAppTypeIdAppIdDocsPost(@ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "Document object that needs to be added" ,required=true ) DocumentDTO body,
-    @ApiParam(value = "Media type of the entity in the body. Default is JSON." ,required=true , defaultValue="JSON")@HeaderParam("Content-Type") String contentType)
-    {
-    return delegate.appsAppTypeIdAppIdDocsPost(appId,appType,body,contentType);
-    }
-    @GET
-    @Path("/{appType}/id/{appId}/docs/{documentId}")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Retrieving document", notes = "Retrieving document.", response = File.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nDocument Retrieved successfully."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error"),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nRequested entity does not exist."),
-        
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Precondition Failed.\nThe request has not been performed because one of the preconditions is not met.") })
-
-    public Response appsAppTypeIdAppIdDocsDocumentIdGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Document uuid.",required=true ) @PathParam("documentId") String documentId,
-    @ApiParam(value = "Validator for conditional requests; based on ETag."  )@HeaderParam("If-Match") String ifMatch,
-    @ApiParam(value = "Validator for conditional requests; based on Last Modified header."  )@HeaderParam("If-Unmodified-Since") String ifUnmodifiedSince)
-    {
-    return delegate.appsAppTypeIdAppIdDocsDocumentIdGet(appType,appId,documentId,ifMatch,ifUnmodifiedSince);
-    }
-    @DELETE
-    @Path("/{appType}/id/{appId}/docs/{documentId}")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Delete Document", notes = "Delete an existing Document", response = Void.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nResource successfully deleted."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nResource to be deleted does not exist.") })
-
-    public Response appsAppTypeIdAppIdDocsDocumentIdDelete(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Document uuid.",required=true ) @PathParam("documentId") String documentId,
-    @ApiParam(value = "Validator for conditional requests; based on ETag."  )@HeaderParam("If-Match") String ifMatch,
-    @ApiParam(value = "Validator for conditional requests; based on Last Modified header."  )@HeaderParam("If-Unmodified-Since") String ifUnmodifiedSince)
-    {
-    return delegate.appsAppTypeIdAppIdDocsDocumentIdDelete(appType,appId,documentId,ifMatch,ifUnmodifiedSince);
-    }
-
-    @PUT
-    @Path("/{appType}/id/{appId}/docs/{documentId}")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Update an Webapp Document", notes = "Update document details. ", response = DocumentDTO.class, tags={ "API Document",  })
-    @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = "OK.  Document updated ", response = DocumentDTO.class),
-            @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.  Invalid request or validation error. ", response = DocumentDTO.class),
-            @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.  The resource to be updated does not exist. ", response = DocumentDTO.class),
-            @io.swagger.annotations.ApiResponse(code = 412, message = "Precondition Failed.  The request has not been performed because one of the preconditions is not met. ", response = DocumentDTO.class) })
-    public Response appsAppTypeIdAppIdDocsDocumentIdPut(
-            @ApiParam(value = "**APP ID** consisting of the **UUID** of the App. The following combination is also accepted as a valid APP ID: the provider of the app, name of the app and the version. Should be formatted as **provider-name-version**. ",required=true) @PathParam("appId") String appId,
-            @ApiParam(value = "Document UUID. ",required=true) @PathParam("documentId") String documentId,
-            @ApiParam(value = "The App type (either Webapp/Mobile app). ",required=true) @PathParam("appType") String appType,
-            @ApiParam(value = "Document object that needs to be added " ,required=true) DocumentDTO body,
-            @ApiParam(value = "Media type of the entity in the body. Default is JSON. " ,required=true, defaultValue="JSON")@HeaderParam("Content-Type") String contentType,
-            @ApiParam(value = "Validator for conditional requests; based on the ETag. " )@HeaderParam("If-Match") String ifMatch,
-            @ApiParam(value = "Validator for conditional requests; based on the Last Modified header. " )@HeaderParam("If-Unmodified-Since") String ifUnmodifiedSince)
-             {
-        return delegate.appsAppTypeIdAppIdDocsDocumentIdPut(appId,documentId,appType,body,contentType,ifMatch,ifUnmodifiedSince);
-    }
-
-    @POST
-    @Path("/{appType}/id/{appId}/docs/{documentId}/content")
-    @Consumes({ "multipart/form-data" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Uploading document", notes = "Uploading document files against an App.", response = StaticContentDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nDocument uploaded successfully."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error"),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nRequested entity does not exist.") })
-
-    public Response appsAppTypeIdAppIdDocsDocumentIdContentPost(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Document uuid.",required=true ) @PathParam("documentId") String documentId,
-    @ApiParam(value = "Document to upload") @Multipart(value = "file", required = false) InputStream fileInputStream,
-    @ApiParam(value = "Document to upload : details") @Multipart(value = "file" , required = false) Attachment fileDetail,
-    @ApiParam(value = "Inline content of the document" )@Multipart(value = "inlineContent", required = false)  String inlineContent,
-    @ApiParam(value = "Validator for conditional requests; based on ETag."  )@HeaderParam("If-Match") String ifMatch,
-    @ApiParam(value = "Validator for conditional requests; based on Last Modified header."  )@HeaderParam("If-Unmodified-Since") String ifUnmodifiedSince)
-    {
-    return delegate.appsAppTypeIdAppIdDocsDocumentIdContentPost(appType,appId,documentId,fileInputStream,fileDetail,inlineContent,ifMatch,ifUnmodifiedSince);
-    }
-
-    @GET
-    @Path("/{appType}/id/{appId}/docs/{documentId}/content")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get document content", notes = "Downloads a FILE type document/get the inline content or source url of a certain document. ", response = void.class, tags={ "App Document",  })
-    @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = "OK.  File or inline content returned. ", response = void.class),
-            @io.swagger.annotations.ApiResponse(code = 303, message = "See Other. Source can be retrived from the URL specified at the Location header. ", response = void.class),
-            @io.swagger.annotations.ApiResponse(code = 304, message = "Not Modified.  Empty body because the client has already the latest version of the requested resource. ", response = void.class),
-            @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.  Requested Document does not exist. ", response = void.class),
-            @io.swagger.annotations.ApiResponse(code = 406, message = "Not Acceptable.  The requested media type is not supported ", response = void.class) })
-    public Response appsAppTypeIdAppIdDocsDocumentIdContentGet(
-            @ApiParam(value = "**APP ID** consisting of the **UUID** of the App. The following combination is also accepted as a valid APP ID: the provider of the app, name of the app and the version. Should be formatted as **provider-name-version**. ",required=true) @PathParam("appId") String appId,
-            @ApiParam(value = "Document UUID. ",required=true) @PathParam("documentId") String documentId,
-            @ApiParam(value = "The App type (either Webapp/Mobile app). ",required=true) @PathParam("appType") String appType,
-            @ApiParam(value = "Media types acceptable for the response. Default is JSON. " , defaultValue="JSON")@HeaderParam("Accept") String accept,
-            @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved variant of the resource. " )@HeaderParam("If-None-Match") String ifNoneMatch,
-            @ApiParam(value = "Validator for conditional requests; based on the Last Modified header of the formerly retrieved variant of the resource. " )@HeaderParam("If-Modified-Since") String ifModifiedSince)
-    {
-        return delegate.appsAppTypeIdAppIdDocsDocumentIdContentGet(appId,documentId,appType,accept,ifNoneMatch,ifModifiedSince);
-    }
-
-    @GET
     @Path("/{appType}/id/{appId}/lifecycle")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
@@ -537,74 +380,6 @@ public class AppsApi  {
     return delegate.appsAppTypeIdAppIdSubscriptionsGet(appType,appId,accept,ifNoneMatch,ifModifiedSince);
     }
     @GET
-    @Path("/{appType}/id/{appId}/tags")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get all Tags of an App", notes = "Get a list of available Tags relevant to given App Internal Id.", response = TagListDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nList of Tags is returned."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nThe resource to be updated does not exist.") })
-
-    public Response appsAppTypeIdAppIdTagsGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Media types acceptable for the response. Default is JSON."  , defaultValue="JSON")@HeaderParam("Accept") String accept,
-    @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch)
-    {
-    return delegate.appsAppTypeIdAppIdTagsGet(appType,appId,accept,ifNoneMatch);
-    }
-    @PUT
-    @Path("/{appType}/id/{appId}/tags")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Add a new tag", notes = "Add a new tag into tag collection of a given application type.", response = Void.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error"),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nThe resource to be updated does not exist."),
-        
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Precondition Failed.\nThe request has not been performed because one of the preconditions is not met.") })
-
-    public Response appsAppTypeIdAppIdTagsPut(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Tag object that needs to be added" ,required=true ) TagListDTO body,
-    @ApiParam(value = "Media type of the entity in the body. Default is JSON." ,required=true , defaultValue="JSON")@HeaderParam("Content-Type") String contentType,
-    @ApiParam(value = "Validator for conditional requests; based on ETag."  )@HeaderParam("If-Match") String ifMatch,
-    @ApiParam(value = "Validator for conditional requests; based on Last Modified header."  )@HeaderParam("If-Unmodified-Since") String ifUnmodifiedSince)
-    {
-    return delegate.appsAppTypeIdAppIdTagsPut(appType,appId,body,contentType,ifMatch,ifUnmodifiedSince);
-    }
-    @DELETE
-    @Path("/{appType}/id/{appId}/tags")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Delete Tags relevant to an App", notes = "Delete Tags relevant to an App by AppId.", response = Void.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nResource successfully deleted."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nResource to be deleted does not exist."),
-        
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Precondition Failed.\nThe request has not been performed because one of the preconditions is not met.") })
-
-    public Response appsAppTypeIdAppIdTagsDelete(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Tag object that needs to be added" ,required=true ) TagListDTO body,
-    @ApiParam(value = "Validator for conditional requests; based on ETag."  )@HeaderParam("If-Match") String ifMatch,
-    @ApiParam(value = "Validator for conditional requests; based on Last Modified header."  )@HeaderParam("If-Unmodified-Since") String ifUnmodifiedSince)
-    {
-    return delegate.appsAppTypeIdAppIdTagsDelete(appType,appId,body,ifMatch,ifUnmodifiedSince);
-    }
-    @GET
     @Path("/{appType}/throttlingtiers")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
@@ -623,50 +398,6 @@ public class AppsApi  {
     @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch)
     {
     return delegate.appsAppTypeThrottlingtiersGet(appType, accept, ifNoneMatch);
-    }
-    @GET
-    @Path("/{appType}/stats/{statType}")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get Stat summary", notes = "Get Stat summary results.", response = StatSummaryDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nThe resource to be updated does not exist.") })
-
-    public Response appsAppTypeStatsStatTypeGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "Stat Type.",required=true ) @PathParam("statType") String statType,
-    @ApiParam(value = "Start date/time of the stat analysis (2016-04-19#10:32:00)") @QueryParam("startTimeStamp") String startTimeStamp,
-    @ApiParam(value = "End date/time of the stat analysis (2016-04-19#10:32:00)") @QueryParam("endTimeStamp") String endTimeStamp,
-    @ApiParam(value = "Limit of records") @QueryParam("limit") Integer limit,
-    @ApiParam(value = "Media types acceptable for the response. Default is JSON."  , defaultValue="JSON")@HeaderParam("Accept") String accept,
-    @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch)
-    {
-    return delegate.appsAppTypeStatsStatTypeGet(appType,statType,startTimeStamp,endTimeStamp,limit,accept,ifNoneMatch);
-    }
-    @GET
-    @Path("/{appType}/tags")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get all Tags", notes = "Get a list of available Tags relevant to given App Type.", response = TagListDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nList of Tags is returned."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nThe resource to be updated does not exist.") })
-
-    public Response appsAppTypeTagsGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "Media types acceptable for the response. Default is JSON."  , defaultValue="JSON")@HeaderParam("Accept") String accept,
-    @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch)
-    {
-    return delegate.appsAppTypeTagsGet(appType,accept,ifNoneMatch);
     }
     @POST
     @Path("/{appType}/validate-context")

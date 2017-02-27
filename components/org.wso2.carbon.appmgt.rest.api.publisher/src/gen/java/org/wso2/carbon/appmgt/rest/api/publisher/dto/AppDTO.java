@@ -56,11 +56,7 @@ public class AppDTO  {
   
   
   private String logoutURL = null;
-  
-  
-  private String businessOwnerId = null;
-  
-  
+
   private List<String> visibleTenants = new ArrayList<String>();
   
   
@@ -332,19 +328,6 @@ public class AppDTO  {
     this.logoutURL = logoutURL;
   }
 
-  
-  /**
-   **/
-  @ApiModelProperty(value = "")
-  @JsonProperty("businessOwnerId")
-  public String getBusinessOwnerId() {
-    return businessOwnerId;
-  }
-  public void setBusinessOwnerId(String businessOwnerName) {
-    this.businessOwnerId = businessOwnerName;
-  }
-
-  
   /**
    **/
   @ApiModelProperty(value = "")
@@ -768,7 +751,6 @@ public class AppDTO  {
     sb.append("  context: ").append(context).append("\n");
     sb.append("  version: ").append(version).append("\n");
     sb.append("  logoutURL: ").append(logoutURL).append("\n");
-    sb.append("  businessOwnerId: ").append(businessOwnerId).append("\n");
     sb.append("  visibleTenants: ").append(visibleTenants).append("\n");
     sb.append("  claims: ").append(claims).append("\n");
     sb.append("  trackingCode: ").append(trackingCode).append("\n");

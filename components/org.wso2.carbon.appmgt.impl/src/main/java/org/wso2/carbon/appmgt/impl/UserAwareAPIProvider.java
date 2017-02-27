@@ -43,68 +43,9 @@ public class UserAwareAPIProvider extends APIProviderImpl {
     }
 
     @Override
-    public void addWebApp(WebApp app) throws AppManagementException {
-        checkCreatePermission();
-        super.addWebApp(app);
-    }
-
-    @Override
-    public String createWebApp(WebApp webApp) throws AppManagementException {
-        checkCreatePermission();
-        return super.createWebApp(webApp);
-    }
-
-    @Override
     public String createNewVersion(App app) throws AppManagementException {
         checkCreatePermission();
         return super.createNewVersion(app);
-    }
-
-    @Override
-    public void copyWebappDocumentations(WebApp api, String newVersion) throws AppManagementException {
-        checkDocumentAddPermission();
-        super.copyWebappDocumentations(api, newVersion);
-    }
-
-    @Override
-    public void updateApp(App app) throws AppManagementException {
-        checkWebappUpdatePermission();
-        super.updateApp(app);
-    }
-
-    @Override
-    public void addDocumentation(APIIdentifier apiId,
-                                 Documentation documentation) throws AppManagementException {
-        checkDocumentAddPermission();
-        super.addDocumentation(apiId, documentation);
-    }
-
-    @Override
-    public void removeDocumentation(APIIdentifier apiId, String docName,
-                                    String docType) throws AppManagementException {
-        checkDocumentRemovePermission();
-        super.removeDocumentation(apiId, docName, docType);
-    }
-
-    @Override
-    public void updateDocumentation(APIIdentifier apiId,
-                                    Documentation documentation) throws AppManagementException {
-        checkDocumentEditPermission();
-        super.updateDocumentation(apiId, documentation);
-    }
-
-    @Override
-    public void addDocumentationContent(APIIdentifier identifier, String documentationName,
-                                        String text) throws AppManagementException {
-        checkDocumentAddPermission();
-        super.addDocumentationContent(identifier, documentationName, text);
-    }
-
-    @Override
-    public void copyAllDocumentation(APIIdentifier apiId, String toVersion) throws
-                                                                            AppManagementException {
-        checkDocumentAddPermission();
-        super.copyAllDocumentation(apiId, toVersion);
     }
 
     @Override

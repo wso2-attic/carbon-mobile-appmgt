@@ -26,7 +26,6 @@ var render = function (theme, data, meta, require) {
     var bodyContext = assets.currentPage(data.assets, data.sso, data.user, data.pagination, data.config);
     bodyContext.searchQuery =searchQuery;
     var searchUrl = "/assets/mobileapp";
-    data.tags.tagUrl = "/assets/mobileapp";
 
     theme('2-column-left', {
         title: data.title,

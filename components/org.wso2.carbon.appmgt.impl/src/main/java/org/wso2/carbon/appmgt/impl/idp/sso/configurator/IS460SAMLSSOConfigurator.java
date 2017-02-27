@@ -25,23 +25,19 @@ import org.apache.axis2.context.ServiceContext;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.appmgt.api.model.SSOProvider;
+import org.wso2.carbon.appmgt.impl.idp.sso.SSOConfiguratorUtil;
+import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
+import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
+import org.wso2.carbon.identity.sso.saml.stub.IdentitySAMLSSOConfigServiceStub;
+import org.wso2.carbon.identity.sso.saml.stub.types.SAMLSSOServiceProviderDTO;
+import org.wso2.carbon.identity.sso.saml.stub.types.SAMLSSOServiceProviderInfoDTO;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Map;
-
-import org.wso2.carbon.appmgt.api.model.SSOProvider;
-import org.wso2.carbon.appmgt.api.model.WebApp;
-import org.wso2.carbon.appmgt.impl.idp.sso.SSOConfiguratorUtil;
-import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
-import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
-import org.wso2.carbon.identity.base.IdentityException;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.sso.saml.stub.IdentitySAMLSSOConfigServiceStub;
-import org.wso2.carbon.identity.sso.saml.stub.types.SAMLSSOServiceProviderDTO;
-import org.wso2.carbon.identity.sso.saml.stub.types.SAMLSSOServiceProviderInfoDTO;
 
 public class IS460SAMLSSOConfigurator extends ISBaseSAMLSSOConfigurator implements SSOConfigurator {
 
@@ -77,24 +73,6 @@ public class IS460SAMLSSOConfigurator extends ISBaseSAMLSSOConfigurator implemen
             log.error("Error adding a new Service Provider", e);
         }
         return status;
-    }
-
-    @Override
-    public boolean removeProvider(SSOProvider provider) {
-        boolean status = false;
-        try {
-            status = stub.removeServiceProvider(provider.getIssuerName());
-        } catch (Exception e) {
-            log.error("Error removing Service Provider", e);
-        }
-
-        return status;
-    }
-
-    @Override
-    public boolean updateProvider(SSOProvider provider) {
-        removeProvider(provider);
-        return createProvider(provider);
     }
 
     @Override
@@ -218,15 +196,5 @@ public class IS460SAMLSSOConfigurator extends ISBaseSAMLSSOConfigurator implemen
             log.error("Error when removing the service provider", e);
             throw new AxisFault(e.getMessage(), e);
         }
-    }
-
-    @Override
-    public boolean updateProvider(WebApp application) {
-        return false;
-    }
-
-    @Override
-    public boolean createProvider(WebApp webApp) {
-        return false;
     }
 }

@@ -23,7 +23,6 @@ var render = function(theme, data, meta, require) {
 
 	data.header.config = data.config;
     var searchUrl = "/assets/mobileapp";
-    data.tags.tagUrl = "/assets/mobileapp";
 
     theme('2-column-left', {
         title: data.title,

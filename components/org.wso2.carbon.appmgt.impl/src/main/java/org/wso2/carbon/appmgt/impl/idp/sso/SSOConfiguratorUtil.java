@@ -22,82 +22,23 @@ import org.apache.commons.logging.LogFactory;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.idp.sso.configurator.SSOConfigurator;
 import org.wso2.carbon.appmgt.impl.idp.sso.model.SSOEnvironment;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
-import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.util.List;
-import java.util.Map;
 
 public class SSOConfiguratorUtil {
 
     private static Log log = LogFactory.getLog(SSOConfiguratorUtil.class);
 
     public static final String SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY = "adminServiceCookie";
-
-    /**
-     * Create or update SSO Provider for a given application
-     *
-     * @param app application object
-     * @param update isToUpdate
-     */
-    public static void createSSOProvider(WebApp app, boolean update, Map<String, String> serviceConfigs) {
-
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        SSOEnvironment ssoEnvironment = findProviderEnvironment(app.getSsoProviderDetails().getProviderName(), app.getSsoProviderDetails().getProviderVersion(), config);
-
-        if(ssoEnvironment == null) {
-            log.error("Could not find SSO Configurator details for " + app.getSsoProviderDetails().toString());
-            return;
-        }
-
-        try {
-            SSOConfigurator configurator = (SSOConfigurator) Class.forName(ssoEnvironment.getProviderClass()).newInstance();
-
-            Map<String, String> configuratorConfig = ssoEnvironment.getParameters();
-
-            // If there is a an http cookie given in the service configs, add it as a configuration to the configurator.
-            if(serviceConfigs.get(SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY) != null){
-                configuratorConfig.put(SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY, serviceConfigs.get(SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY));
-            }
-
-            configurator.init(configuratorConfig);
-
-            if (update) {
-                if(configurator.updateProvider(app)) {
-                    //Log to impose that the SSO Provider is updated for a particular webapp
-                    log.info("SSO Provider  updated for " + app.getId().getApiName());
-                }else {
-                    log.error("Failed to update SSO provider for " +
-                            app.getId().getApiName());
-                }
-            } else {
-                if(configurator.createProvider(app)) {
-                    log.info("SSO Provider configured for " + app.getId().getApiName());
-                }else {
-                    log.error("Failed to setup SSO provider for " + app.getId().getApiName());
-                }
-            }
-
-        } catch (ClassNotFoundException e) {
-            log.error("SSO Configurator class not found " + ssoEnvironment.getProviderClass());
-        } catch (InstantiationException e) {
-            log.error("Error instantiating " + ssoEnvironment.getProviderClass());
-        } catch (IllegalAccessException e) {
-            log.error("Illegal access to " + ssoEnvironment.getProviderClass());
-        }
-    }
 
     public static String[] getAllClaims(String ssoProvider, String version) {
 
@@ -219,57 +160,6 @@ public class SSOConfiguratorUtil {
     }
 
     /**
-     * Removes a given SSOProvider
-     *
-     * @param ssoProvider SSOProvider Object
-     */
-    public void deleteSSOProvider(SSOProvider ssoProvider, Map<String, String> serviceConfigs) throws AppManagementException {
-
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-
-        SSOEnvironment ssoEnvironment = findProviderEnvironment(ssoProvider.getProviderName(),
-                ssoProvider.getProviderVersion(), config);
-
-        if(ssoEnvironment == null) {
-            log.error("Could not find SSO Configurator details for " + ssoProvider.toString());
-            return;
-        }
-
-        SSOConfigurator configurator = null;
-        try {
-            //Initialize SSOConfigurator
-            configurator = (SSOConfigurator) Class.forName(ssoEnvironment.getProviderClass()).newInstance();
-
-            Map<String, String> configuratorConfig = ssoEnvironment.getParameters();
-
-            // If there is a an http cookie given in the service configs, add it as a configuration to the configurator.
-            if(serviceConfigs.get(SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY) != null){
-                configuratorConfig.put(SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY, serviceConfigs.get(SP_ADMIN_SERVICE_COOKIE_PROPERTY_KEY));
-            }
-
-            configurator.init(configuratorConfig);
-
-            //Remove SSOProvider if available
-            if(configurator.getProvider(ssoProvider.getIssuerName())!=null) {
-
-                boolean isRemoved = configurator.removeProvider(ssoProvider);
-                if (isRemoved) {
-                    //Imposing that the SSOProvider for a particular webapp is deleted
-                    log.info("SSO Provider : " + ssoProvider.toString() + " for " + ssoProvider.getIssuerName()
-                            + " is Successfully Deleted");
-                }
-            }
-        } catch (InstantiationException e) {
-            handleException("Error instantiating " + ssoEnvironment.getProviderClass(),e);
-        } catch (IllegalAccessException e) {
-            handleException("Illegal access to " + ssoEnvironment.getProviderClass(),e);
-        } catch (ClassNotFoundException e) {
-            handleException("Cannot find class " + ssoEnvironment.getProviderClass(),e);
-        }
-    }
-
-    /**
      * Utility method used to check availability of service on host/port.
      * @param host
      * @param port
@@ -298,30 +188,6 @@ public class SSOConfiguratorUtil {
         }
 
         return null;
-    }
-
-    public static String getGatewayUrl(WebApp app) {
-        APIIdentifier identifier = app.getId();
-        String url;
-        if(app.getTransports().equals("http")) {
-            url =  AppManagerUtil.getGatewayendpoints().split(",")[0];
-        } else {
-            url = AppManagerUtil.getGatewayendpoints().split(",")[1];
-        }
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-
-        if(!tenantDomain.equalsIgnoreCase("carbon.super")){
-            url = url + "/t/" + tenantDomain + app.getContext() + "/" + identifier.getVersion() + "/";
-        }else {
-            url = url + app.getContext() + "/" + identifier.getVersion() + "/";
-        }
-         return url;
-    }
-
-    public static String getACSURL(WebApp webApp){
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        String acsURLPostfix = config.getFirstProperty(AppMConstants.SSO_CONFIGURATION_ACS_URL_POSTFIX);
-        return getGatewayUrl(webApp) + acsURLPostfix;
     }
 
     public static boolean isResponseSigningEnabled() {
