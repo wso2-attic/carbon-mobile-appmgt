@@ -8,7 +8,6 @@ import org.wso2.carbon.appmgt.rest.api.store.dto.AppRatingListDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.EventsDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.InstallDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.ScheduleDTO;
-import org.wso2.carbon.appmgt.rest.api.store.dto.UserIdListDTO;
 import org.wso2.carbon.appmgt.rest.api.store.factories.AppsApiServiceFactory;
 
 import javax.ws.rs.Consumes;
@@ -338,50 +337,6 @@ public class AppsApi  {
     {
     return delegate.appsAppTypeIdAppIdStorageFileNameGet(appType,appId,fileName,ifMatch,ifUnmodifiedSince);
     }
-    @GET
-    @Path("/{appType}/id/{appId}/subscription")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get subscriptions for current user", notes = "Get subscriptions for current user.", response = AppListDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nQualifying App is returned."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nThe resource to be updated does not exist.") })
-
-    public Response appsAppTypeIdAppIdSubscriptionGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Media types acceptable for the response. Default is JSON."  , defaultValue="JSON")@HeaderParam("Accept") String accept,
-    @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch,
-    @ApiParam(value = "Validator for conditional requests; based on Last Modified header of the\nformerly retrieved variant of the resource."  )@HeaderParam("If-Modified-Since") String ifModifiedSince)
-    {
-    return delegate.appsAppTypeIdAppIdSubscriptionGet(appType,appId,accept,ifNoneMatch,ifModifiedSince);
-    }
-    @POST
-    @Path("/{appType}/id/{appId}/subscription")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Subscribe App", notes = "Subscribe to an existing App", response = Void.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nResource to be deleted does not exist."),
-        
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Precondition Failed.\nThe request has not been performed because one of the preconditions is not met.") })
-
-    public Response appsAppTypeIdAppIdSubscriptionPost(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Media type of the entity in the body. Default is JSON." ,required=true , defaultValue="JSON")@HeaderParam("Content-Type") String contentType)
-    {
-    return delegate.appsAppTypeIdAppIdSubscriptionPost(appType,appId,contentType);
-    }
     @POST
     @Path("/{appType}/id/{appId}/subscription-workflow")
     @Consumes({ "application/json" })
@@ -403,50 +358,6 @@ public class AppsApi  {
     @ApiParam(value = "Media type of the entity in the body. Default is JSON." ,required=true , defaultValue="JSON")@HeaderParam("Content-Type") String contentType)
     {
     return delegate.appsAppTypeIdAppIdSubscriptionWorkflowPost(appType,appId,contentType);
-    }
-    @GET
-    @Path("/{appType}/id/{appId}/subscription/users")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Get subscribed user list", notes = "Get subscribed user list for a given App.", response = UserIdListDTO.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK.\nQualifying App is returned."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nThe resource to be updated does not exist.") })
-
-    public Response appsAppTypeIdAppIdSubscriptionUsersGet(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Media types acceptable for the response. Default is JSON."  , defaultValue="JSON")@HeaderParam("Accept") String accept,
-    @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved\nvariant of the resourec."  )@HeaderParam("If-None-Match") String ifNoneMatch,
-    @ApiParam(value = "Validator for conditional requests; based on Last Modified header of the\nformerly retrieved variant of the resource."  )@HeaderParam("If-Modified-Since") String ifModifiedSince)
-    {
-    return delegate.appsAppTypeIdAppIdSubscriptionUsersGet(appType,appId,accept,ifNoneMatch,ifModifiedSince);
-    }
-    @POST
-    @Path("/{appType}/id/{appId}/unsubscription")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "Un subscribe App", notes = "Un subscribe to an existing App", response = Void.class)
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "OK."),
-        
-        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request.\nInvalid request or validation error."),
-        
-        @io.swagger.annotations.ApiResponse(code = 403, message = "Forbidden.\nThe request must be conditional but no condition has been specified."),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found.\nResource to be deleted does not exist."),
-        
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Precondition Failed.\nThe request has not been performed because one of the preconditions is not met.") })
-
-    public Response appsAppTypeIdAppIdUnsubscriptionPost(@ApiParam(value = "App Type. Either webapp or mobileapp",required=true ) @PathParam("appType") String appType,
-    @ApiParam(value = "**APP ID** consisting of the **UUID** of the App.\nThe combination of the provider of the app, name of the appId and the version is also accepted as a valid App ID.\nShould be formatted as **provider-name-version**.",required=true ) @PathParam("appId") String appId,
-    @ApiParam(value = "Media type of the entity in the body. Default is JSON." ,required=true , defaultValue="JSON")@HeaderParam("Content-Type") String contentType)
-    {
-    return delegate.appsAppTypeIdAppIdUnsubscriptionPost(appType,appId,contentType);
     }
 }
 

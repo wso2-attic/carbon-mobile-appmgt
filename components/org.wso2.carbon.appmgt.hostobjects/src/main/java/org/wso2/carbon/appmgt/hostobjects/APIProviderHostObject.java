@@ -51,8 +51,6 @@ import org.wso2.carbon.appmgt.api.model.LifeCycleEvent;
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
 import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.Tier;
-import org.wso2.carbon.appmgt.api.model.URITemplate;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyValidationResult;
 import org.wso2.carbon.appmgt.hostobjects.internal.HostObjectComponent;
@@ -62,13 +60,11 @@ import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.UserAwareAPIProvider;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
-import org.wso2.carbon.appmgt.impl.idp.sso.SSOConfiguratorUtil;
 import org.wso2.carbon.appmgt.impl.service.AppUsageStatisticsService;
 import org.wso2.carbon.appmgt.impl.utils.APIVersionStringComparator;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.mgt.stub.UserAdminStub;
 import org.wso2.carbon.utils.CarbonUtils;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -92,7 +88,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 @SuppressWarnings("unused")
 public class APIProviderHostObject extends ScriptableObject {
@@ -790,150 +785,6 @@ public class APIProviderHostObject extends ScriptableObject {
     }
 
     /**
-     * This method is to functionality of getting an existing WebApp to WebApp-Provider based
-     *
-     * @param cx      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return a native array
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException Wrapped exception by org.wso2.carbon.apimgt.api.AppManagementException
-     */
-
-    public static NativeArray jsFunction_getAPI(Context cx, Scriptable thisObj,
-                                                Object[] args,
-                                                Function funObj) throws AppManagementException {
-        NativeArray myn = new NativeArray(0);
-
-        if (args == null || !isStringValues(args)) {
-            handleException("Invalid number of parameters or their types.");
-        }
-        String providerName = args[0].toString();
-        String providerNameTenantFlow = args[0].toString();
-        providerName= AppManagerUtil.replaceEmailDomain(providerName);
-        String apiName = args[1].toString();
-        String version = args[2].toString();
-
-        APIIdentifier apiId = new APIIdentifier(providerName, apiName, version);
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        boolean isTenantFlowStarted = false;
-        try {
-            String tenantDomain = MultitenantUtils.getTenantDomain(AppManagerUtil.replaceEmailDomainBack(providerNameTenantFlow));
-            if(tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-            }
-            WebApp api = apiProvider.getAPI(apiId);
-            if (api != null) {
-                Set<URITemplate> uriTemplates = api.getUriTemplates();
-                myn.put(0, myn, checkValue(api.getId().getApiName()));
-                myn.put(1, myn, checkValue(api.getDescription()));
-                myn.put(2, myn, checkValue(api.getUrl()));
-                myn.put(3, myn, checkValue(api.getWsdlUrl()));
-                myn.put(4, myn, checkValue(api.getId().getVersion()));
-                StringBuilder tagsSet = new StringBuilder("");
-                for (int k = 0; k < api.getTags().toArray().length; k++) {
-                    tagsSet.append(api.getTags().toArray()[k].toString());
-                    if (k != api.getTags().toArray().length - 1) {
-                        tagsSet.append(",");
-                    }
-                }
-                myn.put(5, myn, checkValue(tagsSet.toString()));
-                StringBuilder tiersSet = new StringBuilder("");
-                StringBuilder tiersDisplayNamesSet = new StringBuilder("");
-                StringBuilder tiersDescSet = new StringBuilder("");
-                Set<Tier> tierSet = api.getAvailableTiers();
-                Iterator it = tierSet.iterator();
-                int j = 0;
-                while (it.hasNext()) {
-                    Object tierObject = it.next();
-                    Tier tier = (Tier) tierObject;
-                    tiersSet.append(tier.getName());
-                    tiersDisplayNamesSet.append(tier.getDisplayName());
-                    tiersDescSet.append(tier.getDescription());
-                    if (j != tierSet.size() - 1) {
-                        tiersSet.append(",");
-                        tiersDisplayNamesSet.append(",");
-                        tiersDescSet.append(",");
-                    }
-                    j++;
-                }
-
-                myn.put(6, myn, checkValue(tiersSet.toString()));
-                myn.put(7, myn, checkValue(api.getStatus().toString()));
-                myn.put(8, myn, getWebContextRoot(api.getThumbnailUrl()));
-                myn.put(9, myn, api.getContext());
-                myn.put(10, myn, checkValue(Long.valueOf(api.getLastUpdated().getTime()).toString()));
-                myn.put(11, myn, getSubscriberCount(apiId, thisObj));
-
-                if (uriTemplates.size() != 0) {
-                    NativeArray uriTempArr = new NativeArray(uriTemplates.size());
-                    Iterator i = uriTemplates.iterator();
-                    List<NativeArray> uriTemplatesArr = new ArrayList<NativeArray>();
-                    while (i.hasNext()) {
-                        List<String> utArr = new ArrayList<String>();
-                        URITemplate ut = (URITemplate) i.next();
-                        utArr.add(ut.getUriTemplate());
-                        utArr.add(ut.getMethodsAsString().replaceAll("\\s", ","));
-                        utArr.add(ut.getAuthTypeAsString().replaceAll("\\s", ","));
-                        utArr.add(ut.getThrottlingTiersAsString().replaceAll("\\s", ","));
-                        NativeArray utNArr = new NativeArray(utArr.size());
-                        for (int p = 0; p < utArr.size(); p++) {
-                            utNArr.put(p, utNArr, utArr.get(p));
-                        }
-                        uriTemplatesArr.add(utNArr);
-                    }
-
-                    for (int c = 0; c < uriTemplatesArr.size(); c++) {
-                        uriTempArr.put(c, uriTempArr, uriTemplatesArr.get(c));
-                    }
-
-                    myn.put(12, myn, uriTempArr);
-                }
-
-                myn.put(13, myn, checkValue(api.getSandboxUrl()));
-                myn.put(14, myn, checkValue(tiersDescSet.toString()));
-                myn.put(17, myn, checkValue(api.getTechnicalOwner()));
-                myn.put(18, myn, checkValue(api.getTechnicalOwnerEmail()));
-                myn.put(19, myn, checkValue(api.getWadlUrl()));
-                myn.put(20, myn, checkValue(api.getVisibility()));
-                myn.put(21, myn, checkValue(api.getVisibleRoles()));
-                myn.put(22, myn, checkValue(api.getVisibleTenants()));
-                myn.put(23, myn, checkValue(api.getEndpointUTUsername()));
-                myn.put(24, myn, checkValue(api.getEndpointUTPassword()));
-                myn.put(25, myn, checkValue(Boolean.toString(api.isEndpointSecured())));
-                myn.put(26, myn, AppManagerUtil.replaceEmailDomainBack(checkValue(api.getId().getProviderName())));
-                myn.put(27, myn, checkTransport("http",api.getTransports()));
-                myn.put(28, myn, checkTransport("https",api.getTransports()));
-                myn.put(29, myn, checkValue(api.getInSequence()));
-                myn.put(30, myn, checkValue(api.getOutSequence()));
-
-                myn.put(31, myn, checkValue(api.getSubscriptionAvailability()));
-                myn.put(32, myn, checkValue(api.getSubscriptionAvailableTenants()));
-
-                //@todo need to handle backword compatibility
-                myn.put(33, myn, checkValue(api.getEndpointConfig()));
-
-                myn.put(34, myn, checkValue(api.getResponseCache()));
-                myn.put(35, myn, checkValue(Integer.toString(api.getCacheTimeout())));
-                myn.put(36, myn, checkValue(tiersDisplayNamesSet.toString()));
-            } else {
-                handleException("Cannot find the requested WebApp- " + apiName +
-                        "-" + version);
-            }
-        } catch (Exception e) {
-            handleException("Error occurred while getting WebApp information of the api- " + apiName +
-                    "-" + version, e);
-        } finally {
-            if (isTenantFlowStarted) {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
-        }
-        return myn;
-    }
-
-    /**
      * This method returns the user subscribed APPs
      * @param cx      Rhino context
      * @param thisObj Scriptable object
@@ -1141,64 +992,6 @@ public class APIProviderHostObject extends ScriptableObject {
         return myn;
     }
 
-    public static NativeArray jsFunction_getSubscriberCountByAPIVersions(Context cx,
-                                                                         Scriptable thisObj,
-                                                                         Object[] args,
-                                                                         Function funObj)
-            throws AppManagementException {
-        NativeArray myn = new NativeArray(0);
-        String providerName = null;
-        String apiName = null;
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        if (args == null || args.length==0) {
-            handleException("Invalid input parameters.");
-        }
-        boolean isTenantFlowStarted = false;
-        try {
-            providerName = AppManagerUtil.replaceEmailDomain((String) args[0]);
-            String tenantDomain = MultitenantUtils.getTenantDomain(AppManagerUtil.replaceEmailDomainBack(providerName));
-            if(tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-            }
-            apiName = (String) args[1];
-            if (providerName != null && apiName != null) {
-                Map<String, Long> subscriptions = new TreeMap<String, Long>();
-                Set<String> versions = apiProvider.getAPIVersions(AppManagerUtil.replaceEmailDomain(providerName), apiName);
-                for (String version : versions) {
-                    APIIdentifier id = new APIIdentifier(providerName, apiName, version);
-                    WebApp api = apiProvider.getAPI(id);
-                    if (api.getStatus() == APIStatus.CREATED) {
-                        continue;
-                    }
-                    long count = apiProvider.getAPISubscriptionCountByAPI(api.getId());
-                    if (count == 0) {
-                        continue;
-                    }
-                    subscriptions.put(api.getId().getVersion(), count);
-                }
-
-                int i = 0;
-                for (Map.Entry<String, Long> entry : subscriptions.entrySet()) {
-                    NativeObject row = new NativeObject();
-                    row.put("apiVersion", row, entry.getKey());
-                    row.put("count", row, entry.getValue().longValue());
-                    myn.put(i, myn, row);
-                    i++;
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error while getting subscribers of the " +
-                    "provider: " + providerName + " and WebApp: " + apiName, e);
-        }finally {
-            if (isTenantFlowStarted) {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
-        }
-        return myn;
-    }
-
     private static int getSubscriberCount(APIIdentifier apiId, Scriptable thisObj)
             throws AppManagementException {
         APIProvider apiProvider = getAPIProvider(thisObj);
@@ -1249,150 +1042,6 @@ public class APIProviderHostObject extends ScriptableObject {
             handleException("Identity provider URL unspecified");
         }
         return url;
-    }
-
-    /**
-     * This method is to functionality of getting all the APIs stored
-     *
-     * @param cx      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return a native array
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException Wrapped exception by org.wso2.carbon.apimgt.api.AppManagementException
-     */
-    public static NativeArray jsFunction_getAllAPIs(Context cx, Scriptable thisObj,
-                                                    Object[] args,
-                                                    Function funObj)
-            throws AppManagementException {
-        NativeArray myn = new NativeArray(0);
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        /*String tenantDomain = MultitenantUtils.getTenantDomain(AppManagerUtil.replaceEmailDomainBack(providerName));
-        if(tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-        }*/
-        try {
-            List<WebApp> apiList = apiProvider.getAllAPIs();
-            if (apiList != null) {
-                Iterator it = apiList.iterator();
-                int i = 0;
-                while (it.hasNext()) {
-                    NativeObject row = new NativeObject();
-                    Object apiObject = it.next();
-                    WebApp api = (WebApp) apiObject;
-                    APIIdentifier apiIdentifier = api.getId();
-                    row.put("name", row, apiIdentifier.getApiName());
-                    row.put("version", row, apiIdentifier.getVersion());
-                    row.put("provider", row, AppManagerUtil.replaceEmailDomainBack(apiIdentifier.getProviderName()));
-                    row.put("status", row, checkValue(api.getStatus().toString()));
-                    row.put("thumb", row, getWebContextRoot(api.getThumbnailUrl()));
-                    row.put("subs", row, getSubscriberCount(apiIdentifier, thisObj));
-                    myn.put(i, myn, row);
-                    i++;
-
-                }
-            }
-        } catch (Exception e) {
-            handleException("Error occurred while getting the APIs", e);
-        }
-        return myn;
-    }
-
-    /**
-     * This method is to functionality of getting all the APIs stored per provider
-     *
-     * @param cx      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return a native array
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException Wrapped exception by org.wso2.carbon.apimgt.api.AppManagementException
-     */
-    public static NativeArray jsFunction_getAPIsByProvider(Context cx, Scriptable thisObj,
-                                                           Object[] args,
-                                                           Function funObj)
-            throws AppManagementException {
-        NativeArray myn = new NativeArray(0);
-        if (args==null ||args.length == 0) {
-            handleException("Invalid number of parameters.");
-        }
-        String providerName = (String) args[0];
-        if (providerName != null) {
-            APIProvider apiProvider = getAPIProvider(thisObj);
-            boolean isTenantFlowStarted = false;
-            try {
-                String tenantDomain = MultitenantUtils.getTenantDomain(AppManagerUtil.replaceEmailDomainBack(providerName));
-                if(tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                    isTenantFlowStarted = true;
-                    PrivilegedCarbonContext.startTenantFlow();
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                }
-                List<WebApp> apiList = apiProvider.getAPIsByProvider(AppManagerUtil.replaceEmailDomain(providerName));
-                if (apiList != null) {
-                    Iterator it = apiList.iterator();
-                    int i = 0;
-                    while (it.hasNext()) {
-                        NativeObject row = new NativeObject();
-                        Object apiObject = it.next();
-                        WebApp api = (WebApp) apiObject;
-                        APIIdentifier apiIdentifier = api.getId();
-                        row.put("name", row, apiIdentifier.getApiName());
-                        row.put("version", row, apiIdentifier.getVersion());
-                        row.put("provider", row, AppManagerUtil.replaceEmailDomainBack(apiIdentifier.getProviderName()));
-                        row.put("lastUpdatedDate", row, api.getLastUpdated().toString());
-                        myn.put(i, myn, row);
-                        i++;
-                    }
-                }
-            } catch (Exception e) {
-                handleException("Error occurred while getting APIs for " +
-                        "the provider: " + providerName, e);
-            } finally {
-                if (isTenantFlowStarted) {
-                    PrivilegedCarbonContext.endTenantFlow();
-                }
-            }
-        }
-        return myn;
-    }
-
-    public static NativeArray jsFunction_getSubscribedAPIs(Context cx, Scriptable thisObj,
-                                                           Object[] args,
-                                                           Function funObj)
-            throws AppManagementException {
-        String userName = null;
-        NativeArray myn = new NativeArray(0);
-        APIProvider apiProvider = getAPIProvider(thisObj);
-
-        if (args == null || !isStringValues(args)) {
-            handleException("Invalid number of parameters or their types.");
-        }
-        try {
-            userName = (String) args[0];
-            Subscriber subscriber = new Subscriber(userName);
-            Set<WebApp> apiSet = apiProvider.getSubscriberAPIs(subscriber);
-            if (apiSet != null) {
-                Iterator it = apiSet.iterator();
-                int i = 0;
-                while (it.hasNext()) {
-                    NativeObject row = new NativeObject();
-                    Object apiObject = it.next();
-                    WebApp api = (WebApp) apiObject;
-                    APIIdentifier apiIdentifier = api.getId();
-                    row.put("apiName", row, apiIdentifier.getApiName());
-                    row.put("version", row, apiIdentifier.getVersion());
-                    row.put("provider", row, AppManagerUtil.replaceEmailDomainBack(apiIdentifier.getProviderName()));
-                    row.put("updatedDate", row, api.getLastUpdated().toString());
-                    myn.put(i, myn, row);
-                    i++;
-                }
-            }
-        } catch (Exception e) {
-            handleException("Error occurred while getting the subscribed APIs information " +
-                    "for the subscriber-" + userName, e);
-        }
-        return myn;
     }
 
     public static NativeArray jsFunction_getAllAPIUsageByProvider(Context cx, Scriptable thisObj,
@@ -1532,68 +1181,6 @@ public class APIProviderHostObject extends ScriptableObject {
         }
         return apiStatus;
     }
-
-
-    public static NativeArray jsFunction_searchAPIs(Context cx, Scriptable thisObj,
-                                                    Object[] args,
-                                                    Function funObj) throws AppManagementException {
-        NativeArray myn = new NativeArray(0);
-
-        if (args == null || args.length==0) {
-            handleException("Invalid number of parameters.");
-        }
-        String providerName = (String) args[0];
-        providerName= AppManagerUtil.replaceEmailDomain(providerName);
-        String searchValue = (String) args[1];
-        String searchTerm;
-        String searchType;
-
-        if (searchValue.contains(":")) {
-            if (searchValue.split(":").length > 1) {
-                searchType = searchValue.split(":")[0];
-                searchTerm = searchValue.split(":")[1];
-            } else {
-                throw new AppManagementException("Search term is missing. Try again with valid search query.");
-            }
-
-        } else {
-            searchTerm = searchValue;
-            searchType = "default";
-        }
-        try {
-            if ("*".equals(searchTerm) || searchTerm.startsWith("*")) {
-                searchTerm = searchTerm.replaceFirst("\\*", ".*");
-            }
-            APIProvider apiProvider = getAPIProvider(thisObj);
-
-            List<WebApp> searchedList = apiProvider.searchAPIs(searchTerm, searchType, providerName);
-            Iterator it = searchedList.iterator();
-            int i = 0;
-            while (it.hasNext()) {
-                NativeObject row = new NativeObject();
-                Object apiObject = it.next();
-                WebApp api = (WebApp) apiObject;
-                APIIdentifier apiIdentifier = api.getId();
-                row.put("name", row, apiIdentifier.getApiName());
-                row.put("provider", row, AppManagerUtil.replaceEmailDomainBack(apiIdentifier.getProviderName()));
-                row.put("version", row, apiIdentifier.getVersion());
-                row.put("status", row, checkValue(api.getStatus().toString()));
-                row.put("thumb", row, getWebContextRoot(api.getThumbnailUrl()));
-                row.put("subs", row, apiProvider.getSubscribersOfAPI(api.getId()).size());
-                if (providerName != null) {
-                    row.put("lastUpdatedDate", row, checkValue(api.getLastUpdated().toString()));
-                }
-                myn.put(i, myn, row);
-                i++;
-
-
-            }
-        } catch (Exception e) {
-            handleException("Error occurred while getting the searched WebApp- " + searchValue, e);
-        }
-        return myn;
-    }
-
 
     public static boolean jsFunction_hasCreatePermission(Context cx, Scriptable thisObj,
                                                          Object[] args,
@@ -2084,53 +1671,6 @@ public class APIProviderHostObject extends ScriptableObject {
         return apiProvider.getTrackingID(uuid);
     }
 
-    /**
-     * This method returns the endpoint for the webapps
-     *
-     * @param ctx      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return Native array
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     *
-     */
-    public static NativeArray jsFunction_getAppsForTenantDomain(Context ctx, Scriptable thisObj,
-                                                           Object[] args,
-                                                           Function funObj)
-            throws AppManagementException {
-        NativeArray myn = new NativeArray(0);
-        APIProvider apiProvider = getAPIProvider(thisObj);
-
-        String tenantDomain = null;
-        try {
-            tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain(true);
-            List<WebApp> apiList = apiProvider.getAppsWithEndpoint(tenantDomain);
-            if (apiList != null) {
-                Iterator it = apiList.iterator();
-                int i = 0;
-                while (it.hasNext()) {
-                    NativeObject row = new NativeObject();
-                    Object appObject = it.next();
-                    WebApp app = (WebApp) appObject;
-                    APIIdentifier apiIdentifier = app.getId();
-                    row.put("name", row, apiIdentifier.getApiName());
-
-                    // This WebApp is for read the registry values.
-                    WebApp tempApp = apiProvider.getAPI(apiIdentifier);
-                    row.put("version", row, apiIdentifier.getVersion());
-                    row.put("endpoint", row, tempApp.getUrl());
-                    myn.put(i, myn, row);
-                    i++;
-                }
-            }
-        } catch (AppManagementException e) {
-            handleException("Error occurred while getting the application endpoints for the tenant domain "
-                    + tenantDomain, e);
-        }
-        return myn;
-    }
-
     public static NativeArray jsFunction_getAppsByPopularity(Context ctx, Scriptable hostObj, Object[] args,
                                                              Function funObj) throws AppManagementException {
         List<AppHitsStatsDTO> appStatsList = null;
@@ -2192,71 +1732,6 @@ public class APIProviderHostObject extends ScriptableObject {
             }
         }
         return popularApps;
-    }
-
-    /**
-     * This methods update(add/remove) the external app stores for given web app
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @throws AppManagementException
-     */
-    public static void jsFunction_updateExternalAppStores(Context cx, Scriptable thisObj, Object[] args,
-                                                          Function funObj)
-            throws AppManagementException {
-        if (args == null || args.length != 4) {
-            handleException("Invalid number of parameters to the updateExternalAPPStores method,Expected number of" +
-                    "parameters " + 4);
-        }
-
-        if (!(args[3] instanceof NativeArray)) {
-            handleException("Invalid input parameter, 4th parameter  should be a instance of NativeArray");
-        }
-        String provider = (String) args[0];
-        if (provider != null) {
-            provider = AppManagerUtil.replaceEmailDomain(provider);
-        }
-        String name = (String) args[1];
-        String version = (String) args[2];
-        //Getting selected external App stores from UI and publish app to them.
-        NativeArray externalAppStores = (NativeArray) args[3];
-
-        if (log.isDebugEnabled()) {
-            String msg = String.format("Update external stores  for web app ->" +
-                    " app provider : %s, app name :%s, app version : %s", provider, name, version);
-            log.debug(msg);
-        }
-
-        boolean isTenantFlowStarted = false;
-        try {
-            String tenantDomain = MultitenantUtils.getTenantDomain(AppManagerUtil.replaceEmailDomainBack(provider));
-            if (tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-            }
-
-            APIProvider appProvider = getAPIProvider(thisObj);
-            APIIdentifier identifier = new APIIdentifier(provider, name, version);
-            WebApp webApp = appProvider.getAPI(identifier);
-            int tenantId = ServiceReferenceHolder.getInstance().getRealmService().
-                    getTenantManager().getTenantId(tenantDomain);
-            //Check if no external AppStore selected from UI
-            if (externalAppStores != null) {
-                Set<AppStore> inputStores = new HashSet<AppStore>();
-                for (Object store : externalAppStores) {
-                    inputStores.add(AppManagerUtil.getExternalAppStore((String) store, tenantId));
-                }
-                appProvider.updateAppsInExternalAppStores(webApp, inputStores);
-            }
-        } catch (UserStoreException e) {
-            handleException("Error while updating external app stores", e);
-        } finally {
-            if (isTenantFlowStarted) {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
-        }
     }
 
     /**
@@ -2362,60 +1837,6 @@ public class APIProviderHostObject extends ScriptableObject {
         APIIdentifier apiIdentifier = (APIIdentifier) appIdentifierNativeJavaObject.unwrap();
         APIProvider apiProvider = getAPIProvider(thisObj);
         return apiProvider.isDefaultVersion(apiIdentifier);
-    }
-
-    /**
-     * Check if the WebApp has more versions or not.
-     *
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return
-     * @throws AppManagementException
-     */
-    public static boolean jsFunction_hasMoreVersions(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws AppManagementException {
-        NativeArray myn = new NativeArray(0);
-        if (args == null || args.length != 1) {
-            handleException("Invalid input parameters. Expecting APIIdentifier.");
-        }
-        NativeJavaObject appIdentifierNativeJavaObject = (NativeJavaObject) args[0];
-        APIIdentifier apiIdentifier = (APIIdentifier) appIdentifierNativeJavaObject.unwrap();
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        return apiProvider.hasMoreVersions(apiIdentifier);
-    }
-
-    /**
-     * Get WebApp details by UUID.
-     *
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return Asset basic details
-     * @throws AppManagementException
-     */
-    public static NativeObject jsFunction_getAppDetailsFromUUID(Context cx, Scriptable thisObj, Object[] args,
-                                                               Function funObj)
-            throws AppManagementException {
-        NativeObject webAppNativeObj = new NativeObject();
-        if (args == null || args.length != 1) {
-            handleException("Invalid input parameters. Expecting UUID.");
-        }
-        String uuid = (String) args[0];
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        WebApp api = apiProvider.getAppDetailsFromUUID(uuid);
-
-        if (api != null) {
-            webAppNativeObj.put("name", webAppNativeObj, api.getId().getApiName());
-            webAppNativeObj.put("provider", webAppNativeObj, api.getId().getProviderName());
-            webAppNativeObj.put("version", webAppNativeObj, api.getId().getVersion());
-            webAppNativeObj.put("context", webAppNativeObj, api.getContext());
-        } else {
-            handleException("Cannot find the requested WebApp related to UUID - " + uuid);
-        }
-        return webAppNativeObj;
     }
 
     /**
@@ -2613,25 +2034,6 @@ public class APIProviderHostObject extends ScriptableObject {
             saml2SsoIssuer = appName + "-" + version;
         }
         return saml2SsoIssuer;
-    }
-
-    public static String jsFunction_getAscUrl(Context cx, Scriptable thisObj, Object[] args,
-                                                   Function funObj) throws AppManagementException {
-        if (args == null || args.length != 3) {
-            throw new AppManagementException(
-                    "Invalid number of arguments. Arguments length should be one.");
-        }
-
-        String version = (String) args[0];
-        String context = (String) args[1];
-        String transport = (String) args[2];
-
-        APIIdentifier appIdentifier = new APIIdentifier(null, null, version);
-        WebApp webApp = new WebApp(appIdentifier);
-        webApp.setTransports(transport);
-        webApp.setContext(context);
-        String acsUrl = SSOConfiguratorUtil.getACSURL(webApp);
-        return acsUrl;
     }
 }
 

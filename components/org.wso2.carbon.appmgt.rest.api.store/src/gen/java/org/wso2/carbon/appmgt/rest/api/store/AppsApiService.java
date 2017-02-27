@@ -22,11 +22,7 @@ public abstract class AppsApiService {
     public abstract Response appsAppTypeIdAppIdRateGet(String appType,String appId,Integer limit,Integer offset,String accept,String ifNoneMatch,String ifModifiedSince);
     public abstract Response appsAppTypeIdAppIdRatePut(String appType,String appId,AppRatingInfoDTO rating,String contentType,String ifMatch,String ifUnmodifiedSince);
     public abstract Response appsAppTypeIdAppIdStorageFileNameGet(String appType,String appId,String fileName,String ifMatch,String ifUnmodifiedSince);
-    public abstract Response appsAppTypeIdAppIdSubscriptionGet(String appType,String appId,String accept,String ifNoneMatch,String ifModifiedSince);
-    public abstract Response appsAppTypeIdAppIdSubscriptionPost(String appType,String appId,String contentType);
     public abstract Response appsAppTypeIdAppIdSubscriptionWorkflowPost(String appType,String appId,String contentType);
-    public abstract Response appsAppTypeIdAppIdSubscriptionUsersGet(String appType,String appId,String accept,String ifNoneMatch,String ifModifiedSince);
-    public abstract Response appsAppTypeIdAppIdUnsubscriptionPost(String appType,String appId,String contentType);
     public abstract Response appsMobileScheduleInstallPost(String contentType, ScheduleDTO schedule,
                                                            SecurityContext securityContext);
     public abstract Response appsMobileScheduleUpdatePost(String contentType, ScheduleDTO schedule,

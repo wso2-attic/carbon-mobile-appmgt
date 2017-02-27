@@ -32,12 +32,9 @@ import org.json.XML;
 import org.wso2.carbon.appmgt.api.APIProvider;
 import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.api.model.App;
-import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
-import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.Tier;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.AppRepository;
@@ -62,16 +59,12 @@ import org.wso2.carbon.appmgt.rest.api.util.RestApiConstants;
 import org.wso2.carbon.appmgt.rest.api.util.utils.RestApiUtil;
 import org.wso2.carbon.appmgt.rest.api.util.validation.BeanValidator;
 import org.wso2.carbon.appmgt.rest.api.util.validation.CommonValidator;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.governance.api.exception.GovernanceException;
 import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
 import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
-import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.user.api.UserStoreManager;
-import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.mobile.utils.utilities.ZipFileReading;
 
@@ -344,8 +337,6 @@ public class AppsApiServiceImpl extends AppsApiService {
     @Override
     public Response appsAppTypeGet(String appType, String query, String fieldFilter, Integer limit, Integer offset,
                                    String accept, String ifNoneMatch) {
-        List<WebApp> allMatchedApps;
-
         //setting default limit and offset values if they are not set
         limit = limit != null ? limit : RestApiConstants.PAGINATION_LIMIT_DEFAULT;
         offset = offset != null ? offset : RestApiConstants.PAGINATION_OFFSET_DEFAULT;
@@ -415,12 +406,6 @@ public class AppsApiServiceImpl extends AppsApiService {
 
                 MobileApp mobileApp = APPMappingUtil.fromDTOtoMobileApp(body);
                 applicationId = appProvider.createMobileApp(mobileApp);
-            } else if (AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-
-                WebApp webApp = APPMappingUtil.fromDTOToWebapp(body);
-                validateWebApp(webApp, appProvider, true);
-                webApp.setCreatedTime(RestApiPublisherUtils.getCreatedTimeEpoch());
-                applicationId = appProvider.createWebApp(webApp);
             }
             response.put("AppId", applicationId);
         } catch (AppManagementException e) {
@@ -435,69 +420,6 @@ public class AppsApiServiceImpl extends AppsApiService {
 
         return Response.ok().entity(response).build();
     }
-
-    /**
-     * @param webApp
-     * @param appProvider
-     * @param isNewApp    if the app is a new app or existing app
-     * @return
-     * @throws AppManagementException
-     */
-    private boolean validateWebApp(WebApp webApp, APIProvider appProvider, boolean isNewApp)
-            throws AppManagementException {
-        //check if the context is unique
-        if (isNewApp) {
-            boolean isContextExists = appProvider.isContextExist(webApp.getContext());
-            if (isContextExists) {
-                throw new AppManagementException("Context - " + webApp.getContext() + " already exists");
-            }
-        }
-
-        //check if the role/tiers are exists
-        //iterate through all groups
-        List<EntitlementPolicyGroup> groups = webApp.getAccessPolicyGroups();
-        String tenantDomainName = RestApiUtil.getLoggedInUserTenantDomain();
-        for (EntitlementPolicyGroup group : groups) {
-            //iterate through all roles
-            List<String> roles = group.getUserRolesAsList();
-            for (String role : roles) {
-                try {
-                    if (!"".equals(role)) {
-                        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
-                        RealmService realmService = (RealmService) carbonContext.getOSGiService(RealmService.class,
-                                                                                                null);
-                        int tenantId =
-                                ServiceReferenceHolder.getInstance().getRealmService().getTenantManager().getTenantId(
-                                        tenantDomainName);
-                        UserRealm realm = realmService.getTenantUserRealm(tenantId);
-                        UserStoreManager manager = realm.getUserStoreManager();
-                        //check if the role is exists
-                        if (!manager.isExistingRole(role)) {
-                            throw new AppManagementException("Invalid role - " + role);
-                        }
-                    }
-
-                } catch (UserStoreException e) {
-                    throw new AppManagementException("Error while fetching User Store");
-                }
-            }
-
-            String throttlingTier = group.getThrottlingTier();
-            Set<Tier> tiers = appProvider.getTiers(tenantDomainName);
-            boolean tierExists = false;
-            for (Tier tier : tiers) {
-                if (tier.getName().equals(throttlingTier)) {
-                    tierExists = true;
-                }
-            }
-            if (!tierExists) {
-                throw new AppManagementException("Invalid Throttling Tier - " + throttlingTier);
-            }
-        }
-
-        return true;
-    }
-
 
     /**
      * Change lifecycle state of an application
@@ -604,20 +526,6 @@ public class AppsApiServiceImpl extends AppsApiService {
             } catch (AppManagementException e) {
                 RestApiUtil.handleInternalServerError("Error occurred while ", e, log);
             }
-        } else if(AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)){
-
-            try {
-                APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
-                body.setId(appId);
-                WebApp webApp = APPMappingUtil.fromDTOToWebapp(body);
-                validateWebApp(webApp, apiProvider, false);
-                apiProvider.updateApp(webApp);
-
-            } catch (AppManagementException e) {
-                e.printStackTrace();
-            }
-
-
         } else{
             RestApiUtil.handleBadRequest("Invalid application type :" + appType, log);
         }
@@ -641,19 +549,7 @@ public class AppsApiServiceImpl extends AppsApiService {
             }
 
             App app = result.get(0);
-
-            if (appType.equals(AppMConstants.WEBAPP_ASSET_TYPE)) {
-
-                WebApp webApp = (WebApp) app;
-
-                if (webApp.isAdvertiseOnly()) {
-                    removeRegistryArtifact(webApp, username);
-                } else {
-                    //todo: pass the correct auth cookie
-                    String authorizedAdminCookie = null;
-                   // apiProvider.deleteApp(webApp.getId(), webApp.getSsoProviderDetails(), authorizedAdminCookie);
-                }
-            } else if (appType.equals(AppMConstants.MOBILE_ASSET_TYPE)) {
+            if (appType.equals(AppMConstants.MOBILE_ASSET_TYPE)) {
                 removeRegistryArtifact(app, username);
             }
             return Response.ok().build();
@@ -677,15 +573,12 @@ public class AppsApiServiceImpl extends AppsApiService {
     @Override
     public Response appsAppTypeIdAppIdCreateNewVersionPost(String appType, String appId, AppDTO body,String contentType,
                                                            String ifModifiedSince){
-
         APIProvider apiProvider = null;
         try {
             apiProvider = RestApiUtil.getLoggedInUserProvider();
 
             App app = null;
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-                app = APPMappingUtil.fromDTOToWebapp(body);
-            } else if (AppMConstants.MOBILE_ASSET_TYPE.equals(appType)) {
+            if (AppMConstants.MOBILE_ASSET_TYPE.equals(appType)) {
                 MobileApp mobileAppModel = new MobileApp();
                 mobileAppModel.setVersion(body.getVersion());
                 mobileAppModel.setDisplayName(body.getDisplayName());
@@ -830,9 +723,7 @@ public class AppsApiServiceImpl extends AppsApiService {
                 Boolean isEnterpriseSubscriptionEnabled = Boolean.valueOf(appManagerConfiguration.getFirstProperty(
                         AppMConstants.ENABLE_ENTERPRISE_SUBSCRIPTION));
                 if (isSelfSubscriptionEnabled || isEnterpriseSubscriptionEnabled) {
-                    WebApp webApp = appProvider.getAppDetailsFromUUID(appId);
-                    Set<Subscriber> subscriberSet = appProvider.getSubscribersOfAPI(webApp.getId());
-                    userIdListDTO.setUserIds(subscriberSet);
+                    //TODO: Check the usage of this function.
                 } else {
                     RestApiUtil.handleBadRequest("Subscription is disabled", log);
                 }

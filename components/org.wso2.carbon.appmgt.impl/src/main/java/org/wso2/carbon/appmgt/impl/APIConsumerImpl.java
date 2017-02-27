@@ -136,7 +136,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                 userRegistry = this.registry;
             }
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-            result=searchPaginatedAPIs(userRegistry, searchTerm, searchType,start,end);
 
         } catch (Exception e) {
             handleException("Failed to Search APIs", e);

@@ -25,24 +25,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.wso2.carbon.appmgt.api.APIConsumer;
 import org.wso2.carbon.appmgt.api.APIProvider;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.api.model.FileContent;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.PlistTemplateContext;
-import org.wso2.carbon.appmgt.api.model.Subscriber;
-import org.wso2.carbon.appmgt.api.model.Subscription;
-import org.wso2.carbon.appmgt.api.model.WebApp;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppRepository;
 import org.wso2.carbon.appmgt.impl.DefaultAppRepository;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
-import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.appmgt.impl.workflow.WorkflowConstants;
 import org.wso2.carbon.appmgt.impl.workflow.WorkflowException;
 import org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutor;
@@ -59,13 +53,11 @@ import org.wso2.carbon.appmgt.rest.api.store.dto.AppRatingListDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.EventsDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.InstallDTO;
 import org.wso2.carbon.appmgt.rest.api.store.dto.ScheduleDTO;
-import org.wso2.carbon.appmgt.rest.api.store.dto.UserIdListDTO;
 import org.wso2.carbon.appmgt.rest.api.store.utils.mappings.APPMappingUtil;
 import org.wso2.carbon.appmgt.rest.api.util.RestApiConstants;
 import org.wso2.carbon.appmgt.rest.api.util.utils.RestApiUtil;
 import org.wso2.carbon.appmgt.rest.api.util.validation.BeanValidator;
 import org.wso2.carbon.appmgt.rest.api.util.validation.CommonValidator;
-import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.social.core.SocialActivityException;
 import org.wso2.carbon.social.core.service.SocialActivityService;
@@ -87,7 +79,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class AppsApiServiceImpl extends AppsApiService {
 
@@ -794,146 +785,6 @@ public class AppsApiServiceImpl extends AppsApiService {
         return null;
     }
 
-    /**
-     * Retrieve subscription of the given user for a given app
-     *
-     * @param appType
-     * @param appId
-     * @param accept
-     * @param ifNoneMatch
-     * @param ifModifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdSubscriptionGet(String appType, String appId, String accept, String ifNoneMatch,
-                                                      String ifModifiedSince) {
-
-        APIConsumer apiConsumer = null;
-        Map<String, String> subscriptionData = new HashMap<>();
-        boolean isTenantFlowStarted = false;
-        String username = AppManagerUtil.replaceEmailDomain(RestApiUtil.getLoggedInUsername());
-        try {
-            apiConsumer = RestApiUtil.getLoggedInUserConsumer();
-
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-            int tenantId = AppManagerUtil.getTenantId(username);
-            if (tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-            }
-
-            WebApp webApp = apiConsumer.getWebApp(appId);
-            APIIdentifier appIdentifier = webApp.getId();
-            int applicationId = AppManagerUtil.getApplicationId(AppMConstants.DEFAULT_APPLICATION_NAME, username);
-
-            Subscription subscription = apiConsumer.getSubscription(appIdentifier, applicationId,
-                                                                    Subscription.SUBSCRIPTION_TYPE_INDIVIDUAL);
-            if (subscription != null) {
-                subscriptionData.put("SubscriptionId", String.valueOf(subscription.getSubscriptionId()));
-                subscriptionData.put("SubscriptionType", subscription.getSubscriptionType());
-                subscriptionData.put("Status", subscription.getSubscriptionStatus());
-                subscriptionData.put("SubscriptionTime", subscription.getSubscriptionTime());
-                subscriptionData.put("SubscribedUser", subscription.getUserId());
-            }
-        } catch (AppManagementException e) {
-            RestApiUtil.handleInternalServerError(
-                    "Error occurred while retrieving subscription details of webapp with id : "
-                            + appId + " for user " + username, e, log);
-        } finally {
-            if (isTenantFlowStarted) {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
-        }
-        return Response.ok().entity(subscriptionData).build();
-    }
-
-    /**
-     * Adding subscription for a given app
-     *
-     * @param appType     application type ie: webapp, mobileapp
-     * @param appId       application uuid
-     * @param contentType
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdSubscriptionPost(String appType, String appId, String contentType) {
-
-        APIConsumer apiConsumer = null;
-        boolean isTenantFlowStarted = false;
-        String userName = AppManagerUtil.replaceEmailDomain(RestApiUtil.getLoggedInUsername());
-        try {
-            apiConsumer = RestApiUtil.getLoggedInUserConsumer();
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-            int tenantId = AppManagerUtil.getTenantId(userName);
-
-            if (AppManagerUtil.isSelfSubscriptionEnable() || AppManagerUtil.isEnterpriseSubscriptionEnable()) {
-                //Check for subscriber existence
-                Subscriber subscriber = apiConsumer.getSubscriber(userName);
-                if (subscriber == null) {
-                    subscriber = new Subscriber(userName);
-                    subscriber.setSubscribedDate(new Date());
-                    subscriber.setEmail("");
-                    subscriber.setTenantId(tenantId);
-                    apiConsumer.addSubscriber(subscriber);
-                }
-
-                if (tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                    isTenantFlowStarted = true;
-                    PrivilegedCarbonContext.startTenantFlow();
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                }
-                WebApp webApp = apiConsumer.getWebApp(appId);
-                APIIdentifier appIdentifier = webApp.getId();
-                appIdentifier.setTier(AppMConstants.UNLIMITED_TIER);
-
-            /* Tenant based validation for subscription*/
-                String userDomain = MultitenantUtils.getTenantDomain(userName);
-                boolean subscriptionAllowed = false;
-                if (!userDomain.equals(tenantDomain)) {
-                    String subscriptionAvailability = webApp.getSubscriptionAvailability();
-                    if (AppMConstants.SUBSCRIPTION_TO_ALL_TENANTS.equals(subscriptionAvailability)) {
-                        subscriptionAllowed = true;
-                    } else if (AppMConstants.SUBSCRIPTION_TO_SPECIFIC_TENANTS.equals(subscriptionAvailability)) {
-                        String subscriptionAllowedTenants = webApp.getSubscriptionAvailableTenants();
-                        String allowedTenants[] = null;
-                        if (subscriptionAllowedTenants != null) {
-                            allowedTenants = subscriptionAllowedTenants.split(",");
-                            if (allowedTenants != null) {
-                                for (String tenant : allowedTenants) {
-                                    if (tenant != null && userDomain.equals(tenant.trim())) {
-                                        subscriptionAllowed = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    subscriptionAllowed = true;
-                }
-
-                if (!subscriptionAllowed) {
-                    throw new AppManagementException("Subscription is not allowed for " + userDomain);
-                }
-                int applicationId = AppManagerUtil.getApplicationId(AppMConstants.DEFAULT_APPLICATION_NAME, userName);
-                //TODO: Handle enterprise subscription
-                String subscriptionStatus = apiConsumer.addSubscription(appIdentifier, "INDIVIDUAL", userName,
-                                                                        applicationId, null);
-            } else {
-                RestApiUtil.handleBadRequest("Subscription is disabled", log);
-            }
-        } catch (AppManagementException e) {
-            RestApiUtil.handleBadRequest(
-                    "Error while subscribing the user:" + userName + " for " + appType + " with appId :" + appId, log);
-        } finally {
-            if (isTenantFlowStarted) {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
-        }
-        return Response.ok().build();
-    }
-
     @Override
     public Response appsAppTypeIdAppIdSubscriptionWorkflowPost(String appType, String appId, String contentType) {
         WorkflowExecutor workflowExecutor = null;
@@ -946,79 +797,6 @@ public class AppsApiServiceImpl extends AppsApiService {
         }
         boolean isAsynchronousFlow = workflowExecutor.isAsynchronus();
         return Response.ok().entity(isAsynchronousFlow).build();
-    }
-
-    /**
-     * @param appType
-     * @param appId
-     * @param accept
-     * @param ifNoneMatch
-     * @param ifModifiedSince
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdSubscriptionUsersGet(String appType, String appId, String accept,
-                                                           String ifNoneMatch, String ifModifiedSince) {
-        UserIdListDTO userIdListDTO = new UserIdListDTO();
-        try {
-            APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-            if (AppMConstants.WEBAPP_ASSET_TYPE.equals(appType) || AppMConstants.SITE_ASSET_TYPE.equals(appType)) {
-                if (AppManagerUtil.isSelfSubscriptionEnable() || AppManagerUtil.isEnterpriseSubscriptionEnable()) {
-                    WebApp webApp = appProvider.getAppDetailsFromUUID(appId);
-                    Set<Subscriber> subscriberSet = appProvider.getSubscribersOfAPI(webApp.getId());
-                    userIdListDTO.setUserIds(subscriberSet);
-                } else {
-                    RestApiUtil.handleBadRequest("Subscription is disabled", log);
-                }
-            } else {
-                RestApiUtil.handleBadRequest("Unsupported application type '" + appType + "' provided", log);
-            }
-        } catch (AppManagementException e) {
-            if (RestApiUtil.isDueToResourceNotFound(e) || RestApiUtil.isDueToAuthorizationFailure(e)) {
-                RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_API, appId, e, log);
-            } else {
-                String errorMessage = "Error while changing lifecycle state of app with id : " + appId;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-        }
-        return Response.ok().entity(userIdListDTO).build();
-    }
-
-    /**
-     * Remove subscription of a given user for a given application
-     *
-     * @param appType
-     * @param appId
-     * @param contentType
-     * @return
-     */
-    @Override
-    public Response appsAppTypeIdAppIdUnsubscriptionPost(String appType, String appId, String contentType) {
-
-        APIConsumer apiConsumer = null;
-        boolean isTenantFlowStarted = false;
-        String username = AppManagerUtil.replaceEmailDomain(RestApiUtil.getLoggedInUsername());
-        try {
-            apiConsumer = RestApiUtil.getLoggedInUserConsumer();
-            String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
-
-            if (tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                isTenantFlowStarted = true;
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-            }
-            WebApp webApp = apiConsumer.getWebApp(appId);
-            APIIdentifier appIdentifier = webApp.getId();
-            apiConsumer.removeAPISubscription(appIdentifier, username, AppMConstants.DEFAULT_APPLICATION_NAME);
-        } catch (AppManagementException e) {
-            RestApiUtil.handleBadRequest("Error occurred while removing subscription user '" + username +
-                                                 "' for webapp with id " + appId, log);
-        } finally {
-            if (isTenantFlowStarted) {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
-        }
-        return Response.ok().build();
     }
 
     @Override
