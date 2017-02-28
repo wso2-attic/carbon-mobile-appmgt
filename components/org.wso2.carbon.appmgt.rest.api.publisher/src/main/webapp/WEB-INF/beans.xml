@@ -11,12 +11,8 @@
     <bean class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer" />
     <jaxrs:server id="services" address="/">
         <jaxrs:serviceBeans>
-            <bean class="org.wso2.carbon.appmgt.rest.api.publisher.XacmlpoliciesApi" />
             <bean class="org.wso2.carbon.appmgt.rest.api.publisher.RolesApi" />
             <bean class="org.wso2.carbon.appmgt.rest.api.publisher.AppsApi" />
-            <bean class="org.wso2.carbon.appmgt.rest.api.publisher.JavapoliciesApi" />
-            <bean class="org.wso2.carbon.appmgt.rest.api.publisher.AdministrationApi" />
-
         </jaxrs:serviceBeans>
         <jaxrs:providers>
             <ref bean="jsonProvider"/>

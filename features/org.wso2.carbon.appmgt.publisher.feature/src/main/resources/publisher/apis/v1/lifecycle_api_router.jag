@@ -193,15 +193,11 @@ require('/modules/publisher.js').exec(function (ctx) {
 
         // To Send an app to submit for review, created permission is required.
         if (action != "Submit for Review") {
-            if (appType == 'webapp') {
-                permission = config.permissions.webapp_publish;
-            } else if (appType == 'mobileapp') {
+            if (appType == 'mobileapp') {
                 permission = config.permissions.mobileapp_publish;
             }
         } else {
-            if (appType == 'webapp') {
-                permission = config.permissions.webapp_create;
-            } else if (appType == 'mobileapp') {
+            if (appType == 'mobileapp') {
                 permission = config.permissions.mobileapp_create;
             }
         }

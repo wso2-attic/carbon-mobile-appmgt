@@ -11,7 +11,7 @@
  Filename:asset.js
  Created Date: 29/7/2013
  */
-include("/extensions/webapp/modules/jagg/jagg.jag");
+include("/extensions/mobileapp/modules/jagg/jagg.jag");
 var permissions=require('/modules/permissions.js').permissions;
 var config = require('/config/publisher.json');
 var SITE_TYPE = 'site';

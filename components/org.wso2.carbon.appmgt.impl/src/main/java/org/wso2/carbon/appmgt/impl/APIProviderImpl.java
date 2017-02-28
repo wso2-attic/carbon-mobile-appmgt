@@ -28,23 +28,17 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.appmgt.api.APIProvider;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.EntitlementService;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APPLifecycleActions;
 import org.wso2.carbon.appmgt.api.model.App;
-import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.Provider;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.api.model.Usage;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicy;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyValidationResult;
 import org.wso2.carbon.appmgt.impl.dto.Environment;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
-import org.wso2.carbon.appmgt.impl.entitlement.EntitlementServiceFactory;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -312,76 +306,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             handleException("Error occurred while retrieving webapp registry artifact with uuid " + uuid);
         }
         return mobileApp;
-    }
-
-    /**
-     * Get entitlement policy content from policy id
-     *
-     * @param policyId        Entitlement policy id
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @return entitlement policy content
-     * @throws AppManagementException
-     */
-    @Override
-    public String getEntitlementPolicy(String policyId, String authorizedAdminCookie) throws AppManagementException {
-        if (policyId == null) {
-            return null;
-        }
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-
-        EntitlementService entitlementService = EntitlementServiceFactory.getEntitlementService(config, authorizedAdminCookie);
-        return entitlementService.getPolicyContent(policyId);
-    }
-
-    @Override
-    public int saveEntitlementPolicyPartial(String policyPartialName, String policyPartial, boolean isSharedPartial,
-                                            String policyAuthor,String policyPartialDesc) throws AppManagementException {
-        return appMDAO.saveEntitlementPolicyPartial(policyPartialName, policyPartial, isSharedPartial, policyAuthor,
-                policyPartialDesc, tenantId);
-    }
-
-    @Override
-    public EntitlementPolicyPartial getPolicyPartial(int policyPartialId) throws
-                                                                          AppManagementException {
-        return appMDAO.getPolicyPartial(policyPartialId);
-    }
-
-    @Override
-    public boolean deleteEntitlementPolicyPartial(int policyPartialId, String author) throws
-                                                                                      AppManagementException {
-        return appMDAO.deletePolicyPartial(policyPartialId, author);
-    }
-
-    @Override
-    public List<EntitlementPolicyPartial> getSharedPolicyPartialsList() throws
-                                                                        AppManagementException {
-        return appMDAO.getSharedEntitlementPolicyPartialsList(tenantId);
-    }
-
-
-    /**
-     * Get Policy Groups Application wise
-     *
-     * @param appId Application Id
-     * @return List of policy groups
-     * @throws AppManagementException
-     */
-    @Override
-    public List<EntitlementPolicyGroup> getPolicyGroupListByApplication(int appId) throws
-            AppManagementException {
-        return appMDAO.getPolicyGroupListByApplication(appId);
-    }
-
-    @Override
-    public EntitlementPolicyValidationResult validateEntitlementPolicyPartial(String policyPartial) throws
-                                                                                                    AppManagementException {
-
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-
-        EntitlementService entitlementService = EntitlementServiceFactory.getEntitlementService(config);
-        return entitlementService.validatePolicyPartial(policyPartial);
     }
 
     /**

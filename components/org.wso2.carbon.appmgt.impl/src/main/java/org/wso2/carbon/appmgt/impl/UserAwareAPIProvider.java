@@ -17,7 +17,6 @@
 package org.wso2.carbon.appmgt.impl;
 
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 
 /**
@@ -31,42 +30,11 @@ import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
  * when the object had been created in the anonymous mode, an exception will be thrown.
  */
 public class UserAwareAPIProvider extends APIProviderImpl {
-
     private String username;
 
     UserAwareAPIProvider(String username) throws AppManagementException {
         super(username);
         this.username = username;
-    }
-
-    @Override
-    public String createNewVersion(App app) throws AppManagementException {
-        checkCreatePermission();
-        return super.createNewVersion(app);
-    }
-
-    public void checkDocumentRemovePermission() throws AppManagementException {
-        AppManagerUtil.checkPermission(username, AppMConstants.Permissions.DOCUMENT_EDIT);
-    }
-
-    public void checkDocumentEditPermission() throws AppManagementException {
-        AppManagerUtil.checkPermission(username, AppMConstants.Permissions.DOCUMENT_EDIT);
-    }
-
-    public void checkDocumentAddPermission() throws AppManagementException {
-        AppManagerUtil.checkPermission(username, AppMConstants.Permissions.DOCUMENT_ADD);
-    }
-
-    public void checkCreatePermission() throws AppManagementException {
-        AppManagerUtil.checkPermission(username, AppMConstants.Permissions.WEB_APP_CREATE);
-    }
-
-    public void checkWebappUpdatePermission() throws AppManagementException {
-        AppManagerUtil.checkPermission(username, AppMConstants.Permissions.WEB_APP_UPDATE);
-    }
-
-    public void checkWebappDeletePermission() throws AppManagementException {
-        AppManagerUtil.checkPermission(username, AppMConstants.Permissions.WEB_APP_DELETE);
     }
 
     public void checkManageTiersPermission() throws AppManagementException {
@@ -80,22 +48,4 @@ public class UserAwareAPIProvider extends APIProviderImpl {
     public void checkPublishPermissionTenantMode(String userId) throws AppManagementException {
         AppManagerUtil.checkPermission(userId, AppMConstants.Permissions.WEB_APP_PUBLISH);
     }
-
-    @Override
-    public boolean deleteEntitlementPolicyPartial(int policyPartialId, String author) throws
-                                                                                      AppManagementException {
-        checkWebappDeletePermission();
-        return super.deleteEntitlementPolicyPartial(policyPartialId, author);
-    }
-
-    @Override
-    public int saveEntitlementPolicyPartial(String policyPartialName, String policyPartial, boolean isSharedPartial,
-                                            String policyAuthor, String policyPartialDesc)
-            throws AppManagementException {
-        checkCreatePermission();
-        return super.saveEntitlementPolicyPartial(policyPartialName, policyPartial, isSharedPartial, policyAuthor,
-                policyPartialDesc);
-    }
-
-
 }

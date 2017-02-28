@@ -38,7 +38,6 @@ import org.wso2.carbon.appmgt.impl.config.TenantConfigurationLoader;
 import org.wso2.carbon.appmgt.impl.idp.sso.configurator.IS510IdentityApplicationManagementFactory;
 import org.wso2.carbon.appmgt.impl.listners.UserAddListener;
 import org.wso2.carbon.appmgt.impl.observers.SignupObserver;
-import org.wso2.carbon.appmgt.impl.service.APIMGTSampleService;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.appmgt.impl.service.TenantConfigurationService;
 import org.wso2.carbon.appmgt.impl.service.TenantConfigurationServiceImpl;
@@ -120,7 +119,6 @@ public class AppManagerComponent {
 
     private ServiceRegistration registration;
     private static TenantRegistryLoader tenantRegistryLoader;
-    private APIMGTSampleService apimgtSampleService;
     private  String appUsageStatisticsClientImplClass;
 
     protected void activate(ComponentContext componentContext) throws Exception {
@@ -128,11 +126,8 @@ public class AppManagerComponent {
             log.debug("WebApp manager component activated");
         }
 
-        apimgtSampleService = new APIMGTSampleService();
-
         try {
             BundleContext bundleContext = componentContext.getBundleContext();
-            bundleContext.registerService(APIMGTSampleService.class.getName(),apimgtSampleService, null);
             addRxtConfigs();
             addTierPolicies();
             addDefinedSequencesToRegistry();

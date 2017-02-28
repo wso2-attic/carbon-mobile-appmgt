@@ -1,4 +1,4 @@
-include("/extensions/webapp/modules/jagg/jagg.jag");
+include("/extensions/mobileapp/modules/jagg/jagg.jag");
 var permissions={};
 var manager = jagg.module("manager").getAPIStoreObj();
 

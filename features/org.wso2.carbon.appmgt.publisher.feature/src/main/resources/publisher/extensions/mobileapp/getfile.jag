@@ -1,5 +1,5 @@
 <%
-include("/extensions/webapp/modules/jagg/jagg.jag");
+include("/extensions/mobileapp/modules/jagg/jagg.jag");
 var apiProvider = jagg.module('manager').getAPIProviderObj();
 
 var matcher = new URIMatcher(request.getRequestURI());

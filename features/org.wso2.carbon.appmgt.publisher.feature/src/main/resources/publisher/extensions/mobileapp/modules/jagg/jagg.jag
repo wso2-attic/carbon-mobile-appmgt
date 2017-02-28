@@ -94,7 +94,7 @@ var jagg = jagg || (function () {
     };
 
     var getModulesDir = function () {
-        return "/extensions/webapp/modules/";
+        return "/extensions/mobileapp/modules/";
     };
 
     var getTheme = function () {

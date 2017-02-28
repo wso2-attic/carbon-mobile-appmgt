@@ -18,14 +18,11 @@
 package org.wso2.carbon.appmgt.api;
 
 import org.wso2.carbon.appmgt.api.model.App;
-import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.Provider;
 import org.wso2.carbon.appmgt.api.model.Tier;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyValidationResult;
 
 import java.util.List;
 import java.util.Map;
@@ -52,68 +49,6 @@ public interface APIProvider extends APIManager {
     public void updateTier(Tier tier) throws AppManagementException;
 
     public void removeTier(Tier tier) throws AppManagementException;
-
-    /**
-     * Get entitlement policy content from policyId
-     *
-     * @param policyId        Entitlement policy id
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @return Entitlement policy content
-     */
-    String getEntitlementPolicy(String policyId, String authorizedAdminCookie) throws AppManagementException;
-
-    /**
-     * Save the entitlement policy partial
-     *
-     * @param policyPartialName Name of the policy partial
-     * @param policyPartial     policy content
-     * @param isSharedPartial   policy status
-     * @param policyAuthor      author of the policy
-     * @param policyPartialDescription policy description
-     * @return policy id
-     * @throws AppManagementException
-     */
-    int saveEntitlementPolicyPartial(String policyPartialName, String policyPartial, boolean isSharedPartial,
-                                     String policyAuthor,String policyPartialDescription) throws AppManagementException;
-
-    /**
-     *
-     * Get policyPartial content
-     * @param policyPartialId
-     * @return entitlement policy
-     * @throws AppManagementException
-     */
-    public EntitlementPolicyPartial getPolicyPartial(int policyPartialId) throws
-                                                                          AppManagementException;
-
-    /**
-     * Delete entitlement policy partial
-     *
-     * @param policyPartialId
-     * @param author          author of the partial
-     * @return true if success else false
-     * @throws AppManagementException
-     */
-    public boolean deleteEntitlementPolicyPartial(int policyPartialId, String author) throws
-                                                                                     AppManagementException;
-    /**
-     * Get the list of shared policy partials
-     *
-     * @return list of shared policy partials
-     * @throws AppManagementException
-     */
-    public List<EntitlementPolicyPartial> getSharedPolicyPartialsList() throws
-                                                                        AppManagementException;
-
-    /**
-     * Validates the given entitlement policy partial.
-     *
-     * @param policyPartial
-     * @return Result of the validation.
-     * @throws AppManagementException
-     */
-    public EntitlementPolicyValidationResult validateEntitlementPolicyPartial(String policyPartial)
-            throws AppManagementException;
 
     /**
      * Adds a new Mobile Application to the Store
@@ -178,23 +113,6 @@ public interface APIProvider extends APIManager {
     public Set getTierPermissions() throws AppManagementException;
 
     /**
-     * Get the list of Custom InSequences.
-     * @return List of available sequences
-     * @throws AppManagementException
-     */
-
-    public List<String> getCustomInSequences()  throws AppManagementException;
-
-
-    /**
-     * Get the list of Custom OutSequences.
-     * @return List of available sequences
-     * @throws AppManagementException
-     */
-
-    public List<String> getCustomOutSequences()  throws AppManagementException;
-
-    /**
      * Change the lifecycle status of a given application
      * @param appType application type
      * @param appId application type
@@ -202,17 +120,6 @@ public interface APIProvider extends APIManager {
      * @throws AppManagementException
      */
     public void changeLifeCycleStatus(String appType, String appId, String action) throws AppManagementException;
-
-    /**
-     * Get Application wise policy group list
-     *
-     * @param appId Application Id
-     * @return List of policy groups
-     * @throws AppManagementException on error
-     */
-    public List<EntitlementPolicyGroup> getPolicyGroupListByApplication(int appId) throws
-            AppManagementException;
-
 
     /**
      * Get allowed lifecycle actions to perform on a given application
@@ -276,8 +183,6 @@ public interface APIProvider extends APIManager {
      * @throws AppManagementException
      */
     public void updateOneTimeDownloadLinkStatus(OneTimeDownloadLink oneTimeDownloadLink) throws AppManagementException;
-
-    public String getGatewayEndpoint();
 
     public String uploadImage(FileContent fileContent) throws AppManagementException;
 
