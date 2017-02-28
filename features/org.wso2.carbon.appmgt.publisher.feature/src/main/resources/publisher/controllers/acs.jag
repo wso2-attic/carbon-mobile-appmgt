@@ -1,5 +1,5 @@
 <%
-include("/extensions/webapp/modules/jagg/jagg.jag");
+include("/extensions/mobileapp/modules/jagg/jagg.jag");
 
 (function () {
 	    var log = new Log(),

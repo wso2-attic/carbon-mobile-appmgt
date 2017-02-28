@@ -25,16 +25,9 @@ import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.EntitlementService;
 import org.wso2.carbon.appmgt.api.model.APIKey;
-import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
-import org.wso2.carbon.appmgt.api.model.entitlement.XACMLPolicyTemplateContext;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
-import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
-import org.wso2.carbon.appmgt.impl.entitlement.EntitlementServiceFactory;
-import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.appmgt.impl.utils.APIMgtDBUtil;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.core.util.CryptoException;
@@ -756,117 +749,6 @@ public class AppMDAO {
         }
         return author;
     }
-	/**
-	 * Get policy partial from policy partial id
-	 *
-	 * @param policyPartialId policy partial id
-	 * @return policy partial content
-	 * @throws org.wso2.carbon.appmgt.api.AppManagementException
-	 */
-	public EntitlementPolicyPartial getPolicyPartial(int policyPartialId) throws
-                                                                          AppManagementException {
-
-        Connection connection = null;
-        PreparedStatement statementToGetPolicyPartial = null;
-        EntitlementPolicyPartial entitlementPolicyPartial = null;
-        ResultSet rs = null;
-        String queryToGetPolicyPartial =
-                "SELECT NAME, CONTENT, SHARED, DESCRIPTION, AUTHOR " +
-                        "FROM APM_ENTITLEMENT_POLICY_PARTIAL " +
-                        "WHERE ENTITLEMENT_POLICY_PARTIAL_ID = ?";
-
-        try {
-
-            if (log.isDebugEnabled()) {
-                log.debug("Retrieving policy content of policy partial with id : " + policyPartialId);
-            }
-
-            connection = APIMgtDBUtil.getConnection();
-            statementToGetPolicyPartial = connection.prepareStatement(queryToGetPolicyPartial);
-            statementToGetPolicyPartial.setInt(1, policyPartialId);
-
-            rs = statementToGetPolicyPartial.executeQuery();
-            while (rs.next()) {
-                entitlementPolicyPartial = new EntitlementPolicyPartial();
-                entitlementPolicyPartial.setPolicyPartialName(rs.getString("NAME"));
-                entitlementPolicyPartial.setPolicyPartialContent(rs.getString("CONTENT"));
-                entitlementPolicyPartial.setAuthor(rs.getString("AUTHOR"));
-                entitlementPolicyPartial.setDescription(rs.getString("DESCRIPTION"));
-                entitlementPolicyPartial.setShared(rs.getBoolean("SHARED"));
-            }
-
-		} catch (SQLException e) {
-			handleException("Failed to retrieve application entitlement policy partial with id : " +
-					policyPartialId, e);
-		} finally {
-			APIMgtDBUtil.closeAllConnections(statementToGetPolicyPartial, connection, rs);
-		}
-		return entitlementPolicyPartial;
-	}
-
-    /**
-     * Get the list of entitlement policy partial which are shared
-     *
-     * @param tenantId logged users tenant Id
-     * @return list of policy partial
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public List<EntitlementPolicyPartial> getSharedEntitlementPolicyPartialsList(int tenantId) throws
-                                                                                   AppManagementException {
-
-        Connection connection = null;
-        PreparedStatement statementToGetPolicyPartialList = null;
-        List<EntitlementPolicyPartial> entitlementPolicyPartialList = new ArrayList<EntitlementPolicyPartial>();
-        ResultSet rs = null;
-        boolean isShared = true;
-
-        String queryToGetPolicyPartial = "SELECT ENTITLEMENT_POLICY_PARTIAL_ID, NAME, CONTENT, SHARED, AUTHOR, " +
-                "DESCRIPTION " +
-                "FROM APM_ENTITLEMENT_POLICY_PARTIAL WHERE SHARED = ? " +
-                "AND TENANT_ID = ? ";
-
-        try {
-            connection = APIMgtDBUtil.getConnection();
-            statementToGetPolicyPartialList = connection.prepareStatement(queryToGetPolicyPartial);
-            statementToGetPolicyPartialList.setBoolean(1, isShared);
-            statementToGetPolicyPartialList.setInt(2, tenantId);
-
-            rs = statementToGetPolicyPartialList.executeQuery();
-
-            while (rs.next()) {
-                EntitlementPolicyPartial policyPartial = new EntitlementPolicyPartial();
-                policyPartial.setPolicyPartialId(rs.getInt("ENTITLEMENT_POLICY_PARTIAL_ID"));
-                policyPartial.setPolicyPartialName(rs.getString("NAME"));
-
-                // If the content cannot be parsed skip that policy partial.
-                String ruleCondition = exctractConditionFromPolicyPartialContent(rs.getString("CONTENT"));
-                if(ruleCondition == null){
-                	log.error(String.format("Can't read content for the policy partial '%s'.", policyPartial.getPolicyPartialName()));
-                	continue;
-                }else{
-                	policyPartial.setPolicyPartialContent(ruleCondition);
-                }
-
-                String ruleEffect = extractEffectFromPolicyPartialContent(rs.getString("CONTENT"));
-
-                // No need to handle parsing errors at this point since they are captured in the previous block.
-                if(ruleEffect != null){
-                	policyPartial.setRuleEffect(ruleEffect);
-                }
-
-                policyPartial.setShared(rs.getBoolean("SHARED"));
-                policyPartial.setAuthor(rs.getString("AUTHOR"));
-				policyPartial.setDescription(rs.getString("DESCRIPTION"));
-                entitlementPolicyPartialList.add(policyPartial);
-            }
-
-        } catch (SQLException e) {
-            handleException("Failed to retrieve shared entitlement policy partials.", e);
-        } finally {
-            APIMgtDBUtil.closeAllConnections(statementToGetPolicyPartialList, connection, rs);
-        }
-        return entitlementPolicyPartialList;
-    }
 
 	/**
 	 * Delete entitlement policy partial
@@ -951,45 +833,6 @@ public class AppMDAO {
 		}
 
 	}
-
-    /**
-     * Update URLMapping - Entittlement policy patial mappings
-     *
-     * @param xacmlPolicyTemplateContexts xacml poilicy partial template contexts
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public void updateURLEntitlementPolicyPartialMappings(List<XACMLPolicyTemplateContext> xacmlPolicyTemplateContexts)
-            throws AppManagementException {
-
-        String query = "UPDATE APM_POLICY_GRP_PARTIAL_MAPPING SET POLICY_ID = ? " +
-                "WHERE POLICY_GRP_ID = ? " +
-                "AND POLICY_PARTIAL_ID = ?";
-
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        try {
-            connection = APIMgtDBUtil.getConnection();
-            preparedStatement = connection.prepareStatement(query);
-
-            for (XACMLPolicyTemplateContext context : xacmlPolicyTemplateContexts) {
-                preparedStatement.setString(1, context.getPolicyId());
-                preparedStatement.setInt(2, context.getPolicyGroupId());
-                preparedStatement.setInt(3, context.getRuleId());
-                preparedStatement.addBatch();
-            }
-
-            preparedStatement.executeBatch();
-
-            // Finally commit transaction.
-            connection.commit();
-
-        } catch (SQLException e) {
-            handleException("Failed to update URL - Entitlement Policy Partial mappings", e);
-        } finally {
-            APIMgtDBUtil.closeAllConnections(preparedStatement, connection, null);
-        }
-    }
 
     public static Map<String,String> getRegisteredAPIs(String webAppConsumerKey) throws
                                                                                  AppManagementException {
@@ -1207,90 +1050,6 @@ public class AppMDAO {
 		return policyGroupId;
 	}
 
-
-    /**
-     * Update policy groups
-     *
-     * @param policyGroupName    Policy group name
-     * @param throttlingTier     Throttling Tier
-     * @param userRoles          User roles
-     * @param isAnonymousAllowed Is anonymous access allowed to URL pattern
-     * @param policyGroupId      Policy group id
-     * @param policyGroupDesc    Policy group Description
-     * @param authorizedAdminCookie    Authorized cookie to access IDP admin services
-     * @return Last saved policy group id
-     * @throws AppManagementException if any an error found while saving data to DB
-     */
-    public static void updatePolicyGroup(String policyGroupName, String throttlingTier,
-                                         String userRoles, String isAnonymousAllowed,
-                                         int policyGroupId, Object[] objPartialMappings, String policyGroupDesc,
-                                         String authorizedAdminCookie) throws AppManagementException {
-        PreparedStatement ps = null;
-		Connection conn = null;
-        String query = "UPDATE APM_POLICY_GROUP " +
-                "SET NAME = ?, THROTTLING_TIER = ?, USER_ROLES = ?, URL_ALLOW_ANONYMOUS = ?, DESCRIPTION = ? " +
-                "WHERE POLICY_GRP_ID = ? ";
-        try {
-			conn = APIMgtDBUtil.getConnection();
-			conn.setAutoCommit(false);
-			ps = conn.prepareStatement(query);
-			ps.setString(1, policyGroupName);
-			ps.setString(2, throttlingTier);
-			ps.setString(3, userRoles);
-			ps.setBoolean(4, Boolean.parseBoolean(isAnonymousAllowed));
-			ps.setString(5, policyGroupDesc);
-			ps.setInt(6, policyGroupId);
-			ps.executeUpdate();
-
-            //delete XACML Policies from Entitlement Service
-            deleteXACMLPoliciesFromEntitlementService(policyGroupId, conn, authorizedAdminCookie);
-
-			//delete partials mapped to group id
-			deletePolicyPartialMappings(policyGroupId, conn);
-
-            //insert new partial mappings
-            if (objPartialMappings != null) {
-                if (objPartialMappings.length > 0) {
-                    savePolicyPartialMappings(policyGroupId, objPartialMappings, conn);
-                }
-            }
-
-			conn.commit();
-
-			if (log.isDebugEnabled()) {
-				StringBuilder strDataContext=new StringBuilder();
-                strDataContext.append("(policyGroupName:").append(policyGroupName)
-                        .append(", throttlingTier:").append(throttlingTier)
-                        .append(", userRoles:").append(userRoles)
-                        .append(", isAnonymousAllowed:").append(isAnonymousAllowed)
-                        .append(", Partial Mappings:").append(objPartialMappings)
-                        .append(")");
-				log.debug("Record updated successfully." + strDataContext.toString());
-			}
-		} catch (SQLException e) {
-			if (conn != null) {
-				try {
-					conn.rollback();
-				} catch (SQLException e1) {
-					log.error("Failed to rollback while updating the policy group", e);
-				}
-			}
-			StringBuilder strDataContext=new StringBuilder();
-            strDataContext.append("(policyGroupName:").append(policyGroupName)
-                    .append(", throttlingTier:").append(throttlingTier)
-                    .append(", userRoles:").append(userRoles)
-                    .append(", isAnonymousAllowed:").append(isAnonymousAllowed)
-                    .append(", Partial Mappings:").append(objPartialMappings)
-                    .append(")");
-
-            handleException("SQL Error while executing the query to update Policy Group : " + query + " : " +
-                    strDataContext.toString(), e);
-        } finally {
-			APIMgtDBUtil.closeAllConnections(ps, conn, null);
-		}
-	}
-
-
 	/**
 	 * save applications wise policy groups
 	 *
@@ -1320,55 +1079,6 @@ public class AppMDAO {
 			APIMgtDBUtil.closeAllConnections(preparedStatement, null, null);
 		}
 	}
-
-	/**
-	 * method used to get Applications wise Policy Groups
-	 *
-	 * @param appId : Application Id
-	 * @return : list of object EntitlementPolicyGroup which contains Policy Group details
-	 * @throws AppManagementException on error
-	 */
-    public List<EntitlementPolicyGroup> getPolicyGroupListByApplication(int appId)
-            throws AppManagementException {
-
-		Connection connection = null;
-		PreparedStatement ps = null;
-		List<EntitlementPolicyGroup> entitlementPolicyGroupList =
-				new ArrayList<EntitlementPolicyGroup>();
-		ResultSet rs = null;
-
-        String query = "SELECT POLICY_GRP_ID, NAME, THROTTLING_TIER, USER_ROLES, "
-                + "URL_ALLOW_ANONYMOUS, DESCRIPTION FROM APM_POLICY_GROUP "
-                + "WHERE POLICY_GRP_ID IN (SELECT POLICY_GRP_ID FROM APM_POLICY_GROUP_MAPPING WHERE APP_ID=?) ";
-        try {
-			connection = APIMgtDBUtil.getConnection();
-			ps = connection.prepareStatement(query);
-			ps.setInt(1, appId);
-			rs = ps.executeQuery();
-
-			while (rs.next()) {
-				EntitlementPolicyGroup policyGroup = new EntitlementPolicyGroup();
-				policyGroup.setPolicyGroupId(rs.getInt("POLICY_GRP_ID"));
-				policyGroup.setPolicyGroupName(rs.getString("NAME"));
-				policyGroup.setThrottlingTier(rs.getString("THROTTLING_TIER"));
-				policyGroup.setUserRoles(rs.getString("USER_ROLES"));
-				policyGroup.setAllowAnonymous(rs.getBoolean("URL_ALLOW_ANONYMOUS"));
-				policyGroup.setPolicyPartials(getEntitledPartialListForPolicyGroup(rs.getInt("POLICY_GRP_ID"),
-						connection));
-				policyGroup.setPolicyDescription(rs.getString("DESCRIPTION"));
-				entitlementPolicyGroupList.add(policyGroup);
-			}
-
-		} catch (SQLException e) {
-            handleException("SQL Error while executing the query to fetch Application wise policy Group list : " +
-                    query + " : (Application Id" + appId + ")", e);
-        } finally {
-			APIMgtDBUtil.closeAllConnections(ps, connection, rs);
-		}
-		return entitlementPolicyGroupList;
-
-	}
-
 
 	/**
 	 * Get Policy partial details related to Policy Group
@@ -1405,57 +1115,6 @@ public class AppMDAO {
 		}
 		return arrPartials;
 	}
-
-    /**
-     * delete policy groups
-     *
-     * @param applicationId   Application Id
-     * @param policyGroupId   Policy Group Id
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @throws AppManagementException on error
-     */
-    public void deletePolicyGroup(String applicationId, String policyGroupId, String authorizedAdminCookie)
-            throws AppManagementException {
-        Connection conn = null;
-        PreparedStatement ps = null;
-		String query = "";
-		try {
-	   		conn = APIMgtDBUtil.getConnection();
-            conn.setAutoCommit(false);
-
-            //Remove XACML Policies from Entitlement Service
-            deleteXACMLPoliciesFromEntitlementService(Integer.parseInt(policyGroupId), conn, authorizedAdminCookie);
-
-		 	//delete from master table
-			query = "DELETE FROM APM_POLICY_GROUP WHERE POLICY_GRP_ID = ? ";
-			ps = conn.prepareStatement(query);
-			ps.setInt(1, Integer.parseInt(policyGroupId));
-			ps.executeUpdate();
-
-			conn.commit();
-
-			if (log.isDebugEnabled()) {
-				String strDataContext =
-						"(applicationId:" + applicationId + ", policyGroupId:" + policyGroupId + ")";
-				log.debug("Policy Group deleted successfully. " + strDataContext);
-			}
-		} catch (SQLException e) {
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException e1) {
-                    log.error("Rollback while deleting the policy group : " + policyGroupId, e);
-                }
-            }
-            String strDataContext =
-                    "(applicationId:" + applicationId + ", policyGroupId:" + policyGroupId + ")";
-            handleException("Error while executing the query to delete XACML policies : " + query + " : " +
-                    strDataContext, e);
-        } finally {
-			APIMgtDBUtil.closeAllConnections(ps, conn, null);
-		}
-	}
-
 
 	/**
 	 * Save XACML policies, policy group wise
@@ -1521,48 +1180,6 @@ public class AppMDAO {
 			APIMgtDBUtil.closeAllConnections(ps, null, null);
 		}
 	}
-
-    /**
-     * Remove XACML Policies from Entitlement Service
-     *
-     * @param policyGroupId
-     * @param conn
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @throws SQLException,AppManagementException
-     */
-    private static void deleteXACMLPoliciesFromEntitlementService(int policyGroupId, Connection conn,
-                                                                  String authorizedAdminCookie)
-            throws SQLException, AppManagementException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        String query = "SELECT POLICY_ID FROM APM_POLICY_GRP_PARTIAL_MAPPING WHERE POLICY_GRP_ID = ? ";
-
-        //Define Entitlement Service
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        EntitlementService entitlementService = EntitlementServiceFactory.getEntitlementService(config, authorizedAdminCookie);
-
-        try {
-            ps = conn.prepareStatement(query);
-            ps.setInt(1, policyGroupId);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                String policyId = rs.getString(1);
-                //If policy id not null, remove the Entitlement policy with reference to policy id
-                if (policyId != null) {
-                    entitlementService.removePolicy(policyId);
-                }
-            }
-        } catch (SQLException e) {
-            log.error("SQL Error while executing the query to get policy id's under policy group : " +
-                    policyGroupId + ". SQL Query : " + query, e);
-            /* In the code im using a single SQL connection passed from the parent function so I'm logging the error
-            here and throwing the SQLException so  the connection will be disposed by the parent function. */
-            throw e;
-        } finally {
-            APIMgtDBUtil.closeAllConnections(ps, null, rs);
-        }
-    }
 
 	/**
 	 * save java policy and application mapping

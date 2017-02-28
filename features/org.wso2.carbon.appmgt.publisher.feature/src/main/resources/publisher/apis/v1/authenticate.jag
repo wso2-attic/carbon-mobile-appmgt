@@ -29,7 +29,7 @@
  username={name}
  password={password}
  */
-include("/extensions/webapp/modules/jagg/jagg.jag");
+include("/extensions/mobileapp/modules/jagg/jagg.jag");
 var log = new Log('login-api');
 var user = require('store').user;
 var auditLog = require('/modules/auditLog/logger.js');

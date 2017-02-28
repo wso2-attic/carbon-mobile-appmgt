@@ -1,6 +1,6 @@
 <%
 (function(){
-    include("/extensions/webapp/modules/jagg/jagg.jag");
+    include("/extensions/mobileapp/modules/jagg/jagg.jag");
     var ssoIdpProvider = jagg.module('manager').getAPIProviderObj();
     var dataConfi = require('/config/publisher.js').config(),
         sso = require("sso"),

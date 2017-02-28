@@ -41,11 +41,8 @@ import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIKey;
 import org.wso2.carbon.appmgt.api.model.APIStatus;
 import org.wso2.carbon.appmgt.api.model.AppStore;
-import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.SSOProvider;
 import org.wso2.carbon.appmgt.api.model.Tier;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyValidationResult;
 import org.wso2.carbon.appmgt.hostobjects.internal.HostObjectComponent;
 import org.wso2.carbon.appmgt.hostobjects.internal.ServiceReferenceHolder;
 import org.wso2.carbon.appmgt.impl.APIManagerFactory;
@@ -282,226 +279,6 @@ public class APIProviderHostObject extends ScriptableObject {
         return transport;
     }
 
-    /**
-     * Retrieve policy content of a given policy
-     *
-     * @param context Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return policy content
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException Wrapped exception by org.wso2.carbon.apimgt.api.AppManagementException
-     */
-    public static String jsFunction_getEntitlementPolicyContent(Context context, Scriptable thisObj,
-                                                                Object[] args,
-                                                                Function funObj) throws
-                                                                                 AppManagementException {
-        if (args == null || args.length != 2) {
-            handleException("Invalid number of input parameters.");
-        }
-        if (args[0] == null || args[1] == null) {
-            handleException("Error while retrieving entitlement policy content. Entitlement policy id is null");
-        }
-
-        String policyId = args[0].toString();
-        String authorizedAdminCookie = args[1].toString();
-
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        return apiProvider.getEntitlementPolicy(policyId, authorizedAdminCookie);
-    }
-
-    /**
-     * Saves the given entitlement policy partial in database
-     *
-     * @param context Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return entitlement policy partial id
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException Wrapped exception by org.wso2.carbon.apimgt.api.AppManagementException
-     */
-    public static int jsFunction_saveEntitlementPolicyPartial(Context context, Scriptable thisObj,
-                                                              Object[] args,
-                                                              Function funObj) throws
-                                                                               AppManagementException {
-        if (args == null || args.length != 4) {
-            handleException("Invalid number of input parameters.");
-        }
-        if (args[0] == null || args[1] == null ) {
-            handleException("Error while saving policy partial. Policy partial content is null");
-        }
-
-        String policyPartialName = args[0].toString();
-        String policyPartial = args[1].toString();
-        String isShared = args[2].toString();
-        String policyPartialDesc = args[3].toString();
-        boolean isSharedPartial = isShared.equalsIgnoreCase("true");
-        String currentUser = ((APIProviderHostObject) thisObj).getUsername();
-
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        return apiProvider.saveEntitlementPolicyPartial(policyPartialName, policyPartial, isSharedPartial, currentUser,policyPartialDesc);
-    }
-
-    /**
-     * Delete entitlement policy partial
-     *
-     * @param context Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return true if success else false
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public static boolean jsFunction_deleteEntitlementPolicyPartial(Context context, Scriptable thisObj,
-                                                                    Object[] args,
-                                                                    Function funObj) throws
-            AppManagementException {
-        if (args == null || args.length != 1) {
-            handleException("Invalid number of input parameters.");
-        }
-        if (args == null) {
-            handleException("Error while deleting entitlement policy partial. The policy partial id is null");
-        }
-
-        int policyPartialId = Integer.parseInt(args[0].toString());
-        String currentUser = ((APIProviderHostObject) thisObj).getUsername();
-
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        return apiProvider.deleteEntitlementPolicyPartial(policyPartialId, currentUser);
-    }
-
-    /**
-     * Retrieve the name and the content of a given policy partial using policy id
-     *
-     * @param cx      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return policy partial name and content
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException Wrapped exception by org.wso2.carbon.apimgt.api.AppManagementException
-     */
-    public static NativeArray jsFunction_getEntitlementPolicyPartial(Context cx, Scriptable thisObj,
-                                                                     Object[] args,
-                                                                     Function funObj) throws
-                                                                                      AppManagementException {
-        if (args == null || args.length != 1) {
-            handleException("Invalid number of input parameters.");
-        }
-        if (args[0] == null) {
-            handleException("Error while retrieving entitlement policy partial. The policy partial id is null ");
-        }
-        NativeArray myn = new NativeArray(0);
-        int policyPartialId = Integer.parseInt(args[0].toString());
-
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        EntitlementPolicyPartial entitlementPolicyPartial = apiProvider.getPolicyPartial(policyPartialId);
-        String policyPartialName = entitlementPolicyPartial.getPolicyPartialName();
-        String policyPartialContent = entitlementPolicyPartial.getPolicyPartialContent();
-
-        myn.put(0, myn, checkValue(policyPartialName));
-        myn.put(1, myn, checkValue(policyPartialContent));
-        return myn;
-    }
-
-    /**
-     * Retrieve the shared policy partials
-     *
-     * @param cx      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return shared policy partials
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public static NativeArray jsFunction_getSharedPolicyPartialList(Context cx, Scriptable thisObj,
-                                                                    Object[] args,
-                                                                    Function funObj) throws
-                                                                                     AppManagementException {
-
-        NativeArray myn = new NativeArray(0);
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        List<EntitlementPolicyPartial> policyPartialList = apiProvider.getSharedPolicyPartialsList();
-        int count = 0;
-        for (EntitlementPolicyPartial entitlementPolicyPartial : policyPartialList) {
-            NativeObject row = new NativeObject();
-            row.put("partialId", row, entitlementPolicyPartial.getPolicyPartialId());
-            row.put("partialName", row, entitlementPolicyPartial.getPolicyPartialName());
-            row.put("partialContent", row, entitlementPolicyPartial.getPolicyPartialContent());
-            row.put("ruleEffect", row, entitlementPolicyPartial.getRuleEffect());
-            row.put("isShared", row, entitlementPolicyPartial.isShared());
-            row.put("author", row, entitlementPolicyPartial.getAuthor());
-            row.put("description", row, entitlementPolicyPartial.getDescription());
-            count++;
-            myn.put(count, myn, row);
-        }
-
-        return myn;
-    }
-
-
-    /**
-     * Get application wise policy group list
-     * @param context Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return Policy Group Array
-     * @throws AppManagementException on error
-     */
-    public static NativeArray jsFunction_getPolicyGroupListByApplication(Context context, Scriptable thisObj,
-                                                                          Object[] args,
-                                                                          Function funObj) throws
-            AppManagementException {
-        NativeArray policyGroupArr = new NativeArray(0);
-        int applicationId = Integer.parseInt(args[0].toString());
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        List<EntitlementPolicyGroup> policyGroupList = apiProvider.getPolicyGroupListByApplication(applicationId);
-        int count = 0;
-        String policyPartials;
-        for (EntitlementPolicyGroup entitlementPolicyGroup : policyGroupList) {
-            NativeObject row = new NativeObject();
-            row.put("policyGroupId", row, entitlementPolicyGroup.getPolicyGroupId());
-            row.put("policyGroupName", row, entitlementPolicyGroup.getPolicyGroupName());
-            row.put("throttlingTier", row, entitlementPolicyGroup.getThrottlingTier());
-            row.put("userRoles", row, entitlementPolicyGroup.getUserRoles());
-            row.put("allowAnonymous", row, entitlementPolicyGroup.isAllowAnonymous());
-            policyPartials = entitlementPolicyGroup.getPolicyPartials().toString();
-            row.put("policyPartials", row, policyPartials);
-            row.put("policyGroupDesc",row,entitlementPolicyGroup.getPolicyDescription());
-
-            count++;
-            policyGroupArr.put(count, policyGroupArr, row);
-        }
-
-        return policyGroupArr;
-    }
-
-    /**
-     * Validate the given entitlement policy partial
-     * @param context      Rhino context
-     * @param thisObj Scriptable object
-     * @param args    Passing arguments
-     * @param funObj  Function object
-     * @return whether the policy partial is valid or not
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException Wrapped exception by org.wso2.carbon.apimgt.api.AppManagementException
-     */
-    public static EntitlementPolicyValidationResult jsFunction_validateEntitlementPolicyPartial(
-            Context context, Scriptable thisObj, Object[] args, Function funObj) throws
-                                                                                 AppManagementException {
-
-        if (args == null || args.length != 1) {
-            handleException("Invalid number of input parameters.");
-        }
-        if (args[0] == null) {
-            handleException("Error while validating policy partial. The policy partial content is null");
-        }
-        String policyPartial = args[0].toString();
-
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        return apiProvider.validateEntitlementPolicyPartial(policyPartial);
-
-    }
-
     private static void checkFileSize(FileHostObject fileHostObject)
             throws ScriptException, AppManagementException {
         if (fileHostObject != null) {
@@ -706,21 +483,6 @@ public class APIProviderHostObject extends ScriptableObject {
 
         }
         return apiStatus;
-    }
-
-    public static boolean jsFunction_hasCreatePermission(Context cx, Scriptable thisObj,
-                                                         Object[] args,
-                                                         Function funObj) {
-        APIProvider provider = getAPIProvider(thisObj);
-        if (provider instanceof UserAwareAPIProvider) {
-            try {
-                ((UserAwareAPIProvider) provider).checkCreatePermission();
-                return true;
-            } catch (AppManagementException e) {
-                return false;
-            }
-        }
-        return false;
     }
 
     public static boolean jsFunction_hasManageTierPermission(Context cx, Scriptable thisObj,
@@ -1093,60 +855,6 @@ public class APIProviderHostObject extends ScriptableObject {
     }
 
     /**
-     * Retrieves custom sequences from registry
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public static NativeArray jsFunction_getCustomOutSequences(Context cx, Scriptable thisObj,
-                                                               Object[] args, Function funObj)
-            throws AppManagementException {
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        List<String> sequenceList = apiProvider.getCustomOutSequences();
-
-        NativeArray myn = new NativeArray(0);
-        if (sequenceList == null) {
-            return null;
-        } else {
-            for (int i = 0; i < sequenceList.size(); i++) {
-                myn.put(i, myn, sequenceList.get(i));
-            }
-            return myn;
-        }
-
-    }
-
-    /**
-     * Retrieves custom sequences from registry
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public static NativeArray jsFunction_getCustomInSequences(Context cx, Scriptable thisObj,
-                                                              Object[] args, Function funObj)
-            throws AppManagementException {
-        APIProvider apiProvider = getAPIProvider(thisObj);
-        List<String> sequenceList = apiProvider.getCustomInSequences();
-
-        NativeArray myn = new NativeArray(0);
-        if (sequenceList == null) {
-            return null;
-        } else {
-            for (int i = 0; i < sequenceList.size(); i++) {
-                myn.put(i, myn, sequenceList.get(i));
-            }
-            return myn;
-        }
-
-    }
-
-    /**
      * Returns the current subscription configuration defined in app-manager.xml.
      * @param cx
      * @param thisObj
@@ -1294,23 +1002,6 @@ public class APIProviderHostObject extends ScriptableObject {
             apiProvider.removeBinaryFromStorage(AppManagerUtil.resolvePath(HostObjectUtils.getBinaryStorageConfiguration(),
                     fileNames.get(i).toString()));
         }
-    }
-
-
-    /**
-     * Get Gateway endpoint url
-     *
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return Gateway endpoint url
-     * @throws AppManagementException
-     */
-    public static String jsFunction_getGatewayEndpoint(Context cx, Scriptable thisObj, Object[] args,
-                                                       Function funObj) throws AppManagementException {
-        APIProvider provider = getAPIProvider(thisObj);
-        return provider.getGatewayEndpoint();
     }
 
     /**
