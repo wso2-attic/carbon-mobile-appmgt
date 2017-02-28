@@ -621,9 +621,7 @@ public class AppsApiServiceImpl extends AppsApiService {
                     tenantDomainName);
             Registry registry = ServiceReferenceHolder.getInstance().
                     getRegistryService().getGovernanceUserRegistry(tenantUserName, tenantId);
-            boolean isAsynchronousFlow = false;
-                    //org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutorFactory.getInstance().getWorkflowExecutor(
-                      //      "AM_APPLICATION_PUBLISH").isAsynchronus();
+            boolean isAsynchronousFlow = true;
             GenericArtifactManager artifactManager = new GenericArtifactManager(registry, appType);
             GenericArtifact artifact = artifactManager.getGenericArtifact(appId);
             //Validate App Id

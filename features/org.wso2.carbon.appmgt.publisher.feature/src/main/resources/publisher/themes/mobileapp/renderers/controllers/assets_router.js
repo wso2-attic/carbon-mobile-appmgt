@@ -24,9 +24,7 @@ var render = function (theme, data, meta, require) {
                                                              um);
 
     var lifecycleColors = {"Create": "btn-green", "Recycle": "btn-blue", "Re-Publish": "btn-blue", "Submit for Review": "btn-blue", "Unpublish": "btn-orange", "Deprecate": "btn-danger", "Retire": "btn-danger", "Publish": "btn-blue", "Approve": "btn-blue", "Reject": "btn-orange"};
-
-    appPublishWFExecutor = org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutorFactory.getInstance().getWorkflowExecutor("AM_APPLICATION_PUBLISH");
-    var isAsynchronousFlow = appPublishWFExecutor.isAsynchronus();
+    var isAsynchronousFlow = true;
 
     // indicates whether this user has publisher permissions or not
     data.isPublisher = publishActionAuthorized;
