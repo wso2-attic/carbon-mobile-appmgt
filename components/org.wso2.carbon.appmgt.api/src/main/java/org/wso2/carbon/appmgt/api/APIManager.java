@@ -60,31 +60,6 @@ public interface APIManager {
             throws AppManagementException;
 
     /**
-     * Creates a new subscriber. The newly created subscriber id will be set in the given object.
-     *
-     * @param subscriber The subscriber to be added
-     * @throws AppManagementException if failed add subscriber
-     */
-    public void addSubscriber(Subscriber subscriber) throws AppManagementException;
-
-    /**
-     * Updates the details of the given subscriber.
-     *
-     * @param subscriber The subscriber to be updated
-     * @throws AppManagementException if failed to update subscriber
-     */
-    public void updateSubscriber(Subscriber subscriber) throws AppManagementException;
-
-    /**
-     * Returns the subscriber for the given subscriber id.
-     *
-     * @param subscriberId The subscriber id of the subscriber to be returned
-     * @return The looked up subscriber or null if the requested subscriber does not exist
-     * @throws AppManagementException if failed to get Subscriber
-     */
-    public Subscriber getSubscriber(int subscriberId) throws AppManagementException;
-
-    /**
      * Associates the given icon image with the specified path.
      *
      * @param resourcePath a String representing the relative path of a resource.

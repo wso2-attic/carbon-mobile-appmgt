@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -110,37 +111,6 @@ public class AdministrationApiServiceImpl extends AdministrationApiService {
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
         return Response.ok().entity(policyPartialDTO).build();
-    }
-
-    @Override
-    public Response administrationXacmlpoliciesPolicyPartialIdPut(Integer policyPartialId, PolicyPartialDTO body,
-                                                                  String contentType, String ifMatch,
-                                                                  String ifUnmodifiedSince) {
-        beanValidator = new BeanValidator();
-        beanValidator.validate(body);
-        try {
-            APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
-            String currentUser = RestApiUtil.getLoggedInUsername();
-            if (body.getPolicyPartial().trim().isEmpty()) {
-                RestApiUtil.handleBadRequest("XACML Policy Content cannot be empty", log);
-            }
-            EntitlementPolicyPartial entitlementPolicyPartial = apiProvider.getPolicyPartial(policyPartialId);
-            if (entitlementPolicyPartial == null) {
-                return RestApiUtil.buildNotFoundException("XACML Policy Partial", policyPartialId.toString())
-                        .getResponse();
-            }
-
-            //todo: provide appropriate auth cookie
-            //update policy
-            String authorizedAdminCookie = null;
-            apiProvider.updateEntitlementPolicyPartial(policyPartialId, body.getPolicyPartial(), currentUser,
-                                                       body.getIsSharedPartial(), body.getPolicyPartialDesc(),
-                                                       authorizedAdminCookie);
-        } catch (AppManagementException e) {
-            String errorMessage = "Error while updating XACML policy";
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
-        }
-        return Response.ok().build();
     }
 
     @Override

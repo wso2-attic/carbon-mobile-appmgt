@@ -20,32 +20,16 @@ package org.wso2.carbon.appmgt.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.appmgt.api.APIConsumer;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.model.APIIdentifier;
-import org.wso2.carbon.appmgt.api.model.Application;
-import org.wso2.carbon.appmgt.api.model.SubscribedAPI;
-import org.wso2.carbon.appmgt.api.model.Subscriber;
-import org.wso2.carbon.appmgt.api.model.Subscription;
-import org.wso2.carbon.appmgt.api.model.WebAppSearchOption;
-import org.wso2.carbon.appmgt.api.model.WebAppSortOption;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
-import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
-import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
-import org.wso2.carbon.registry.core.Registry;
-import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.session.UserRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -91,180 +75,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             isTagCacheEnabled = true;
             tagCacheValidityTime = Long.parseLong(enableTagCache);
         }
-    }
-
-    public Subscriber getSubscriber(String subscriberId) throws AppManagementException {
-        Subscriber subscriber = null;
-        try {
-            subscriber = appMDAO.getSubscriber(subscriberId);
-        } catch (AppManagementException e) {
-            handleException("Failed to get Subscriber", e);
-        }
-        return subscriber;
-    }
-
-    private <T> T[] concatArrays(T[] first, T[] second) {
-        T[] result = Arrays.copyOf(first, first.length + second.length);
-        System.arraycopy(second, 0, result, first.length, second.length);
-        return result;
-    }
-
-    public float getAverageRating(String uuid, String assetType) throws AppManagementException {
-        float rating = 0;
-        try {
-            GenericArtifactManager artifactManager = AppManagerUtil.getArtifactManager(registry, assetType);
-            GenericArtifact genericArtifact = artifactManager.getGenericArtifact(uuid);
-            rating = registry.getAverageRating(genericArtifact.getPath());
-        } catch (RegistryException e) {
-            handleException("Failed to retrieve rating", e);
-        }
-        return rating;
-    }
-
-    public Map<String,Object> searchPaginatedAPIs(String searchTerm, String searchType, String requestedTenantDomain,int start,int end)
-            throws AppManagementException {
-        Map<String,Object> result = new HashMap<String,Object>();
-        try {
-            Registry userRegistry;
-            boolean isTenantMode=(requestedTenantDomain != null);
-            if ((isTenantMode && this.tenantDomain==null) || (isTenantMode && isTenantDomainNotMatching(requestedTenantDomain))) {//Tenant store anonymous mode
-                int tenantId = ServiceReferenceHolder.getInstance().getRealmService().getTenantManager()
-                        .getTenantId(requestedTenantDomain);
-                userRegistry = ServiceReferenceHolder.getInstance().
-                        getRegistryService().getGovernanceUserRegistry(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME, tenantId);
-            } else {
-                userRegistry = this.registry;
-            }
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
-
-        } catch (Exception e) {
-            handleException("Failed to Search APIs", e);
-        }
-        return result;
-    }
-
-    public Set<SubscribedAPI> getSubscribedAPIs(Subscriber subscriber) throws
-                                                                       AppManagementException {
-        Set<SubscribedAPI> originalSubscribedAPIs = null;
-        Set<SubscribedAPI> subscribedAPIs = new HashSet<SubscribedAPI>();
-        try {
-            originalSubscribedAPIs= appMDAO.getSubscribedAPIs(subscriber);
-            for(SubscribedAPI subscribedApi:originalSubscribedAPIs) {
-                subscribedApi.getTier().setDisplayName(AppManagerUtil.getTierDisplayName(tenantId,subscribedApi.getTier().getName()));
-                subscribedAPIs.add(subscribedApi);
-            }
-
-        } catch (AppManagementException e) {
-            handleException("Failed to get APIs of " + subscriber.getName(), e);
-        }
-        return subscribedAPIs;
-    }
-
-    public Set<SubscribedAPI> getSubscribedAPIs(Subscriber subscriber, String applicationName) throws
-                                                                                               AppManagementException {
-        Set<SubscribedAPI> subscribedAPIs = null;
-        try {
-            subscribedAPIs = appMDAO.getSubscribedAPIs(subscriber, applicationName);
-        } catch (AppManagementException e) {
-            handleException("Failed to get APIs of " + subscriber.getName() + " under application " + applicationName, e);
-        }
-        return subscribedAPIs;
-    }
-
-    public boolean isSubscribed(APIIdentifier apiIdentifier, String userId)
-            throws AppManagementException {
-        boolean isSubscribed;
-        try {
-            isSubscribed = appMDAO.isSubscribed(apiIdentifier, userId);
-        } catch (AppManagementException e) {
-            String msg = "Failed to check if user(" + userId + ") has subscribed to " + apiIdentifier;
-            log.error(msg, e);
-            throw new AppManagementException(msg, e);
-        }
-        return isSubscribed;
-    }
-
-    @Override
-    public Subscription getSubscription(APIIdentifier apiIdentifier, int applicationId, String subscriptionType)throws
-                                                                                                                AppManagementException {
-        return appMDAO.getSubscription(apiIdentifier, applicationId, subscriptionType);
-    }
-
-    public void removeSubscription(APIIdentifier identifier, String userId, int applicationId)
-            throws AppManagementException {
-        appMDAO.removeSubscription(identifier, applicationId);
-    }
-
-    public void removeAPISubscription(APIIdentifier identifier, String userId, String applicationName)
-            throws AppManagementException {
-        appMDAO.removeAPISubscription(identifier, userId, applicationName);
-        /*if (AppManagerUtil.isAPIGatewayKeyCacheEnabled()) {
-            invalidateCachedKeys(applicationId, identifier);
-        }*/
-    }
-
-    public void removeSubscriber(APIIdentifier identifier, String userId)
-            throws AppManagementException {
-        throw new UnsupportedOperationException("Unsubscribe operation is not yet implemented");
-    }
-
-    /**
-     * Add a new Application from the store.
-     * @param application - {@link Application}
-     * @param userId - {@link String} 
-     * @return {@link String}
-     */
-    //ToDo: Refactor addApplication method return type to void
-    public String addApplication(Application application, String userId)
-            throws AppManagementException {
-    	
-    	appMDAO.addApplication(application, userId);
-        return appMDAO.getApplicationStatus(application.getName(),userId);
-    }
-
-    public void updateApplication(Application application) throws AppManagementException {
-        appMDAO.updateApplication(application);
-    }
-
-    public boolean isApplicationTokenExists(String accessToken) throws AppManagementException {
-        return appMDAO.isAccessTokenExists(accessToken);
-    }
-
-    public Set<SubscribedAPI> getSubscribedIdentifiers(Subscriber subscriber, APIIdentifier identifier)
-            throws AppManagementException {
-        Set<SubscribedAPI> subscribedAPISet = new HashSet<SubscribedAPI>();
-        Set<SubscribedAPI> subscribedAPIs = getSubscribedAPIs(subscriber);
-        for (SubscribedAPI api : subscribedAPIs) {
-            if (api.getApiId().equals(identifier)) {
-                subscribedAPISet.add(api);
-            }
-        }
-        return subscribedAPISet;
-    }
-
-    private boolean isAllowDisplayAPIsWithMultipleStatus() {
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        String displayAllAPIs = config.getFirstProperty(AppMConstants.API_STORE_DISPLAY_ALL_APIS);
-        if (displayAllAPIs == null) {
-            log.warn("The configurations related to show deprecated Apps in AppStore " +
-                    "are missing in app-manager.xml.");
-            return false;
-        }
-        return Boolean.parseBoolean(displayAllAPIs);
-    }
-
-    private boolean isAllowDisplayMultipleVersions() {
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-
-        String displayMultiVersions = config.getFirstProperty(AppMConstants.API_STORE_DISPLAY_MULTIPLE_VERSIONS);
-        if (displayMultiVersions == null) {
-            log.warn("The configurations related to show multiple versions of WebApp in AppStore " +
-                    "are missing in app-manager.xml.");
-            return false;
-        }
-        return Boolean.parseBoolean(displayMultiVersions);
     }
 
     /**
@@ -344,57 +154,6 @@ class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             log.error("cannot retrieve user role list for tenant" + tenantDomain);
         }
         return false;
-    }
-
-    private boolean isAllowDisplayAllAPIs() {
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        String displayAllAPIs = config.getFirstProperty(AppMConstants.API_STORE_DISPLAY_ALL_APIS);
-        if (displayAllAPIs == null) {
-            log.warn("The configurations related to show deprecated Apps in AppStore " +
-                    "are missing in app-manager.xml.");
-            return false;
-        }
-        return Boolean.parseBoolean(displayAllAPIs);
-    }
-    
-    private boolean isTenantDomainNotMatching(String tenantDomain) {
-    	if (this.tenantDomain != null) {
-    		return !(this.tenantDomain.equals(tenantDomain));
-    	}
-    	return true;
-    }
-
-    public Application[] getApplications(Subscriber subscriber) throws AppManagementException {
-        return appMDAO.getApplications(subscriber);
-    }
-
-    @Override
-    public List<APIIdentifier> getUserAccessibleApps(String username, int tenantIdOfUser, int tenantIdOfStore,
-                                                     WebAppSortOption sortOption, boolean treatAsSite)
-            throws AppManagementException {
-        return appMDAO.getUserAccessibleApps(username, tenantIdOfUser, tenantIdOfStore, sortOption, treatAsSite);
-    }
-
-    @Override
-    public List<APIIdentifier> searchUserAccessibleApps(String username, int tenantIdOfUser, int tenantIdOfStore,
-                                                        boolean treatAsSite, WebAppSearchOption searchOption,
-                                                        String searchValue) throws AppManagementException {
-        Registry anonnymousUserRegistry = null;
-        try {
-            if (tenantIdOfStore != tenantIdOfUser) {
-                // Get registry for anonnymous users when searching is going in tenant.
-                anonnymousUserRegistry = ServiceReferenceHolder.getInstance().getRegistryService()
-                        .getGovernanceUserRegistry(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME, tenantIdOfStore);
-            } else {
-                anonnymousUserRegistry = registry;
-            }
-        } catch (RegistryException e) {
-            handleException("Error while obtaining registry.", e);
-        }
-
-        return appMDAO.searchUserAccessibleApps(username, tenantIdOfUser, tenantIdOfStore, treatAsSite, searchOption,
-                                                searchValue, anonnymousUserRegistry);
     }
 
     @Override

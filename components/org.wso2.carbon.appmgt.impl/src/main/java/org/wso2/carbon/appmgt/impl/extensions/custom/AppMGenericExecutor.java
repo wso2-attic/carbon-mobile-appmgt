@@ -22,7 +22,6 @@ package org.wso2.carbon.appmgt.impl.extensions.custom;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
@@ -50,7 +49,7 @@ import java.util.Map;
  */
 public class AppMGenericExecutor extends GenericExecutor {
 
-    private static final Log log= LogFactory.getLog(ApproveEventExecutor.class);
+    private static final Log log= LogFactory.getLog(AppMGenericExecutor.class);
     private static final String REGISTRY_LC_NAME =  "registry.LC.name";
 
     private UserRealm userRealm;

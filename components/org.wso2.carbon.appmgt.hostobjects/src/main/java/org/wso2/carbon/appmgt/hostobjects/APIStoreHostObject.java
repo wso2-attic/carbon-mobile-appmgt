@@ -23,13 +23,9 @@ import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.context.ServiceContext;
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.axis2.transport.http.HttpTransportProperties;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jaggeryjs.scriptengine.exceptions.ScriptException;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONValue;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.NativeArray;
@@ -38,14 +34,8 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.wso2.carbon.appmgt.api.APIConsumer;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.dto.AppVersionUserUsageDTO;
-import org.wso2.carbon.appmgt.api.exception.AppUsageQueryServiceClientException;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIKey;
-import org.wso2.carbon.appmgt.api.model.Application;
-import org.wso2.carbon.appmgt.api.model.SubscribedAPI;
-import org.wso2.carbon.appmgt.api.model.Subscriber;
-import org.wso2.carbon.appmgt.api.model.Subscription;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.hostobjects.internal.HostObjectComponent;
 import org.wso2.carbon.appmgt.hostobjects.internal.ServiceReferenceHolder;
@@ -53,27 +43,17 @@ import org.wso2.carbon.appmgt.impl.APIManagerFactory;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.UserAwareAPIConsumer;
-import org.wso2.carbon.appmgt.impl.dao.AppMDAO;
 import org.wso2.carbon.appmgt.impl.dto.UserRegistrationConfigDTO;
-import org.wso2.carbon.appmgt.impl.dto.WorkflowDTO;
 import org.wso2.carbon.appmgt.impl.idp.TrustedIdP;
 import org.wso2.carbon.appmgt.impl.idp.WebAppIdPFactory;
-import org.wso2.carbon.appmgt.impl.service.AppUsageStatisticsService;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 import org.wso2.carbon.appmgt.impl.utils.SelfSignUpUtil;
-import org.wso2.carbon.appmgt.impl.workflow.WorkflowConstants;
-import org.wso2.carbon.appmgt.impl.workflow.WorkflowException;
-import org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutor;
-import org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutorFactory;
-import org.wso2.carbon.appmgt.impl.workflow.WorkflowStatus;
 import org.wso2.carbon.authenticator.stub.AuthenticationAdminStub;
 import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
-import org.wso2.carbon.identity.user.registration.stub.UserRegistrationAdminServiceException;
 import org.wso2.carbon.identity.user.registration.stub.UserRegistrationAdminServiceStub;
-import org.wso2.carbon.identity.user.registration.stub.dto.UserDTO;
 import org.wso2.carbon.identity.user.registration.stub.dto.UserFieldDTO;
 import org.wso2.carbon.registry.core.ActionConstants;
 import org.wso2.carbon.registry.core.RegistryConstants;
@@ -94,8 +74,6 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -324,104 +302,6 @@ public class APIStoreHostObject extends ScriptableObject {
         return row;
     }
 
-    /**
-     * Given a base 64 encoded username:password string,
-     * this method checks if said user has enough privileges to advance a workflow.
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return
-     * @throws ScriptException
-     * @throws WorkflowException
-     */
-    public static NativeObject jsFunction_validateWFPermission(Context cx, Scriptable thisObj,
-                                                Object[] args, Function funObj) throws ScriptException,
-                                                                                       AppManagementException {
-        if (args==null || args.length == 0||!isStringArray(args)) {
-            throw new AppManagementException("Invalid input parameters for authorizing workflow progression.");
-        }
-
-        NativeObject row = new NativeObject();
-
-        String reqString = (String) args[0];
-        String authType = reqString.split("\\s+")[0];
-        String encodedString = reqString.split("\\s+")[1];
-        if(!HttpTransportProperties.Authenticator.BASIC.equals(authType)){
-            //throw new AppManagementException("Invalid Authorization Header Type");
-            row.put("error", row, true);
-            row.put("statusCode", row, 401);
-            row.put("message", row, "Invalid Authorization Header Type");
-            return row;
-        }
-
-        byte[] decoded = Base64.decodeBase64(encodedString.getBytes());
-
-        String decodedString = new String(decoded);
-
-        if(decodedString.isEmpty() || !decodedString.contains(":")){
-            //throw new AppManagementException("Invalid number of arguments. Please provide a valid username and password.");
-            row.put("error", row, true);
-            row.put("statusCode", row, 401);
-            row.put("message", row, "Invalid Authorization Header Value");
-            return row;
-        }
-
-        String username = decodedString.split(":")[0];
-        String password = decodedString.split(":")[1];
-
-        AppManagerConfiguration config = HostObjectComponent.getAPIManagerConfiguration();
-        //String url = config.getFirstProperty(AppMConstants.AUTH_MANAGER_URL);
-        //if (url == null) {
-        //    throw new AppManagementException("WebApp key manager URL unspecified");
-        //}
-
-        try {
-            RealmService realmService = ServiceReferenceHolder.getInstance().getRealmService();
-
-            int tenantId=ServiceReferenceHolder.getInstance().getRealmService().getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(username));
-
-            org.wso2.carbon.user.api.UserStoreManager userStoreManager = realmService.getTenantUserRealm(tenantId).getUserStoreManager();
-            Boolean authStatus = userStoreManager.authenticate(username, password);
-
-            if(!authStatus){
-                //throw new WorkflowException("Please recheck the username and password and try again.");
-                row.put("error", row, true);
-                row.put("statusCode", row, 401);
-                row.put("message", row, "Authentication Failure. Please recheck username and password");
-                return row;
-            }
-
-            String tenantDomain = MultitenantUtils.getTenantDomain(username);
-
-            String usernameWithDomain = AppManagerUtil.setDomainNameToUppercase(username);
-
-            if (!tenantDomain.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME)) {
-                usernameWithDomain = usernameWithDomain + "@"+tenantDomain;
-            }
-
-            boolean authorized = AppManagerUtil.checkPermissionQuietly(usernameWithDomain, AppMConstants.Permissions.APP_WORKFLOWADMIN);
-
-            if (authorized) {
-                row.put("error", row, false);
-                row.put("statusCode", row, 200);
-                row.put("message", row, "Authorization Successful");
-                return row;
-            } else {
-                //handleException("Login failed! Insufficient Privileges.");
-                row.put("error", row, true);
-                row.put("statusCode", row, 403);
-                row.put("message", row, "Forbidden. User not authorized to perform action");
-                return row;
-            }
-        } catch (Exception e) {
-            row.put("error", row, true);
-            row.put("statusCode", row, 500);
-            row.put("message", row, e.getMessage());
-            return row;
-        }
-    }
-
     public static boolean jsFunction_isSelfSignupEnabled(){
         AppManagerConfiguration config = HostObjectComponent.getAPIManagerConfiguration();
         return Boolean.parseBoolean(config.getFirstProperty(AppMConstants.SELF_SIGN_UP_ENABLED));
@@ -453,96 +333,6 @@ public class APIStoreHostObject extends ScriptableObject {
             return urlsList;
         }
         return urlsList;
-    }
-
-    public static boolean jsFunction_isSubscribed(Context cx, Scriptable thisObj,
-                                                  Object[] args, Function funObj)
-            throws ScriptException,
-                   AppManagementException {
-
-        String username = null;
-        if (args != null && args.length != 0) {
-            String providerName = (String) args[0];
-            String apiName = (String) args[1];
-            String version = (String) args[2];
-            if (args[3] != null) {
-                username = (String) args[3];
-            }
-            APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, version);
-            APIConsumer apiConsumer = getAPIConsumer(thisObj);
-            return username != null && apiConsumer.isSubscribed(apiIdentifier, username);
-        } else {
-            throw new AppManagementException("No input username value.");
-        }
-    }
-
-    /**
-     * Returns the subscription for the given criteria based on the subscription type. e.g. Individual, Enterprise
-     * @param cx
-     * @param thisObj
-     * @param args
-     * @param funObj
-     * @return
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    public static NativeObject jsFunction_getSubscription(Context cx,
-                                         Scriptable thisObj, Object[] args, Function funObj)throws
-                                                                                            AppManagementException {
-
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-
-        String providerName = (String)args[0];
-        providerName= AppManagerUtil.replaceEmailDomain(providerName);
-        String apiName = (String)args[1];
-        String version = (String)args[2];
-        String applicationName = (String)args[3];
-        String subscriptionType = (String)args[4];
-        String userId = (String)args[5];
-
-        int applicationId = AppManagerUtil.getApplicationId(applicationName,userId);
-
-        APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, version);
-
-        NativeObject subscriptionToReturn = null;
-
-        try {
-            Subscription subscription = apiConsumer.getSubscription(apiIdentifier, applicationId, subscriptionType);
-
-            if(subscription != null){
-                subscriptionToReturn = new NativeObject();
-
-                subscriptionToReturn.put("subscriptionId", subscriptionToReturn, subscription.getSubscriptionId());
-                subscriptionToReturn.put("webAppId", subscriptionToReturn, subscription.getWebAppId());
-                subscriptionToReturn.put("applicationId", subscriptionToReturn, subscription.getApplicationId());
-                subscriptionToReturn.put("subscriptionType", subscriptionToReturn, subscription.getSubscriptionType());
-                subscriptionToReturn.put("subscriptionStatus",subscriptionToReturn,subscription.getSubscriptionStatus());
-                subscriptionToReturn.put("subscriptionTime",subscriptionToReturn,subscription.getSubscriptionTime());
-                subscriptionToReturn.put("subscribedUser",subscriptionToReturn,subscription.getUserId());
-
-                Set<String> trustedIdps = subscription.getTrustedIdps();
-
-                String trustedIdpsJsonString = "[]";
-                if(trustedIdps != null) {
-                    JSONArray jsonArray = new JSONArray();
-
-                    for (String idp : trustedIdps) {
-                        jsonArray.add(idp);
-                    }
-
-                    trustedIdpsJsonString = JSONValue.toJSONString(jsonArray);
-                }
-
-                subscriptionToReturn.put("trustedIdps", subscriptionToReturn, trustedIdpsJsonString);
-
-            }
-
-            return subscriptionToReturn;
-
-        } catch (AppManagementException e) {
-            handleException("Error while getting subscription", e);
-            return null;
-        }
-
     }
 
     /**
@@ -586,65 +376,6 @@ public class APIStoreHostObject extends ScriptableObject {
         }
     }
 
-    public static boolean jsFunction_removeSubscriber(Context cx,
-                                                      Scriptable thisObj, Object[] args, Function funObj)
-            throws AppManagementException {
-        String providerName = "";
-        String apiName = "";
-        String version = "";
-        String application = "";
-        String userId = "";
-        if (args!=null && args.length!=0 ) {
-            providerName = (String)args[0];
-            apiName = (String)args[1];
-            version = (String)args[2];
-            application = (String) args[3];
-            userId = (String)args[4];
-        }
-        APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, version);
-        apiIdentifier.setApplicationId(application);
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-        try {
-            apiConsumer.removeSubscriber(apiIdentifier, userId);
-            return true;
-        } catch (AppManagementException e) {
-            handleException("Error while removing subscriber: " + userId, e);
-            return false;
-        }
-
-    }
-
-    public static NativeArray jsFunction_getSubscriptions(Context cx,
-                                                          Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-
-        NativeArray myn = new NativeArray(0);
-        if (args!=null && args.length!=0 ) {
-            String providerName = (String)args[0];
-            String apiName = (String)args[1];
-            String version = (String)args[2];
-            String user = (String)args[3];
-
-            APIIdentifier apiIdentifier = new APIIdentifier(AppManagerUtil.replaceEmailDomain(providerName), apiName, version);
-            Subscriber subscriber = new Subscriber(user);
-            APIConsumer apiConsumer = getAPIConsumer(thisObj);
-            Set<SubscribedAPI> apis = apiConsumer.getSubscribedIdentifiers(subscriber, apiIdentifier);
-            int i = 0;
-            if(apis!=null){
-                for (SubscribedAPI api : apis) {
-                    NativeObject row = new NativeObject();
-                    row.put("application", row, api.getApplication().getName());
-                    row.put("applicationId", row, api.getApplication().getId());
-                    row.put("prodKey", row, getKey(api, AppMConstants.API_KEY_TYPE_PRODUCTION));
-                    row.put("sandboxKey", row, getKey(api, AppMConstants.API_KEY_TYPE_SANDBOX));
-                    myn.put(i++, myn, row);
-
-                }
-            }
-        }
-        return myn;
-    }
-
     public static String jsFunction_getSwaggerDiscoveryUrl(Context cx,
                                                            Scriptable thisObj, Object[] args,
                                                            Function funObj)
@@ -676,16 +407,6 @@ public class APIStoreHostObject extends ScriptableObject {
         }
     }
 
-    private static APIKey getKey(SubscribedAPI api, String keyType) {
-        List<APIKey> apiKeys = api.getKeys();
-        return getKeyOfType(apiKeys, keyType);
-    }
-
-    private static APIKey getAppKey(Application app, String keyType) {
-        List<APIKey> apiKeys = app.getKeys();
-        return getKeyOfType(apiKeys, keyType);
-    }
-
     private static APIKey getKeyOfType(List<APIKey> apiKeys, String keyType) {
         for (APIKey key : apiKeys) {
             if (keyType.equals(key.getType())) {
@@ -694,64 +415,6 @@ public class APIStoreHostObject extends ScriptableObject {
         }
         return null;
     }
-
-    public static NativeObject jsFunction_getSubscriber(Context cx,
-                                                        Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, AppManagementException {
-
-        if (args != null && isStringArray(args)) {
-            NativeObject user = new NativeObject();
-            String userName = args[0].toString();
-            Subscriber subscriber = null;
-            APIConsumer apiConsumer = getAPIConsumer(thisObj);
-            try {
-                subscriber = apiConsumer.getSubscriber(userName);
-            } catch (AppManagementException e) {
-                handleException("Error while getting Subscriber", e);
-            } catch (Exception e) {
-                handleException("Error while getting Subscriber", e);
-            }
-
-            if (subscriber != null) {
-                user.put("name", user, subscriber.getName());
-                user.put("id", user, subscriber.getId());
-                user.put("email", user, subscriber.getEmail());
-                user.put("subscribedDate", user, subscriber.getSubscribedDate());
-                return user;
-            }
-        }
-        return null;
-    }
-
-    private static boolean addSubscriber(String userId, Scriptable thisObj)
-            throws ScriptException, AppManagementException, UserStoreException {
-
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-        Subscriber subscriber = apiConsumer.getSubscriber(userId);
-        if (subscriber == null) {
-            subscriber = new Subscriber(userId);
-            subscriber.setSubscribedDate(new Date());
-            //TODO : need to set the proper email
-            subscriber.setEmail("");
-            try {
-                int tenantId =
-                        ServiceReferenceHolder.getInstance().getRealmService().getTenantManager()
-                                              .getTenantId(
-                                                      MultitenantUtils.getTenantDomain(userId));
-                subscriber.setTenantId(tenantId);
-                apiConsumer.addSubscriber(subscriber);
-            } catch (AppManagementException e) {
-                handleException("Error while adding the subscriber" + subscriber.getName(), e);
-                return false;
-            } catch (Exception e) {
-                handleException("Error while adding the subscriber" + subscriber.getName(), e);
-                return false;
-            }
-            return true;
-        }
-        return false;
-    }
-
 
     public static boolean jsFunction_sleep(Context cx,
                                            Scriptable thisObj, Object[] args, Function funObj){
@@ -765,60 +428,6 @@ public class APIStoreHostObject extends ScriptableObject {
             }
         }
         return true;
-    }
-
-    public static NativeObject jsFunction_resumeWorkflow(Context cx,
-                                                       Scriptable thisObj, Object[] args, Function funObj)
-            throws ScriptException, WorkflowException {
-
-        NativeObject row = new NativeObject();
-
-        if (args!=null && isStringArray(args)) {
-
-            String workflowReference = (String) args[0];
-            String status = (String) args[1];
-            String description = null;
-            if(args.length > 2){
-                description = (String) args[2];
-            }
-
-            AppMDAO appMDAO = new AppMDAO();
-
-            try {
-                if(workflowReference!=null){
-                    WorkflowDTO workflowDTO = appMDAO.retrieveWorkflow(workflowReference);
-
-                    if(workflowDTO == null){
-                        log.error("Could not find workflow for reference " + workflowReference);
-                        row.put("error", row, true);
-                        row.put("statusCode", row, 500);
-                        row.put("message", row, "Could not find workflow for reference " + workflowReference);
-                        return row;
-                    }
-
-                    workflowDTO.setWorkflowDescription(description);
-                    workflowDTO.setStatus(WorkflowStatus.valueOf(status));
-
-                    String workflowType = workflowDTO.getWorkflowType();
-                    WorkflowExecutor workflowExecutor = WorkflowExecutorFactory.getInstance()
-                            .getWorkflowExecutor(workflowType);
-
-                    workflowExecutor.complete(workflowDTO);
-                    row.put("error", row, false);
-                    row.put("statusCode", row, 200);
-                    row.put("message", row, "Invoked workflow completion successfully.");
-                }
-            } catch (IllegalArgumentException e){
-                row.put("error", row, true);
-                row.put("statusCode", row, 500);
-                row.put("message", row, "Illegal argument provided. Valid values for status are APPROVED and REJECTED.");
-            } catch (AppManagementException e) {
-                row.put("error", row, true);
-                row.put("statusCode", row, 500);
-                row.put("message", row, "Error while resuming workflow. " + e.getMessage());
-            }
-        }
-        return row;
     }
 
     /*
@@ -849,129 +458,6 @@ public class APIStoreHostObject extends ScriptableObject {
             }
         }
         return false;
-    }
-
-    public static void jsFunction_addUser(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws AppManagementException {
-        String customErrorMsg = null;
-
-        if (args != null && isStringArray(args)) {
-            String username = args[0].toString();
-            String password = args[1].toString();
-
-
-            AppManagerConfiguration config = HostObjectComponent.getAPIManagerConfiguration();
-            /*
-             * boolean workFlowEnabled =
-             * Boolean.parseBoolean(config.getFirstProperty
-             * (APIConstants.SELF_SIGN_UP_ENABLED));
-             * if (!workFlowEnabled) {
-             * handleException("Self sign up has been disabled on this server");
-             * }
-             */
-            String serverURL = config.getFirstProperty(AppMConstants.AUTH_MANAGER_URL);
-            String tenantDomain = MultitenantUtils.getTenantDomain(AppManagerUtil.replaceEmailDomainBack(username));
-
-
-            boolean isTenantFlowStarted = false;
-
-            try {
-
-                if (tenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                    isTenantFlowStarted = true;
-                    PrivilegedCarbonContext.startTenantFlow();
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                }
-                int tenantId =
-                        ServiceReferenceHolder.getInstance().getRealmService().getTenantManager()
-                                .getTenantId(tenantDomain);
-
-                // get the signup configuration
-                UserRegistrationConfigDTO signupConfig = SelfSignUpUtil.getSignupConfiguration(tenantId);
-                // set tenant specific sign up user storage
-                if (signupConfig != null && !("".equals(signupConfig.getSignUpDomain()))) {
-                    if (!signupConfig.isSignUpEnabled()) {
-                        handleException("Self sign up has been disabled for this tenant domain");
-                    }
-                    int index = username.indexOf(UserCoreConstants.DOMAIN_SEPARATOR);
-                    /*
-                     * if there is a different domain provided by the user other than one given in the configuration,
-                     * add the correct signup domain. Here signup domain refers to the user storage
-                     */
-
-                    if (index > 0) {
-                        username =
-                                signupConfig.getSignUpDomain().toUpperCase() + UserCoreConstants.DOMAIN_SEPARATOR +
-                                        username.substring(index + 1);
-                    } else {
-                        username =
-                                signupConfig.getSignUpDomain().toUpperCase() + UserCoreConstants.DOMAIN_SEPARATOR +
-                                        username;
-                    }
-                }
-
-                // check whether admin credentials are correct.
-                boolean validCredentials = checkCredentialsForAuthServer(
-                        signupConfig.getAdminUserName(), signupConfig.getAdminPassword(), serverURL);
-
-                if (validCredentials) {
-                    UserDTO userDTO = new UserDTO();
-                    userDTO.setUserName(username);
-                    userDTO.setPassword(password);
-
-                    UserRegistrationAdminServiceStub stub = new UserRegistrationAdminServiceStub(null, serverURL +
-                            "UserRegistrationAdminService");
-                    CarbonUtils.setBasicAccessSecurityHeaders(signupConfig.getAdminUserName(),
-                            signupConfig.getAdminPassword(), true, stub._getServiceClient());
-                    stub.addUser(userDTO);
-
-                    WorkflowExecutor userSignUpWFExecutor = WorkflowExecutorFactory.getInstance()
-                            .getWorkflowExecutor(WorkflowConstants.WF_TYPE_AM_USER_SIGNUP);
-
-                    WorkflowDTO signUpWFDto = new WorkflowDTO();
-                    signUpWFDto.setWorkflowReference(username);
-                    signUpWFDto.setStatus(WorkflowStatus.CREATED);
-                    signUpWFDto.setCreatedTime(System.currentTimeMillis());
-                    signUpWFDto.setTenantDomain(tenantDomain);
-                    signUpWFDto.setTenantId(tenantId);
-                    signUpWFDto.setExternalWorkflowReference(userSignUpWFExecutor.generateUUID());
-                    signUpWFDto.setWorkflowType(WorkflowConstants.WF_TYPE_AM_USER_SIGNUP);
-                    signUpWFDto.setCallbackUrl(userSignUpWFExecutor.getCallbackURL());
-
-                    try {
-                        userSignUpWFExecutor.execute(signUpWFDto);
-                    } catch (WorkflowException e) {
-                        log.error("Unable to execute User SignUp Workflow", e);
-                        // removeUser(username, config, serverURL);
-                        removeTenantUser(username, signupConfig, serverURL);
-
-                        handleException("Unable to execute User SignUp Workflow", e);
-                    }
-                } else {
-                    customErrorMsg =
-                            "Unable to add a user. Please check credentials in "
-                                    + "the signup-config.xml in the registry";
-                    handleException(customErrorMsg);
-                }
-
-            } catch (RemoteException e) {
-                handleException(e.getMessage(), e);
-            } catch (UserRegistrationAdminServiceException e) {
-                handleException("Error while adding the user: " + username + ". " + e.getMessage(), e);
-            } catch (WorkflowException e) {
-                handleException("Error while adding the user: " + username + ". " + e.getMessage(), e);
-            } catch (UserAdminUserAdminException e) {
-                handleException("Error while adding the user: " + username + ". " + e.getMessage(), e);
-            } catch (org.wso2.carbon.user.api.UserStoreException e) {
-                handleException("Error while retrieving tenant id for tenant domain : " + tenantDomain, e);
-            } finally {
-                if (isTenantFlowStarted) {
-                    PrivilegedCarbonContext.endTenantFlow();
-                }
-            }
-        } else {
-            handleException("Invalid input parameters.");
-        }
     }
 
     /**
@@ -1126,57 +612,6 @@ public class APIStoreHostObject extends ScriptableObject {
 
     }
 
-    public static boolean jsFunction_removeSubscription(Context cx, Scriptable thisObj,
-                                                        Object[] args,
-                                                        Function funObj)
-            throws AppManagementException {
-        if (args==null|| args.length == 0) {
-            handleException("Invalid number of input parameters.");
-        }
-        String username = (String)args[0];
-        int applicationId = ((Number) args[1]).intValue();
-        NativeObject apiData = (NativeObject) args[2];
-        String provider = AppManagerUtil.replaceEmailDomain((String) apiData.get("provider", apiData));
-        String name = (String) apiData.get("apiName", apiData);
-        String version = (String) apiData.get("version", apiData);
-        APIIdentifier apiId = new APIIdentifier(provider, name, version);
-
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-        try {
-            apiConsumer.removeSubscription(apiId, username, applicationId);
-            return true;
-        } catch (AppManagementException e) {
-            handleException("Error while removing the subscription of" + name + "-" + version, e);
-            return false;
-      }
-    }
-
-    public static boolean jsFunction_removeAPISubscription(Context cx, Scriptable thisObj,
-                                                        Object[] args,
-                                                        Function funObj)
-            throws AppManagementException {
-        if (args==null|| args.length == 0) {
-            handleException("Invalid number of input parameters.");
-        }
-        String username = (String)args[3];
-        String applicationName = (String)args[2];
-        NativeObject apiData = (NativeObject) args[0];
-
-        String provider = AppManagerUtil.replaceEmailDomain((String) apiData.get("provider", apiData));
-        String name = (String) apiData.get("name", apiData);
-        String version = (String) apiData.get("version", apiData);
-        APIIdentifier apiId = new APIIdentifier(provider, name, version);
-
-        APIConsumer apiConsumer = getAPIConsumer(thisObj);
-        try {
-            apiConsumer.removeAPISubscription(apiId, username, applicationName);
-            return true;
-        } catch (AppManagementException e) {
-            handleException("Error while removing the subscription of" + name + "-" + version, e);
-            return false;
-        }
-    }
-
     /**
      * Given a name of a user the function checks whether the subscriber role is present
      * @param cx
@@ -1227,58 +662,6 @@ public class APIStoreHostObject extends ScriptableObject {
             return row;
         }
     }
-
-
-
-    public static NativeArray jsFunction_getAPIUsageforSubscriber(Context cx, Scriptable thisObj,
-                                                                  Object[] args, Function funObj)
-            throws AppManagementException {
-        List<AppVersionUserUsageDTO> list = null;
-        if (args==null || args.length == 0) {
-            handleException("Invalid number of parameters.");
-        }
-        NativeArray myn = new NativeArray(0);
-//        if (!HostObjectUtils.checkDataPublishingEnabled()) {
-//            return myn;
-//        }
-        String subscriberName = (String) args[0];
-        String period = (String) args[1];
-
-        try {
-            AppUsageStatisticsService appUsageStatisticsService = new
-                    AppUsageStatisticsService(((APIProviderHostObject) thisObj).getUsername());
-            list = appUsageStatisticsService.
-                    getUsageBySubscriber(subscriberName, period);
-        } catch (AppUsageQueryServiceClientException e) {
-            handleException("Error while invoking AbstractAppUsageStatisticsClient for ProviderAPIUsage", e);
-        } catch (Exception e) {
-            handleException("Error while invoking AbstractAppUsageStatisticsClient for ProviderAPIUsage", e);
-        }
-
-        Iterator it = null;
-
-        if (list != null) {
-            it = list.iterator();
-        }
-        int i = 0;
-        if (it != null) {
-            while (it.hasNext()) {
-                NativeObject row = new NativeObject();
-                Object usageObject = it.next();
-                AppVersionUserUsageDTO usage = (AppVersionUserUsageDTO) usageObject;
-                row.put("api", row, usage.getApiname());
-                row.put("version", row, usage.getVersion());
-                row.put("count", row, usage.getCount());
-                row.put("costPerAPI", row, usage.getCostPerAPI());
-                row.put("cost", row, usage.getCost());
-                myn.put(i, myn, row);
-                i++;
-
-            }
-        }
-        return myn;
-    }
-
 
     public static boolean jsFunction_isCommentActivated() throws AppManagementException {
 
@@ -1523,33 +906,6 @@ public class APIStoreHostObject extends ScriptableObject {
 		return idps;
 
 	}
-
-    public static NativeArray jsFunction_getApplications(Context cx,
-                                                         Scriptable thisObj, Object[] args,
-                                                         Function funObj)
-            throws ScriptException, AppManagementException {
-
-        NativeArray myn = new NativeArray(0);
-        if (args != null && isStringArray(args)) {
-            String username = args[0].toString();
-            APIConsumer apiConsumer = getAPIConsumer(thisObj);
-            Application[] applications = apiConsumer.getApplications(new Subscriber(username));
-            if (applications != null) {
-                int i = 0;
-                for (Application application : applications) {
-                    NativeObject row = new NativeObject();
-                    row.put("name", row, application.getName());
-                    row.put("tier", row, application.getTier());
-                    row.put("id", row, application.getId());
-                    row.put("callbackUrl", row, application.getCallbackUrl());
-                    row.put("status", row, application.getStatus());
-                    row.put("description", row, application.getDescription());
-                    myn.put(i++, myn, row);
-                }
-            }
-        }
-        return myn;
-    }
 
     /**
      *

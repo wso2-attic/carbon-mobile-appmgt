@@ -52,7 +52,6 @@ import org.wso2.carbon.appmgt.api.model.SSOProvider;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.impl.AppMConstants;
 import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
-import org.wso2.carbon.appmgt.impl.dao.AppMDAO;
 import org.wso2.carbon.appmgt.impl.dto.Environment;
 import org.wso2.carbon.appmgt.impl.dto.UserRegistrationConfigDTO;
 import org.wso2.carbon.appmgt.impl.idp.sso.model.SSOEnvironment;
@@ -1830,11 +1829,6 @@ public final class AppManagerUtil {
 		}
 
 		return false;
-	}
-
-	public static int getApplicationId(String appName, String userId) throws
-                                                                      AppManagementException {
-		return new AppMDAO().getApplicationId(appName, userId);
 	}
 
 	public static boolean isAPIManagementEnabled() {
