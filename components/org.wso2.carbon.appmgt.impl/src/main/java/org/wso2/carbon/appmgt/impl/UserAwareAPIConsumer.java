@@ -17,9 +17,6 @@
 package org.wso2.carbon.appmgt.impl;
 
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.model.APIIdentifier;
-import org.wso2.carbon.appmgt.api.model.Application;
-import org.wso2.carbon.appmgt.api.model.Subscription;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
 
 /**
@@ -43,33 +40,6 @@ public class UserAwareAPIConsumer extends APIConsumerImpl {
     UserAwareAPIConsumer(String username) throws AppManagementException {
         super(username);
         this.username = username;
-    }
-
-    @Override
-    public Subscription getSubscription(APIIdentifier apiIdentifier, int applicationId, String subscriptionType) throws
-                                                                                                                 AppManagementException {
-        checkSubscribePermission();
-        return super.getSubscription(apiIdentifier, applicationId, subscriptionType);
-    }
-
-    @Override
-    public void removeSubscription(APIIdentifier identifier, String userId,
-                                   int applicationId) throws AppManagementException {
-        checkSubscribePermission();
-        super.removeSubscription(identifier, userId, applicationId);
-    }
-
-    @Override
-    public String addApplication(Application application, String userId) throws
-                                                                         AppManagementException {
-        checkSubscribePermission();
-        return super.addApplication(application, userId);
-    }
-
-    @Override
-    public void updateApplication(Application application) throws AppManagementException {
-        checkSubscribePermission();
-        super.updateApplication(application);
     }
 
     public void checkSubscribePermission() throws AppManagementException {

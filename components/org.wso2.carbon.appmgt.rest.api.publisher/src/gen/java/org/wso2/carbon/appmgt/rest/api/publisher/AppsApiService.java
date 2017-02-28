@@ -25,6 +25,5 @@ public abstract class AppsApiService {
     public abstract Response appsAppTypeIdAppIdSubscriptionsGet(String appType,String appId,String accept,String ifNoneMatch,String ifModifiedSince);
     public abstract Response appsAppTypeThrottlingtiersGet(String appType, String accept, String ifNoneMatch);
     public abstract Response appsAppTypeValidateContextPost(String appType,String appContext,String contentType,String ifModifiedSince);
-    public abstract Response appsAppTypeNameAppNameVersionVersionUuidGet(String appType,String appName,String version,String accept,String ifNoneMatch);
 }
 

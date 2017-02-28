@@ -29,7 +29,6 @@ import org.wso2.carbon.appmgt.api.AppMgtResourceNotFoundException;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APIKey;
 import org.wso2.carbon.appmgt.api.model.Icon;
-import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.impl.dao.AppMDAO;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
@@ -389,21 +388,6 @@ public abstract class AbstractAPIManager implements APIManager {
         	}
         }
         return false;
-    }
-
-    public void addSubscriber(Subscriber subscriber)
-            throws AppManagementException {
-        appMDAO.addSubscriber(subscriber);
-    }
-
-    public void updateSubscriber(Subscriber subscriber)
-            throws AppManagementException {
-        appMDAO.updateSubscriber(subscriber);
-    }
-
-    public Subscriber getSubscriber(int subscriberId)
-            throws AppManagementException {
-        return appMDAO.getSubscriber(subscriberId);
     }
 
     public Icon getIcon(APIIdentifier identifier) throws AppManagementException {

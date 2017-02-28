@@ -26,31 +26,22 @@ import org.apache.axis2.Constants;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
-import org.json.simple.JSONObject;
 import org.wso2.carbon.appmgt.api.APIProvider;
 import org.wso2.carbon.appmgt.api.AppManagementException;
 import org.wso2.carbon.appmgt.api.EntitlementService;
-import org.wso2.carbon.appmgt.api.dto.UserApplicationAPIUsage;
 import org.wso2.carbon.appmgt.api.model.APIIdentifier;
 import org.wso2.carbon.appmgt.api.model.APPLifecycleActions;
 import org.wso2.carbon.appmgt.api.model.App;
-import org.wso2.carbon.appmgt.api.model.AppDefaultVersion;
-import org.wso2.carbon.appmgt.api.model.AppStore;
 import org.wso2.carbon.appmgt.api.model.EntitlementPolicyGroup;
 import org.wso2.carbon.appmgt.api.model.FileContent;
-import org.wso2.carbon.appmgt.api.model.JavaPolicy;
-import org.wso2.carbon.appmgt.api.model.LifeCycleEvent;
 import org.wso2.carbon.appmgt.api.model.MobileApp;
 import org.wso2.carbon.appmgt.api.model.OneTimeDownloadLink;
 import org.wso2.carbon.appmgt.api.model.Provider;
-import org.wso2.carbon.appmgt.api.model.Subscriber;
 import org.wso2.carbon.appmgt.api.model.Tier;
 import org.wso2.carbon.appmgt.api.model.Usage;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicy;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyPartial;
 import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicyValidationResult;
-import org.wso2.carbon.appmgt.api.model.entitlement.XACMLPolicyTemplateContext;
-import org.wso2.carbon.appmgt.impl.dao.AppMDAO;
 import org.wso2.carbon.appmgt.impl.dto.Environment;
 import org.wso2.carbon.appmgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.appmgt.impl.entitlement.EntitlementServiceFactory;
@@ -61,9 +52,7 @@ import org.wso2.carbon.governance.api.exception.GovernanceException;
 import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
 import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
 import org.wso2.carbon.governance.api.util.GovernanceUtils;
-import org.wso2.carbon.registry.common.CommonConstants;
 import org.wso2.carbon.registry.core.ActionConstants;
-import org.wso2.carbon.registry.core.Association;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
@@ -84,16 +73,12 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class provides the core WebApp provider functionality. It is implemented in a very
@@ -134,18 +119,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return providerSet;
     }
 
-    public Set<Subscriber> getSubscribersOfProvider(String providerId)
-            throws AppManagementException {
-
-        Set<Subscriber> subscriberSet = null;
-        try {
-            subscriberSet = appMDAO.getSubscribersOfProvider(providerId);
-        } catch (AppManagementException e) {
-            handleException("Failed to get Subscribers for : " + providerId, e);
-        }
-        return subscriberSet;
-    }
-
     public Provider getProvider(String providerName) throws AppManagementException {
         Provider provider = null;
         String providerPath = RegistryConstants.GOVERNANCE_REGISTRY_BASE_PATH +
@@ -169,32 +142,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
     /**
-     * Return Usage of given APIIdentifier
-     *
-     * @param apiIdentifier APIIdentifier
-     * @return Usage
-     */
-    public Usage getUsageByAPI(APIIdentifier apiIdentifier) {
-        return null;
-    }
-
-    /**
-     * Return Usage of given provider and WebApp
-     *
-     * @param providerId if of the provider
-     * @param apiName    name of the WebApp
-     * @return Usage
-     */
-    public Usage getAPIUsageByUsers(String providerId, String apiName) {
-        return null;
-    }
-
-    public UserApplicationAPIUsage[] getAllAPIUsageByProvider(
-            String providerName) throws AppManagementException {
-        return appMDAO.getAllAPIUsageByProvider(providerName);
-    }
-
-    /**
      * Shows how a given consumer uses the given WebApp.
      *
      * @param apiIdentifier APIIdentifier
@@ -203,41 +150,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
      */
     public Usage getAPIUsageBySubscriber(APIIdentifier apiIdentifier, String consumerEmail) {
         return null;
-    }
-
-    public Set<Subscriber> getSubscribersOfAPI(APIIdentifier identifier)
-            throws AppManagementException {
-
-        Set<Subscriber> subscriberSet = null;
-        try {
-            subscriberSet = appMDAO.getSubscribersOfAPI(identifier);
-        } catch (AppManagementException e) {
-            handleException("Failed to get subscribers for WebApp : " + identifier.getApiName(), e);
-        }
-        return subscriberSet;
-    }
-
-    public long getAPISubscriptionCountByAPI(APIIdentifier identifier)
-            throws AppManagementException {
-        long count = 0L;
-        try {
-            count = appMDAO.getAPISubscriptionCountByAPI(identifier);
-        } catch (AppManagementException e) {
-            handleException("Failed to get APISubscriptionCount for: " + identifier.getApiName(), e);
-        }
-        return count;
-    }
-
-    public Map<String, List> getSubscribedAPPsByUsers(String fromDate, String toDate)
-            throws AppManagementException {
-        Map<String, List> users = new HashMap<String, List>();
-        try {
-            users = appMDAO.getSubscribedAPPsByUsers(fromDate, toDate, tenantId);
-        } catch (AppManagementException e) {
-            handleException("Failed to get subscribed apps by users for the period " + fromDate + "to " +
-                    toDate, e);
-        }
-        return users;
     }
 
 
@@ -403,57 +315,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
     /**
-     * Generates entitlement policies for the given app.
-     *
-     * @param apiIdentifier@throws AppManagementException
-     * @param authorizedAdminCookie      Authorized cookie to access IDP admin services
-     */
-    @Override
-    public void generateEntitlementPolicies(APIIdentifier apiIdentifier, String authorizedAdminCookie) throws
-                                                                                                 AppManagementException {
-
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-
-        List<XACMLPolicyTemplateContext> xacmlPolicyTemplateContexts =
-                appMDAO.getEntitlementPolicyTemplateContexts(apiIdentifier);
-
-        if (xacmlPolicyTemplateContexts != null && !xacmlPolicyTemplateContexts.isEmpty()) {
-            EntitlementService entitlementService = EntitlementServiceFactory.getEntitlementService(config,
-                                                                                                    authorizedAdminCookie);
-
-            entitlementService.generateAndSaveEntitlementPolicies(xacmlPolicyTemplateContexts);
-
-            // Update URL mapping => XACML partial mapping with the generated policy IDs.
-            appMDAO.updateURLEntitlementPolicyPartialMappings(xacmlPolicyTemplateContexts);
-        }
-    }
-
-    /**
-     * Updates given entitlement policies.
-     *
-     * @param policies        Entitlement policies to be updated.
-     * @param authorizedAdminCookie Authorized cookie to access IDP admin services
-     * @throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    @Override
-    public void updateEntitlementPolicies(List<EntitlementPolicy> policies,String authorizedAdminCookie) throws
-                                                                            AppManagementException {
-
-        if (policies == null || policies.isEmpty()) {
-            return;
-        }
-
-        AppManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        EntitlementService entitlementService = EntitlementServiceFactory.getEntitlementService(config, authorizedAdminCookie);
-
-        for (EntitlementPolicy policy : policies) {
-            entitlementService.updatePolicy(policy);
-        }
-    }
-
-    /**
      * Get entitlement policy content from policy id
      *
      * @param policyId        Entitlement policy id
@@ -474,11 +335,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
     @Override
-    public int getWebAppId(String uuid) throws AppManagementException {
-        return appMDAO.getWebAppId(uuid);
-    }
-
-    @Override
     public int saveEntitlementPolicyPartial(String policyPartialName, String policyPartial, boolean isSharedPartial,
                                             String policyAuthor,String policyPartialDesc) throws AppManagementException {
         return appMDAO.saveEntitlementPolicyPartial(policyPartialName, policyPartial, isSharedPartial, policyAuthor,
@@ -486,30 +342,9 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
     @Override
-    public boolean updateEntitlementPolicyPartial(int policyPartialId, String policyPartial,
-                                                  String author, boolean isShared, String policyPartialDesc,
-                                                  String authorizedAdminCookie) throws AppManagementException {
-        appMDAO.updateEntitlementPolicyPartial(policyPartialId, policyPartial, author, isShared, policyPartialDesc);
-
-        // Regenerate XACML policies of the apps which are using the updated policy partial.
-        List<APIIdentifier> associatedApps = getAssociatedApps(policyPartialId);
-
-        for(APIIdentifier associatedApp : associatedApps){
-        	generateEntitlementPolicies(associatedApp, authorizedAdminCookie);
-        }
-
-        return true;
-    }
-
-    @Override
     public EntitlementPolicyPartial getPolicyPartial(int policyPartialId) throws
                                                                           AppManagementException {
         return appMDAO.getPolicyPartial(policyPartialId);
-    }
-
-    @Override
-    public List<APIIdentifier> getAssociatedApps(int policyPartialId) throws AppManagementException {
-        return appMDAO.getAssociatedApps(policyPartialId);
     }
 
     @Override
@@ -537,18 +372,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             AppManagementException {
         return appMDAO.getPolicyGroupListByApplication(appId);
     }
-
-    /**
-     * Retrieves TRACKING_CODE sequences from APM_APP Table
-     *@param uuid : Application UUID
-     *@return TRACKING_CODE
-     *@throws org.wso2.carbon.appmgt.api.AppManagementException
-     */
-    @Override
-    public String getTrackingID(String uuid) throws AppManagementException {
-        return appMDAO.getTrackingID(uuid);
-    }
-
 
     @Override
     public EntitlementPolicyValidationResult validateEntitlementPolicyPartial(String policyPartial) throws
@@ -697,30 +520,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return authorizationManager.getAllowedRolesForResource(resourcePath,ActionConstants.GET);
     }
 
-    public List<LifeCycleEvent> getLifeCycleEvents(APIIdentifier apiId) throws
-                                                                        AppManagementException {
-        return appMDAO.getLifeCycleEvents(apiId);
-    }
-
-    public void updateSubscription(APIIdentifier apiId,String subStatus,int appId) throws
-                                                                                   AppManagementException {
-        appMDAO.updateSubscription(apiId, subStatus, appId);
-    }
-
-	/**
-	 * Moves subscriptions of one app to another app
-	 *
-	 * @param fromIdentifier subscriptions of this app
-	 * @param toIdentifier   will be moved into this app
-	 * @return number of subscriptions moved
-	 * @throws AppManagementException
-	 */
-	@Override
-	public int moveSubscriptions(APIIdentifier fromIdentifier, APIIdentifier toIdentifier) throws
-																						   AppManagementException {
-		return appMDAO.moveSubscriptions(fromIdentifier, toIdentifier);
-	}
-
     @Override
     public List<App> searchApps(String appType, Map<String, String> searchTerms) throws AppManagementException {
 
@@ -815,127 +614,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 		}
 		return sequenceList;
 	}
-
-    @Override
-    public Map<String, Long> getSubscriptionCountByAPPs(String provider, String fromDate, String toDate,
-                                                        boolean isSubscriptionOn) throws AppManagementException {
-        Map<String, Long> subscriptions = null;
-        try {
-            subscriptions = appMDAO.getSubscriptionCountByApp(provider, fromDate, toDate, tenantId, isSubscriptionOn);
-        } catch (AppManagementException e) {
-            handleException("Failed to get subscriptionCount by apps for provider :" + provider + "for the period "
-                                    + fromDate + "to" + toDate, e);
-        }
-        return subscriptions;
-    }
-
-    @Override
-    public Set<AppStore> getExternalAppStores(APIIdentifier identifier)
-            throws AppManagementException {
-        // get all stores from configuration
-        Set<AppStore> storesFromConfig = AppManagerUtil.getExternalStores(tenantId);
-        if (storesFromConfig != null && storesFromConfig.size() > 0) {
-            AppManagerUtil.validateStoreName(storesFromConfig);
-            //get already published stores from db
-            Set<AppStore> publishedStores = appMDAO.getExternalAppStoresDetails(identifier);
-            if (publishedStores != null && publishedStores.size() > 0) {
-                //Retains only the stores that contained in configuration
-                publishedStores.retainAll(storesFromConfig);
-
-                for (AppStore publishedStore : publishedStores) {
-                    for (AppStore configuredStore : storesFromConfig) {
-                        if (publishedStore.getName().equals(configuredStore.getName())) { //If the configured appstore
-                            // already stored in db, change the published state to true
-                            configuredStore.setPublished(true);
-                        }
-                    }
-                }
-            }
-        }
-        return storesFromConfig;
-    }
-
-    /**
-     * Get the stores where given app is already published.
-     * @param identifier WebApp Identifier
-     * @return
-     * @throws AppManagementException
-     */
-    private Set<AppStore> getPublishedExternalAppStores(APIIdentifier identifier)
-            throws AppManagementException {
-        Set<AppStore> configuredAppStores = new HashSet<AppStore>();
-        configuredAppStores.addAll(AppManagerUtil.getExternalStores(tenantId));
-        if (configuredAppStores.size() != 0) {
-            Set<AppStore> storesSet = appMDAO.getExternalAppStoresDetails(identifier);
-            //Retains only the stores that contained in configuration
-            configuredAppStores.retainAll(storesSet);
-            return configuredAppStores;
-
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Store the published external stores details in DB.
-     * @param apiId       WebApp Identifier
-     * @param apiStoreSet stores
-     * @return
-     * @throws AppManagementException
-     */
-    private void addExternalAppStoresDetails(APIIdentifier apiId, Set<AppStore> apiStoreSet)
-            throws AppManagementException {
-        if (log.isDebugEnabled()) {
-            String msg = String.format("Save published external app store details to DB " +
-                    "for web app %s ", apiId.getApiName());
-            log.debug(msg);
-        }
-        appMDAO.addExternalAppStoresDetails(apiId, apiStoreSet);
-    }
-
-    /**
-     * Remove the records of unpublished external store details from DB.
-     *
-     * @param identifier    WebApp Identifier
-     * @param removalCompletedStores stores
-     * @throws AppManagementException
-     */
-    private void removeExternalAppStoreDetails(APIIdentifier identifier, Set<AppStore> removalCompletedStores)
-            throws AppManagementException {
-        if (log.isDebugEnabled()) {
-            String msg = String.format("Delete  external app store details from DB " +
-                    "for web app %s ", identifier.getApiName());
-            log.debug(msg);
-        }
-        appMDAO.deleteExternalAppStoresDetails(identifier, removalCompletedStores);
-    }
-
-    /**
-     * Get web app default version.
-     *
-     * @param appName
-     * @param providerName
-     * @param appStatus
-     * @return
-     * @throws AppManagementException
-     */
-    @Override
-    public String getDefaultVersion(String appName, String providerName, AppDefaultVersion appStatus)
-            throws AppManagementException {
-        return AppMDAO.getDefaultVersion(appName, providerName, appStatus);
-    }
-
-    /**
-     * Check if the given app is the default version.
-     *
-     * @param identifier
-     * @return true if given app is the default version
-     * @throws AppManagementException
-     */
-    @Override
-    public boolean isDefaultVersion(APIIdentifier identifier) throws AppManagementException {
-        return appMDAO.isDefaultVersion(identifier);
-    }
 
     /**
      * Change the lifecycle state of a given application
@@ -1300,10 +978,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
         String gatewayUrl = gatewayEnvironment.getApiGatewayEndpoint().split(",")[0];
         return gatewayUrl;
-    }
-
-    public String getAppUUIDbyName(String appName, String appVersion, int tenantId) throws AppManagementException{
-       return appRepository.getAppUUIDbyName(appName, appVersion, tenantId);
     }
 
     public String uploadImage(FileContent fileContent) throws AppManagementException {

@@ -645,10 +645,7 @@ require('/modules/publisher.js').exec(function (ctx) {
 
     routeManager.register('GET', 'publisher', '/publisher/api/lifecycle/{type}/{id}', function (context) {
         try {
-
-            appPublishWFExecutor =
-            org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutorFactory.getInstance().getWorkflowExecutor("AM_APPLICATION_PUBLISH");
-            var isAsynchronousFlow = appPublishWFExecutor.isAsynchronus();
+            var isAsynchronousFlow = true;
             var shortName = context.params.type;
             var id = context.params.id;
             var artifactManager = rxtManager.getArtifactManager(shortName);

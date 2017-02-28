@@ -17,11 +17,8 @@
 package org.wso2.carbon.appmgt.impl;
 
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.model.*;
-import org.wso2.carbon.appmgt.api.model.entitlement.EntitlementPolicy;
+import org.wso2.carbon.appmgt.api.model.App;
 import org.wso2.carbon.appmgt.impl.utils.AppManagerUtil;
-
-import java.util.List;
 
 /**
  * User aware APIProvider implementation which ensures that the invoking user has the
@@ -46,11 +43,6 @@ public class UserAwareAPIProvider extends APIProviderImpl {
     public String createNewVersion(App app) throws AppManagementException {
         checkCreatePermission();
         return super.createNewVersion(app);
-    }
-
-    @Override
-    public String getTrackingID(String uuid) throws AppManagementException {
-       return super.getTrackingID(uuid);
     }
 
     public void checkDocumentRemovePermission() throws AppManagementException {
@@ -85,20 +77,6 @@ public class UserAwareAPIProvider extends APIProviderImpl {
         AppManagerUtil.checkPermission(username, AppMConstants.Permissions.WEB_APP_PUBLISH);
     }
 
-    @Override
-    public void generateEntitlementPolicies(APIIdentifier apiIdentifier, String authorizedAdminCookie) throws
-                                                                                                 AppManagementException {
-        checkCreatePermission();
-        super.generateEntitlementPolicies(apiIdentifier, authorizedAdminCookie);
-    }
-
-    @Override
-    public void updateEntitlementPolicies(List<EntitlementPolicy> policies,String authorizedAdminCookie) throws
-                                                                            AppManagementException {
-        checkWebappUpdatePermission();
-        super.updateEntitlementPolicies(policies, authorizedAdminCookie);
-    }
-
     public void checkPublishPermissionTenantMode(String userId) throws AppManagementException {
         AppManagerUtil.checkPermission(userId, AppMConstants.Permissions.WEB_APP_PUBLISH);
     }
@@ -108,17 +86,6 @@ public class UserAwareAPIProvider extends APIProviderImpl {
                                                                                       AppManagementException {
         checkWebappDeletePermission();
         return super.deleteEntitlementPolicyPartial(policyPartialId, author);
-    }
-
-    @Override
-    public boolean updateEntitlementPolicyPartial(int policyPartialId, String policyPartial,
-                                                  String author, boolean isShared, String policyPartialDesc,
-                                                  String authorizedAdminCookie)
-            throws AppManagementException {
-        checkWebappUpdatePermission();
-        return super.updateEntitlementPolicyPartial(policyPartialId, policyPartial, author, isShared,
-                                                    policyPartialDesc, authorizedAdminCookie);
-
     }
 
     @Override

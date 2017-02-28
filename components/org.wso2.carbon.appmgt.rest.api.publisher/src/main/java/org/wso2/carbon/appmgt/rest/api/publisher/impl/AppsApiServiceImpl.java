@@ -621,9 +621,7 @@ public class AppsApiServiceImpl extends AppsApiService {
                     tenantDomainName);
             Registry registry = ServiceReferenceHolder.getInstance().
                     getRegistryService().getGovernanceUserRegistry(tenantUserName, tenantId);
-            boolean isAsynchronousFlow =
-                    org.wso2.carbon.appmgt.impl.workflow.WorkflowExecutorFactory.getInstance().getWorkflowExecutor(
-                            "AM_APPLICATION_PUBLISH").isAsynchronus();
+            boolean isAsynchronousFlow = true;
             GenericArtifactManager artifactManager = new GenericArtifactManager(registry, appType);
             GenericArtifact artifact = artifactManager.getGenericArtifact(appId);
             //Validate App Id
@@ -820,35 +818,6 @@ public class AppsApiServiceImpl extends AppsApiService {
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
         return Response.ok().entity(responseMap).build();
-    }
-
-    @Override
-    public Response appsAppTypeNameAppNameVersionVersionUuidGet(String appType, String appName, String version,
-                                                                String accept, String ifNoneMatch) {
-        AppDTO appDTO = new AppDTO();
-        if (AppMConstants.WEBAPP_ASSET_TYPE.equals(appType)) {
-            try {
-                APIProvider appProvider = RestApiUtil.getLoggedInUserProvider();
-                int tenantId = ServiceReferenceHolder.getInstance().getRealmService().getTenantManager().getTenantId(
-                        RestApiUtil.getLoggedInUserTenantDomain());
-
-                String uuid = appProvider.getAppUUIDbyName(appName, version, tenantId);
-                if (log.isDebugEnabled()) {
-                    log.debug("UUID of the app: " + appName + ", version: " + version + " is " + uuid);
-                }
-                appDTO.setId(uuid);
-            } catch (AppManagementException e) {
-                String errorMessage = "Error while retrieving UUID for app: " + appName + " and version: " + version;
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            } catch (UserStoreException e) {
-                String errorMessage = "Error while retrieving tenant details";
-                RestApiUtil.handleInternalServerError(errorMessage, e, log);
-            }
-
-        } else {
-            RestApiUtil.handleBadRequest("Unsupported application type '" + appType + "' provided", log);
-        }
-        return Response.ok().entity(appDTO).build();
     }
 
     //remove artifact from registry

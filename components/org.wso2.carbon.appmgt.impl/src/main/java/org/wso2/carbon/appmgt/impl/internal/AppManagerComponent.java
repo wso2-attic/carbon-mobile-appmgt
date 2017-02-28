@@ -27,9 +27,12 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.appmgt.api.AppManagementException;
-import org.wso2.carbon.appmgt.api.AppUsageStatisticsClient;
 import org.wso2.carbon.appmgt.api.IdentityApplicationManagementFactory;
-import org.wso2.carbon.appmgt.impl.*;
+import org.wso2.carbon.appmgt.impl.APIManagerFactory;
+import org.wso2.carbon.appmgt.impl.AppMConstants;
+import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
+import org.wso2.carbon.appmgt.impl.AppManagerConfigurationService;
+import org.wso2.carbon.appmgt.impl.AppManagerConfigurationServiceImpl;
 import org.wso2.carbon.appmgt.impl.config.TenantConfiguration;
 import org.wso2.carbon.appmgt.impl.config.TenantConfigurationLoader;
 import org.wso2.carbon.appmgt.impl.idp.sso.configurator.IS510IdentityApplicationManagementFactory;
@@ -76,8 +79,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @scr.component name="org.wso2.appmgt.impl.services.appm" immediate="true"
@@ -108,9 +109,6 @@ import java.util.Set;
  * @scr.reference name="identity.application.management.adapter"
  * interface="org.wso2.carbon.appmgt.api.IdentityApplicationManagementFactory" cardinality="0..n" policy="dynamic"
  * bind="setIdentityApplicationManagementFactory" unbind="unsetIdentityApplicationManagementFactory"
- * @scr.reference name="app.manager.default.stat.usageClient"
- * interface="org.wso2.carbon.appmgt.api.AppUsageStatisticsClient" cardinality="0..n"
- * policy="dynamic" bind="setAppUsageStatisticsClient" unbind="unsetAppUsageStatisticsClient"
  *  @scr.reference name="org.wso2.carbon.identity.core.util"
  * interface="org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent"
  * cardinality="1..1" policy="dynamic" bind="setIdentityCoreInitializedEvent" unbind="unsetIdentityCoreInitializedEvent"
@@ -123,8 +121,6 @@ public class AppManagerComponent {
     private ServiceRegistration registration;
     private static TenantRegistryLoader tenantRegistryLoader;
     private APIMGTSampleService apimgtSampleService;
-    private AppUsageStatisticsClient appUsageStatisticsClient;
-    private Set<AppUsageStatisticsClient> appUsageStatisticsClients = new HashSet<>();
     private  String appUsageStatisticsClientImplClass;
 
     protected void activate(ComponentContext componentContext) throws Exception {
@@ -252,7 +248,6 @@ public class AppManagerComponent {
 
             //Find the app usage statistics client which is proffered in the configuration and set instance of it.
             appUsageStatisticsClientImplClass = configuration.getFirstProperty(AppMConstants.APP_STATISTIC_CLIENT_PROVIDER);
-            doRegisterAppUsageStatisticsClient();
 
         } catch (AppManagementException e) {
             log.error("Error while initializing the WebApp manager component", e);
@@ -267,18 +262,6 @@ public class AppManagerComponent {
         APIManagerFactory.getInstance().clearAll();
         RemoteAuthorizationManager authorizationManager = RemoteAuthorizationManager.getInstance();
         authorizationManager.destroy();
-    }
-
-    private void doRegisterAppUsageStatisticsClient() {
-        for (AppUsageStatisticsClient tempAppUsageStatisticsClient : appUsageStatisticsClients) {
-            if (tempAppUsageStatisticsClient.getClass().getName().equals(appUsageStatisticsClientImplClass)) {
-                appUsageStatisticsClient = tempAppUsageStatisticsClient;
-            }
-        }
-        if (appUsageStatisticsClient != null) {
-            org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder.getInstance()
-                    .setAppUsageStatClient(appUsageStatisticsClient);
-        }
     }
 
     protected void setRegistryService(RegistryService registryService) {
@@ -558,20 +541,5 @@ public class AppManagerComponent {
             IdentityApplicationManagementFactory identityApplicationManagementFactory) {
         ServiceReferenceHolder.getInstance()
                 .setIdentityApplicationManagementFactory(new IS510IdentityApplicationManagementFactory());
-    }
-
-    protected void setAppUsageStatisticsClient(AppUsageStatisticsClient appUsageStatClient) {
-        if (log.isDebugEnabled()) {
-            log.debug("App usage stat client bind method is calling");
-        }
-        appUsageStatisticsClients.add(appUsageStatClient);
-        doRegisterAppUsageStatisticsClient();
-    }
-
-    protected void unsetAppUsageStatisticsClient(AppUsageStatisticsClient appUsageStatClient) {
-        if (log.isDebugEnabled()) {
-            log.debug("App usage stat client unbind method is calling");
-        }
-        appUsageStatisticsClients.remove(appUsageStatClient);
     }
 }
