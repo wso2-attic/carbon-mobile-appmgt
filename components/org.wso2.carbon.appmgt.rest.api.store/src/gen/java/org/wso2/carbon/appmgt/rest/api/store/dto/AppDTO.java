@@ -101,6 +101,8 @@ public class AppDTO  {
   
   private String previousVersionAppID = null;
 
+  private AppAppmetaDTO appmeta = null;
+
 
   private List<CustomPropertyDTO> customProperties = new ArrayList<CustomPropertyDTO>();
 
@@ -482,6 +484,16 @@ public class AppDTO  {
   }
   public void setCustomProperties(List<CustomPropertyDTO> customProperties) {
     this.customProperties = customProperties;
+  }
+
+  @ApiModelProperty(value = "")
+  @JsonProperty("appmeta")
+  public AppAppmetaDTO getAppmeta() {
+    return appmeta;
+  }
+
+  public void setAppmeta(AppAppmetaDTO appmeta) {
+    this.appmeta = appmeta;
   }
 
 

@@ -554,13 +554,7 @@ public class AppsApiServiceImpl extends AppsApiService {
 
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
 
-            List<App> result = apiProvider.searchApps(appType, RestApiUtil.getSearchTerms(query));
-
-
-            if (result.isEmpty()) {
-                String errorMessage = "No result found.";
-                return RestApiUtil.buildNotFoundException(errorMessage, null).getResponse();
-            }
+            List<App> result = apiProvider.searchPublishedApps(appType, RestApiUtil.getSearchTerms(query));
 
             AppListDTO appListDTO = null;
             if (fieldFilter == null || "BASIC".equalsIgnoreCase(fieldFilter)) {
@@ -568,11 +562,6 @@ public class AppsApiServiceImpl extends AppsApiService {
 
             } else {
                 appListDTO = APPMappingUtil.getAppListDTOWithAllFields(result, offset, limit);
-            }
-
-            if (appListDTO.getCount() == 0) {
-                String errorMessage = "No result found.";
-                return RestApiUtil.buildNotFoundException(errorMessage, null).getResponse();
             }
 
             APPMappingUtil.setPaginationParams(appListDTO, query, offset, limit, result.size());
