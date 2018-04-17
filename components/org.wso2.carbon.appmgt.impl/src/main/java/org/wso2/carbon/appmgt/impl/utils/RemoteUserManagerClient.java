@@ -1,7 +1,5 @@
 package org.wso2.carbon.appmgt.impl.utils;
 
-import java.io.File;
-
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
@@ -14,6 +12,8 @@ import org.wso2.carbon.appmgt.impl.AppManagerConfiguration;
 import org.wso2.carbon.appmgt.impl.service.ServiceReferenceHolder;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceStub;
 import org.wso2.carbon.utils.CarbonUtils;
+
+import java.io.File;
 
 /**
  * RemoteUserStroeManager Admin service client.
@@ -39,8 +39,7 @@ public class RemoteUserManagerClient {
 
 			String clientRepo = CarbonUtils.getCarbonHome() + File.separator + "repository" +
                     File.separator + "deployment" + File.separator + "client";
-			String clientAxisConf = CarbonUtils.getCarbonHome() + File.separator + "repository" +
-                    File.separator + "conf" + File.separator + "axis2"+ File.separator +"axis2_client.xml";
+			String clientAxisConf = CarbonUtils.getCarbonConfigDirPath() + File.separator + "axis2"+ File.separator +"axis2_client.xml";
 			
 			ConfigurationContext configContext =   ConfigurationContextFactory. createConfigurationContextFromFileSystem(clientRepo,clientAxisConf);
 			userStoreManagerStub =  new RemoteUserStoreManagerServiceStub(configContext, serviceURL +
